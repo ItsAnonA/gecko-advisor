@@ -6,19 +6,11 @@ import React from 'react';
 import Card from '../components/Card';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import LoginModal from '../components/LoginModal';
-import SignupModal from '../components/SignupModal';
-import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 export default function Docs() {
-  const [showLogin, setShowLogin] = React.useState(false);
-  const [showSignup, setShowSignup] = React.useState(false);
-  const [showForgotPassword, setShowForgotPassword] = React.useState(false);
-  const [forgotEmail, setForgotEmail] = React.useState('');
-
   return (
     <>
-      <Header onShowLogin={() => setShowLogin(true)} onShowSignup={() => setShowSignup(true)} />
+      <Header />
       <main className="max-w-3xl mx-auto p-6 space-y-6">
         <header>
           <h1 className="text-3xl font-bold">Gecko Advisor Docs</h1>
@@ -71,33 +63,6 @@ export default function Docs() {
       </Card>
       </main>
       <Footer />
-      <LoginModal
-        isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
-        onSwitchToSignup={() => {
-          setShowLogin(false);
-          setShowSignup(true);
-        }}
-        onForgotPassword={(emailValue) => {
-          setForgotEmail(emailValue ?? '');
-          setShowLogin(false);
-          setShowForgotPassword(true);
-        }}
-      />
-      <SignupModal
-        isOpen={showSignup}
-        onClose={() => setShowSignup(false)}
-        onSwitchToLogin={() => {
-          setShowSignup(false);
-          setShowLogin(true);
-        }}
-      />
-      <ForgotPasswordModal
-        isOpen={showForgotPassword}
-        onClose={() => setShowForgotPassword(false)}
-        onBackToLogin={() => setShowLogin(true)}
-        defaultEmail={forgotEmail}
-      />
     </>
   );
 }

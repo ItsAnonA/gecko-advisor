@@ -7,15 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { getRecentReports } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
 import { BRAND } from '../config/branding';
 import Card from '../components/Card';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
-import LoginModal from '../components/LoginModal';
-import SignupModal from '../components/SignupModal';
 import EnhancedTrustIndicator from '../components/EnhancedTrustIndicator';
-import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import GradeBadge from '../components/GradeBadge';
 import TurnstileWidget, { useTurnstileEnabled } from '../components/TurnstileWidget';
 import type { RecentReportsResponse } from '@privacy-advisor/shared';
@@ -60,13 +56,8 @@ const fetchRecentReports = async (): Promise<RecentQueryResult> => {
 export default function Home() {
   const [input, setInput] = useState('https://example.com');
   const [loading, setLoading] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignupModal, setShowSignupModal] = useState(false);
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { token } = useAuth();
   const turnstileEnabled = useTurnstileEnabled();
 
   async function onScan() {
@@ -84,7 +75,6 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({
           url: input,
@@ -122,10 +112,7 @@ export default function Home() {
 
   return (
     <>
-      <Header
-        onShowLogin={() => setShowLoginModal(true)}
-        onShowSignup={() => setShowSignupModal(true)}
-      />
+      <Header />
       <main className="max-w-5xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
       {/* Hero Section - Privacy Scanner */}
       <header className="text-center space-y-6 py-8 md:py-16">
@@ -477,35 +464,6 @@ export default function Home() {
 
     </main>
     <Footer />
-
-    {/* Auth modals */}
-    <LoginModal
-      isOpen={showLoginModal}
-      onClose={() => setShowLoginModal(false)}
-      onSwitchToSignup={() => {
-        setShowLoginModal(false);
-        setShowSignupModal(true);
-      }}
-      onForgotPassword={(emailValue) => {
-        setForgotPasswordEmail(emailValue ?? '');
-        setShowLoginModal(false);
-        setShowForgotPasswordModal(true);
-      }}
-    />
-    <SignupModal
-      isOpen={showSignupModal}
-      onClose={() => setShowSignupModal(false)}
-      onSwitchToLogin={() => {
-        setShowSignupModal(false);
-        setShowLoginModal(true);
-      }}
-    />
-    <ForgotPasswordModal
-      isOpen={showForgotPasswordModal}
-      onClose={() => setShowForgotPasswordModal(false)}
-      onBackToLogin={() => setShowLoginModal(true)}
-      defaultEmail={forgotPasswordEmail}
-    />
     </>
   );
 }

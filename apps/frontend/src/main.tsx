@@ -8,8 +8,6 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { AuthProvider } from './contexts/AuthContext';
-import { WalletProvider } from './contexts/WalletProvider';
 import './lib/performance'; // Initialize performance monitoring
 import './styles.css';
 
@@ -21,10 +19,6 @@ const Reports = React.lazy(() => import('./pages/ReportsPage'));
 const Compare = React.lazy(() => import('./pages/Compare'));
 const Docs = React.lazy(() => import('./pages/Docs'));
 const About = React.lazy(() => import('./pages/About'));
-const Pricing = React.lazy(() => import('./pages/Pricing'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
-const CheckoutSuccess = React.lazy(() => import('./pages/CheckoutSuccess'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Loading component for Suspense fallback
@@ -92,38 +86,6 @@ const router = createBrowserRouter([
     )
   },
   {
-    path: '/dashboard',
-    element: (
-      <React.Suspense fallback={<PageLoader />}>
-        <Dashboard />
-      </React.Suspense>
-    )
-  },
-  {
-    path: '/pricing',
-    element: (
-      <React.Suspense fallback={<PageLoader />}>
-        <Pricing />
-      </React.Suspense>
-    )
-  },
-  {
-    path: '/checkout-success',
-    element: (
-      <React.Suspense fallback={<PageLoader />}>
-        <CheckoutSuccess />
-      </React.Suspense>
-    )
-  },
-  {
-    path: '/reset-password',
-    element: (
-      <React.Suspense fallback={<PageLoader />}>
-        <ResetPassword />
-      </React.Suspense>
-    )
-  },
-  {
     path: '/settings',
     element: (
       <React.Suspense fallback={<PageLoader />}>
@@ -172,25 +134,21 @@ createRoot(document.getElementById('root')!).render(
       }}
     >
       <QueryClientProvider client={qc}>
-        <WalletProvider>
-          <AuthProvider>
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: '#1e293b',
-                  color: '#fff',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                },
-              }}
-            />
-            <RouterProvider router={router} />
-          </AuthProvider>
-        </WalletProvider>
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#1e293b',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 500,
+              padding: '12px 16px',
+              borderRadius: '8px',
+            },
+          }}
+        />
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>

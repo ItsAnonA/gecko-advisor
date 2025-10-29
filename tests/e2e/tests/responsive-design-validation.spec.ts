@@ -134,8 +134,8 @@ test.describe('Responsive Design Validation', () => {
         }
       }
 
-      // Check CTA buttons are touch-friendly
-      const ctaButtons = page.locator('button:has-text("Subscribe"), button:has-text("Upgrade"), button:has-text("Choose Plan")');
+      // Check CTA buttons are touch-friendly (scan button, action buttons)
+      const ctaButtons = page.locator('button:has-text("Scan"), button:has-text("Start"), button[type="submit"]');
       const ctaCount = await ctaButtons.count();
 
       if (ctaCount > 0) {

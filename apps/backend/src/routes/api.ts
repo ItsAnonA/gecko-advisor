@@ -1,10 +1,26 @@
+// SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+// SPDX-License-Identifier: MIT
 import { Router, type Request, type Response } from 'express';
 import crypto from 'crypto';
 import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
-import { requirePro } from '../middleware/auth.js';
-import type { SafeUser } from '../services/authService.js';
+// DISABLED: Authentication removed - these routes are not registered
+// import { requirePro } from '../middleware/auth.js';
+// import type { SafeUser } from '../services/authService.js';
+
+// Stub type for SafeUser to maintain TypeScript compatibility
+type SafeUser = {
+  id: string;
+  email: string;
+  subscription: string;
+  subscriptionStatus: string;
+  apiKey: string | null;
+  apiCallsMonth: number;
+  apiResetAt: Date | null;
+};
+
+const requirePro = (_req: Request, _res: Response, next: () => void) => next();
 
 export const apiRouter = Router();
 

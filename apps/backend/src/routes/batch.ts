@@ -3,14 +3,25 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { normalizeUrl } from '@privacy-advisor/shared';
-import type { SafeUser } from '../services/authService.js';
+// DISABLED: Authentication removed - these routes are not registered
+// import type { SafeUser } from '../services/authService.js';
 import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
-import { requirePro } from '../middleware/auth.js';
+// import { requirePro } from '../middleware/auth.js';
 import { addScanJob, SCAN_PRIORITY } from '../queue.js';
 import { createScanWithSlug } from '../services/slug.js';
 import { createId } from '@paralleldrive/cuid2';
+
+// Stub type for SafeUser to maintain TypeScript compatibility
+type SafeUser = {
+  id: string;
+  email: string;
+  subscription: string;
+  subscriptionStatus: string;
+};
+
+const requirePro = (_req: Request, _res: Response, next: () => void) => next();
 
 export const batchRouter = Router();
 

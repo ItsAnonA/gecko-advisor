@@ -1,4 +1,6 @@
-﻿import express, { type NextFunction, type Request, type Response } from "express";
+// SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+// SPDX-License-Identifier: MIT
+import express, { type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
@@ -12,7 +14,6 @@ import { performanceMonitor, addPerformanceHeaders } from "./middleware/performa
 import { apiV1Router, apiV2Router } from "./routes/index.js";
 import { adminRouter } from "./routes/admin.js";
 import { docsRouter } from "./routes/docs.js";
-import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./health.js";
 import { initSentry, Sentry } from "./sentry.js";
 import { problem } from "./problem.js";
@@ -112,7 +113,6 @@ export function createServer() {
   app.use('/api', apiV2Router);
 
   app.use('/api', adminRouter);
-  app.use('/api/auth', authRouter);
   app.use('/docs', docsRouter);
 
   if (sentryEnabled) {

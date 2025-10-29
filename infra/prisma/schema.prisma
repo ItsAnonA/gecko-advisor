@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+// SPDX-License-Identifier: MIT
+
 generator client {
   provider      = "prisma-client-js"
   output        = "../../node_modules/.prisma/client"
@@ -18,74 +21,25 @@ enum IssueSeverity {
   critical
 }
 
-// New enums for Freemium model
-enum Subscription {
-  FREE
-  PRO
-  TEAM
-}
-
-enum SubscriptionStatus {
-  INACTIVE
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  TRIALING
-}
-
-enum AuthMethod {
-  EMAIL
-  WALLET
-  BOTH
-}
-
 enum CheckFrequency {
   DAILY
   WEEKLY
   MONTHLY
 }
 
-// New User model for authentication and subscriptions
+// Simplified User model - authentication removed
 model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  name          String?
-  passwordHash  String? // Optional for email-only accounts
-  emailVerified Boolean    @default(false)
-  authMethod    AuthMethod @default(EMAIL)
-
-  // Subscription
-  subscription         Subscription @default(FREE)
-  subscriptionProvider String? // 'STRIPE' | 'LEMONSQUEEZY' | 'WALLET'
-
-  // Stripe fields
-  stripeCustomerId     String? @unique
-  stripeSubscriptionId String? @unique
-
-  // LemonSqueezy fields
-  lsCustomerId     String? @unique
-  lsSubscriptionId String? @unique
-
-  subscriptionStatus SubscriptionStatus @default(INACTIVE)
-  subscriptionEndsAt DateTime?
-
-  // API Access
-  apiKey        String?   @unique
-  apiCallsMonth Int       @default(0)
-  apiResetAt    DateTime?
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
 
   // Relations
-  scans                Scan[]
-  watchedUrls          WatchedUrl[]
-  walletLink           WalletLink?
-  passwordResetTokens  PasswordResetToken[]
+  watchedUrls WatchedUrl[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([email])
-  @@index([apiKey])
-  @@index([stripeCustomerId])
 }
 
 // Enhanced Scan model with user relations and privacy controls
@@ -107,12 +61,9 @@ model Scan {
   shareMessage    String?
   meta            Json?
 
-  // New Freemium fields
-  userId    String?
-  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  isPublic  Boolean @default(true) // Pro users can make scans private
-  isProScan Boolean @default(false) // Track if scan was performed with Pro features
-  scannerIp String? // Track anonymous scans for rate limiting
+  // Public access and rate limiting
+  isPublic  Boolean @default(true)
+  scannerIp String? // Track scans for rate limiting
 
   evidence  Evidence[]
   issues    Issue[]
@@ -125,8 +76,6 @@ model Scan {
   // Optimized indexes for critical performance paths
   @@index([normalizedInput, status, finishedAt(sort: Desc)], map: "Scan_dedupe_lookup_idx")
   @@index([status, createdAt(sort: Desc)], map: "Scan_recent_reports_idx")
-  // New indexes for Freemium features
-  @@index([userId, createdAt(sort: Desc)], map: "Scan_user_history_idx")
   @@index([isPublic, createdAt(sort: Desc)], map: "Scan_public_reports_idx")
   @@index([scannerIp, createdAt(sort: Desc)], map: "Scan_ip_ratelimit_idx")
 }
@@ -201,32 +150,4 @@ model WatchedUrl {
 
   @@unique([userId, url])
   @@index([lastChecked, checkFrequency], map: "WatchedUrl_schedule_idx")
-}
-
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([tokenHash])
-  @@index([userId, expiresAt], map: "PasswordResetToken_user_idx")
-}
-
-// Wallet authentication linking
-model WalletLink {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Store HASHED wallet address for linking only
-  walletAddressHash String   @unique
-  linkedAt          DateTime @default(now())
-  lastVerified      DateTime @default(now())
-
-  @@index([walletAddressHash])
 }

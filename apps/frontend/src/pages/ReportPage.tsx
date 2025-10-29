@@ -18,7 +18,6 @@ import Footer from '../components/Footer';
 import GradeBadge from '../components/GradeBadge';
 import type { ReportResponse } from '@privacy-advisor/shared';
 import { computeDataSharingLevel, type DataSharingLevel } from '../lib/dataSharing';
-import { useAuth } from '../contexts/AuthContext';
 
 type EvidenceItem = ReportResponse['evidence'][number];
 type EvidenceType = EvidenceItem['kind'];
@@ -473,8 +472,6 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
 export default function ReportPage() {
   const { slug = '' } = useParams();
   const { data, isLoading, isError, error, refetch } = useQuery(reportQueryOptions(slug));
-  const { user } = useAuth();
-  const isPro = user?.subscription === 'PRO' || user?.subscription === 'TEAM';
 
   if (isLoading) {
     return <ReportSkeleton />;
@@ -522,7 +519,7 @@ export default function ReportPage() {
     );
   }
 
-  return <ReportBody slug={slug} data={data} isPro={isPro} />;
+  return <ReportBody slug={slug} data={data} />;
 }
 
 /**
@@ -687,7 +684,7 @@ const calculateBreakdown = (scan: ReportResponse['scan'], evidence: EvidenceItem
   return breakdown;
 };
 
-function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportResponse; isPro: boolean }) {
+function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   const { scan, evidence, meta } = data;
   const [showBreakdown, setShowBreakdown] = React.useState(false);
 

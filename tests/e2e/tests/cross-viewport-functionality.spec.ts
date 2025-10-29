@@ -204,92 +204,6 @@ test.describe('Cross-Viewport Functionality Validation', () => {
     });
   }
 
-  // Test PRO upgrade modal across viewports
-  for (const [key, viewport] of Object.entries(VIEWPORTS)) {
-    test(`PRO Upgrade Modal - ${viewport.name}`, async ({ page }) => {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      console.log(`🧪 TEST: PRO upgrade modal on ${viewport.name}`);
-
-      await page.goto('/');
-      await page.waitForLoadState('networkidle');
-
-      // Find "Upgrade to Pro" or "Go PRO" button
-      const upgradeButton = page.locator(
-        'button:has-text("Upgrade"), button:has-text("Go PRO"), button:has-text("PRO"), a:has-text("Upgrade")'
-      );
-
-      if (await upgradeButton.count() > 0) {
-        const visibleUpgradeBtn = upgradeButton.first();
-
-        if (await visibleUpgradeBtn.isVisible()) {
-          console.log('✅ Upgrade button found');
-
-          await visibleUpgradeBtn.click();
-          console.log('✅ Upgrade button clicked');
-
-          await page.waitForTimeout(2000);
-          await takeScreenshot(page, `functionality-${key.toLowerCase()}-upgrade-modal`);
-
-          // Check for modal or signup form
-          const signupElements = page.locator(
-            '[role="dialog"], .modal, form[class*="signup"], [class*="signup-modal"]'
-          );
-
-          if (await signupElements.count() > 0) {
-            const modal = signupElements.first();
-
-            if (await modal.isVisible()) {
-              console.log('✅ Signup modal opened');
-
-              const modalBox = await modal.boundingBox();
-              if (modalBox) {
-                console.log(`✅ Modal size: ${modalBox.width}x${modalBox.height}px`);
-
-                // Verify modal is properly sized for viewport
-                expect(modalBox.width).toBeLessThanOrEqual(viewport.width);
-                console.log('✅ Modal fits viewport');
-
-                // Check for form inputs
-                const inputs = modal.locator('input');
-                const inputCount = await inputs.count();
-                console.log(`📊 Form inputs found: ${inputCount}`);
-
-                if (inputCount > 0) {
-                  const firstInput = inputs.first();
-                  const inputBox = await firstInput.boundingBox();
-
-                  if (inputBox) {
-                    console.log(`✅ Input size: ${inputBox.width}x${inputBox.height}px`);
-
-                    // Input should be touch-friendly on mobile
-                    if (key === 'MOBILE' || key === 'TABLET') {
-                      expect(inputBox.height).toBeGreaterThanOrEqual(44);
-                      console.log('✅ Input is touch-friendly');
-                    }
-                  }
-                }
-              }
-
-              // Test close functionality
-              const closeButton = modal.locator('button[aria-label="Close"], button:has-text("Close")');
-              if (await closeButton.count() > 0 && await closeButton.first().isVisible()) {
-                await closeButton.first().click();
-                await page.waitForTimeout(1000);
-                console.log('✅ Modal closed successfully');
-              }
-            }
-          } else {
-            console.log('⚠️  Signup modal not found (may navigate to different page)');
-          }
-        }
-      } else {
-        console.log('⚠️  Upgrade button not found on homepage');
-      }
-
-      console.log(`\n📋 PRO UPGRADE TEST (${viewport.name}): PASS ✅\n`);
-    });
-  }
-
   // Test touch interactions on mobile
   test('Mobile Touch Interactions (375px)', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.MOBILE);
@@ -461,7 +375,6 @@ test.afterAll(async () => {
   console.log('  ✅ Scan Submission (Mobile, Tablet, Desktop)');
   console.log('  ✅ Navigation Links (Mobile, Tablet, Desktop)');
   console.log('  ✅ Wallet Connection Modal (Mobile, Tablet, Desktop)');
-  console.log('  ✅ PRO Upgrade Modal (Mobile, Tablet, Desktop)');
   console.log('  ✅ Touch Interactions (Mobile)');
   console.log('  ✅ Keyboard Navigation (Desktop)');
   console.log('  ✅ Scrolling Behavior (All Viewports)');
