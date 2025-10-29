@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+// SPDX-License-Identifier: MIT
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -67,8 +69,7 @@ export default defineConfig({
           'pages-static': [
             './src/pages/About.tsx',
             './src/pages/Docs.tsx',
-            './src/pages/NotFound.tsx',
-            './src/pages/Pricing.tsx'
+            './src/pages/NotFound.tsx'
           ]
         },
         // Optimize chunk file names for caching

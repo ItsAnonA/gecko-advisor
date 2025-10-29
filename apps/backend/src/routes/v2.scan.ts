@@ -1,4 +1,5 @@
-﻿import { Router, type Request } from "express";
+// SPDX-License-Identifier: MIT
+import { Router, type Request } from "express";
 import { z } from "zod";
 import {
   UrlScanRequestSchema,
@@ -6,7 +7,7 @@ import {
   AddressScanRequestSchema,
   ScanQueuedResponseSchema,
   normalizeUrl,
-} from "@privacy-advisor/shared";
+} from "@gecko-advisor/shared";
 import type { SafeUser } from "../services/authService.js";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
