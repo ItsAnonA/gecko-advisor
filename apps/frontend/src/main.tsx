@@ -92,7 +92,7 @@ const router = createBrowserRouter([
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Settings Coming Soon</h1>
-            <p className="text-gray-600">Account settings page is under development.</p>
+            <p className="text-gray-600">Display preferences and application settings coming soon.</p>
           </div>
         </div>
       </React.Suspense>

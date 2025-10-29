@@ -7,12 +7,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { BRAND } from '../config/branding';
 
-export interface HeaderProps {
-  // Props kept for backward compatibility but no longer used
-  onShowLogin?: () => void;
-  onShowSignup?: () => void;
-}
-
 /**
  * Header Component - PrivacyGecko Branding
  * Top navigation bar with PrivacyGecko branding and navigation
@@ -28,7 +22,7 @@ export interface HeaderProps {
  * @example
  * <Header />
  */
-export default function Header({ onShowLogin: _onShowLogin, onShowSignup: _onShowSignup }: HeaderProps) {
+export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

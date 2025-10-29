@@ -292,7 +292,7 @@ test.describe('Critical Fixes Validation - Stage Environment', () => {
         const scanCount = await scanItems.count();
         console.log(`Number of recent scans displayed: ${scanCount}`);
       } else {
-        console.log('Recent scans section not visible (may require authentication)');
+        console.log('Recent scans section not visible (feature may not be implemented yet or requires prior scans)');
       }
     });
   });

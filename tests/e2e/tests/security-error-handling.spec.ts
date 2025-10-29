@@ -173,35 +173,6 @@ test.describe('Security & Error Handling', () => {
     }
   });
 
-  test('Admin authentication timing attack fixes', async ({ page }) => {
-    // Test timing attack resistance for admin endpoints
-    const adminUrls = [
-      '/admin',
-      '/admin/login',
-      '/api/admin',
-      '/admin/dashboard',
-    ];
-
-    for (const url of adminUrls) {
-      const startTime = performance.now();
-
-      try {
-        await page.goto(url);
-        await page.waitForTimeout(1000);
-      } catch (e) {
-        // 404 or other errors are expected
-      }
-
-      const endTime = performance.now();
-      const responseTime = endTime - startTime;
-
-      console.log(`Admin URL ${url} response time: ${responseTime.toFixed(2)}ms`);
-
-      // Response times should be consistent to prevent timing attacks
-      expect(responseTime).toBeLessThan(5000); // Should fail fast
-    }
-  });
-
   test('Rate limiting validation', async ({ page }) => {
     const homePage = new HomePage(page);
 
@@ -420,35 +391,13 @@ test.describe('Security & Error Handling', () => {
     }
   });
 
-  test('Session security validation', async ({ page }) => {
-    const homePage = new HomePage(page);
-
-    await homePage.goto();
-
-    // Check for secure session cookies
-    const cookies = await page.context().cookies();
-
-    cookies.forEach(cookie => {
-      console.log(`Cookie: ${cookie.name}, Secure: ${cookie.secure}, HttpOnly: ${cookie.httpOnly}`);
-
-      // Session cookies should be secure
-      if (cookie.name.toLowerCase().includes('session') || cookie.name.toLowerCase().includes('auth')) {
-        expect(cookie.secure).toBe(true);
-        expect(cookie.httpOnly).toBe(true);
-      }
-    });
-  });
-
   test('Information disclosure prevention', async ({ page }) => {
     // Test that error messages don't expose sensitive information
     const testUrls = [
-      '/api/admin',
       '/api/database',
       '/api/internal',
-      '/admin/config',
       '/.env',
       '/config.json',
-      '/admin/users',
     ];
 
     for (const url of testUrls) {
