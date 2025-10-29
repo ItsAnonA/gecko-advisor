@@ -1,8 +1,9 @@
+// SPDX-License-Identifier: MIT
 import { Router } from "express";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { logger } from "../logger.js";
-import { etldPlusOne, buildReportPayload, type ReportEvidence } from "@privacy-advisor/shared";
+import { etldPlusOne, buildReportPayload, type ReportEvidence } from "@gecko-advisor/shared";
 
 export const reportV1Router = Router();
 
