@@ -3,7 +3,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
-import { normalizeUrl } from '@privacy-advisor/shared';
+import { normalizeUrl } from '@gecko-advisor/shared';
 // DISABLED: Authentication removed - these routes are not registered
 // import type { SafeUser } from '../services/authService.js';
 import { prisma } from '../prisma.js';
