@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 // SPDX-License-Identifier: MIT
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
