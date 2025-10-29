@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { turnstileService } from '../services/turnstileService.js';
 import { problem } from '../problem.js';
+import { logger } from '../logger.js';
 
 type RequestWithTurnstile = Request & {
   turnstileVerified?: boolean;
@@ -34,24 +35,35 @@ export async function requireTurnstile(req: Request, res: Response, next: NextFu
 
   const userAgent = req.get('user-agent');
 
-  const result = await turnstileService.verify({
-    token,
-    remoteIp,
-    userAgent,
-  });
+  try {
+    const result = await turnstileService.verify({
+      token,
+      remoteIp,
+      userAgent,
+    });
 
-  if (!result.success) {
-    const detail = Array.isArray(result.errorCodes) ? result.errorCodes.join(', ') : undefined;
-    problem(res, 400, 'Security Check Failed', detail ?? 'turnstile_verification_failed');
-    return;
+    if (!result.success) {
+      const detail = Array.isArray(result.errorCodes) ? result.errorCodes.join(', ') : undefined;
+      problem(res, 400, 'Security Check Failed', detail ?? 'turnstile_verification_failed');
+      return;
+    }
+
+    (req as RequestWithTurnstile).turnstileVerified = true;
+
+    // Remove token to avoid accidentally persisting it downstream
+    if (req.body && 'turnstileToken' in req.body) {
+      delete (req.body as Record<string, unknown>).turnstileToken;
+    }
+
+    next();
+  } catch (error) {
+    logger.error({
+      err: error,
+      method: req.method,
+      url: req.url,
+      ip: req.ip,
+      userAgent,
+    }, 'Turnstile verification error');
+    problem(res, 500, 'Security Check Error');
   }
-
-  (req as RequestWithTurnstile).turnstileVerified = true;
-
-  // Remove token to avoid accidentally persisting it downstream
-  if (req.body && 'turnstileToken' in req.body) {
-    delete (req.body as Record<string, unknown>).turnstileToken;
-  }
-
-  next();
 }
