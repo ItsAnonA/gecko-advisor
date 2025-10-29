@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: MIT
 import type { PrismaClient, Evidence } from "@prisma/client";
-import type { ScoreResult } from "@privacy-advisor/shared";
-import { labelForScore } from "@privacy-advisor/shared";
+import type { ScoreResult } from "@gecko-advisor/shared";
+import { labelForScore } from "@gecko-advisor/shared";
 import { isFirstParty } from './utils/firstPartyDetection.js';
 import { parse } from 'tldts';
 

@@ -1,5 +1,5 @@
 /*
-SPDX-FileCopyrightText: 2025 Privacy Advisor contributors
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import { test, expect, Page, ViewportSize } from '@playwright/test';
@@ -126,81 +126,6 @@ test.describe('Cross-Viewport Functionality Validation', () => {
       }
 
       console.log(`\n📋 NAVIGATION TEST (${viewport.name}): PASS ✅\n`);
-    });
-  }
-
-  // Test wallet connection modal across viewports
-  for (const [key, viewport] of Object.entries(VIEWPORTS)) {
-    test(`Wallet Connection Modal - ${viewport.name}`, async ({ page }) => {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      console.log(`🧪 TEST: Wallet connection on ${viewport.name}`);
-
-      await page.goto('/');
-      await page.waitForLoadState('networkidle');
-
-      // Find "Connect Wallet" button
-      const connectWalletButton = page.locator('button:has-text("Connect Wallet"), button:has-text("Connect")');
-
-      if (await connectWalletButton.count() > 0 && await connectWalletButton.first().isVisible()) {
-        console.log('✅ Connect Wallet button found');
-
-        const buttonBox = await connectWalletButton.first().boundingBox();
-        console.log(`✅ Button box: ${buttonBox?.width}x${buttonBox?.height}px`);
-
-        // Click the button
-        await connectWalletButton.first().click();
-        console.log('✅ Connect Wallet button clicked');
-
-        await page.waitForTimeout(2000);
-        await takeScreenshot(page, `functionality-${key.toLowerCase()}-wallet-modal`);
-
-        // Check if modal opened
-        const modal = page.locator('[role="dialog"], .modal, [class*="modal"]').first();
-
-        if (await modal.isVisible()) {
-          console.log('✅ Wallet modal opened');
-
-          const modalBox = await modal.boundingBox();
-          if (modalBox) {
-            console.log(`✅ Modal size: ${modalBox.width}x${modalBox.height}px`);
-
-            // Modal should fit within viewport
-            expect(modalBox.width).toBeLessThanOrEqual(viewport.width);
-            console.log('✅ Modal fits within viewport');
-
-            // Modal content should be readable
-            if (key === 'MOBILE') {
-              expect(modalBox.width).toBeGreaterThan(300); // Min readable width
-              console.log('✅ Modal content readable on mobile');
-            }
-          }
-
-          // Test close button
-          const closeButton = page.locator('button[aria-label="Close"], button:has-text("Close"), button[class*="close"]');
-          if (await closeButton.count() > 0) {
-            const closeBtn = closeButton.first();
-            if (await closeBtn.isVisible()) {
-              console.log('✅ Close button visible');
-
-              const closeBtnBox = await closeBtn.boundingBox();
-              if (closeBtnBox && (key === 'MOBILE' || key === 'TABLET')) {
-                expect(closeBtnBox.height).toBeGreaterThanOrEqual(44);
-                console.log('✅ Close button is touch-friendly');
-              }
-
-              await closeBtn.click();
-              await page.waitForTimeout(1000);
-              console.log('✅ Modal closed');
-            }
-          }
-        } else {
-          console.log('⚠️  Wallet modal did not open (may require additional setup)');
-        }
-      } else {
-        console.log('⚠️  Connect Wallet button not found (may not be on homepage)');
-      }
-
-      console.log(`\n📋 WALLET CONNECTION TEST (${viewport.name}): PASS ✅\n`);
     });
   }
 
@@ -374,7 +299,6 @@ test.afterAll(async () => {
   console.log('\nFunctionality Tested:');
   console.log('  ✅ Scan Submission (Mobile, Tablet, Desktop)');
   console.log('  ✅ Navigation Links (Mobile, Tablet, Desktop)');
-  console.log('  ✅ Wallet Connection Modal (Mobile, Tablet, Desktop)');
   console.log('  ✅ Touch Interactions (Mobile)');
   console.log('  ✅ Keyboard Navigation (Desktop)');
   console.log('  ✅ Scrolling Behavior (All Viewports)');

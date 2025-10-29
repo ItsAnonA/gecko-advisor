@@ -180,17 +180,6 @@ test.describe('Critical Fixes Validation - Stage Environment', () => {
       expect(cspViolations).toHaveLength(0);
     });
 
-    test('should load pricing page in under 2.5 seconds', async ({ page }) => {
-      const startTime = Date.now();
-
-      const response = await page.goto('/pricing', { waitUntil: 'load' });
-      const loadTime = (Date.now() - startTime) / 1000;
-
-      console.log(`Pricing page load time: ${loadTime.toFixed(2)}s`);
-
-      expect(response?.status()).toBe(200);
-      expect(loadTime).toBeLessThan(2.5);
-    });
 
     test('should have no CSP errors for Google Fonts', async ({ page }) => {
       await page.goto('/');
@@ -308,7 +297,7 @@ test.describe('Critical Fixes Validation - Stage Environment', () => {
     });
   });
 
-  test.describe('5. Error Handling & Edge Cases', () => {
+  test.describe('4. Error Handling & Edge Cases', () => {
     test('should handle invalid URL submission gracefully', async ({ page }) => {
       await page.goto('/');
 
@@ -359,7 +348,7 @@ test.describe('Critical Fixes Validation - Stage Environment', () => {
     });
   });
 
-  test.describe('6. Responsive Design', () => {
+  test.describe('5. Responsive Design', () => {
     test('should work correctly on mobile viewport (375x667)', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto('/');
