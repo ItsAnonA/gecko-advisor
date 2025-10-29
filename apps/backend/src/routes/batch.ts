@@ -14,11 +14,10 @@ import { createScanWithSlug } from '../services/slug.js';
 import { createId } from '@paralleldrive/cuid2';
 
 // Stub type for SafeUser to maintain TypeScript compatibility
+// NOTE: This entire file is legacy code - authentication has been removed
 type SafeUser = {
   id: string;
   email: string;
-  subscription: string;
-  subscriptionStatus: string;
 };
 
 const requirePro = (_req: Request, _res: Response, next: () => void) => next();
@@ -111,10 +110,8 @@ batchRouter.post('/', requirePro, async (req: Request, res: Response) => {
           status: 'queued',
           progress: 0,
           source: 'batch',
-          user: user.id ? { connect: { id: user.id } } : undefined,
           scannerIp: req.ip || null,
-          isPublic: !isPrivate, // Pro users can make batch scans private
-          isProScan: true,
+          isPublic: !isPrivate, // Can make batch scans private
           meta: { batchId }, // Store batch ID in metadata
         })
       )
@@ -200,7 +197,7 @@ batchRouter.get('/:batchId/status', requirePro, async (req: Request, res: Respon
           path: ['batchId'],
           equals: batchId,
         },
-        userId: user.id, // Ensure user can only see their own batches
+        // LEGACY: userId removed - authentication has been removed
       },
       select: {
         id: true,
@@ -279,10 +276,10 @@ batchRouter.get('/history', requirePro, async (req: Request, res: Response) => {
   }
 
   try {
-    // Find all scans with batch IDs for this user
+    // Find all scans with batch IDs
     const batchScans = await prisma.scan.findMany({
       where: {
-        userId: user.id,
+        // LEGACY: userId removed - authentication has been removed
         source: 'batch',
         meta: {
           not: Prisma.DbNull,
