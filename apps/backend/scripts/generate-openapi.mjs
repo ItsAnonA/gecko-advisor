@@ -12,7 +12,7 @@ import {
   ScanStatusSchema,
   ReportResponseSchema,
   RecentReportsResponseSchema,
-} from "@privacy-advisor/shared";
+} from "@gecko-advisor/shared";
 import { z } from "zod";
 
 const schemas = {

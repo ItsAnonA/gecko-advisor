@@ -117,6 +117,8 @@ export default defineConfig({
       '@components': resolve(__dirname, './src/components'),
       '@pages': resolve(__dirname, './src/pages'),
       '@lib': resolve(__dirname, './src/lib'),
+      // Resolve workspace package for production build
+      '@gecko-advisor/shared': resolve(__dirname, '../../packages/shared/src/index.ts'),
     },
   },
   // Dependency pre-bundling optimizations
