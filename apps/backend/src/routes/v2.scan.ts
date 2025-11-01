@@ -67,12 +67,9 @@ scanV2Router.post(['/', '/url'], requireTurnstile, async (req, res) => {
       status: 'queued',
       progress: 0,
       source: force ? 'manual-force' : 'manual',
-      // No user tracking for scan history
-      userId: null,
       scannerIp: req.ip || null,
       // All scans are public (100% free, no PRO tier)
       isPublic: true,
-      isProScan: false,
     };
 
     const scan = await createScanWithSlug(prisma, scanData);
