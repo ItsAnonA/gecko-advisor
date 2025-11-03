@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Home Page -->
+  <url>
+    <loc>https://geckoadvisor.com/</loc>
+    <lastmod>2025-11-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- About Page -->
+  <url>
+    <loc>https://geckoadvisor.com/about</loc>
+    <lastmod>2025-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Documentation Page -->
+  <url>
+    <loc>https://geckoadvisor.com/docs</loc>
+    <lastmod>2025-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Reports Page -->
+  <url>
+    <loc>https://geckoadvisor.com/reports</loc>
+    <lastmod>2025-11-02</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Compare Page -->
+  <url>
+    <loc>https://geckoadvisor.com/compare</loc>
+    <lastmod>2025-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Example Report URLs (these should be updated dynamically in production) -->
+  <!-- Add actual report URLs here as they're generated -->
+</urlset>

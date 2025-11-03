@@ -1,0 +1,13 @@
+# Gecko Advisor - Privacy Scanner
+# https://geckoadvisor.com
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /scan/
+Disallow: /dashboard
+Disallow: /reset-password
+Disallow: /settings
+
+# Sitemap
+Sitemap: https://geckoadvisor.com/sitemap.xml
