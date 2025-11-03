@@ -3,9 +3,9 @@ name: E2E Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, preprod]
   pull_request:
-    branches: [main]
+    branches: [main, preprod]
   schedule:
     # Run tests daily at 2 AM UTC
     - cron: '0 2 * * *'
