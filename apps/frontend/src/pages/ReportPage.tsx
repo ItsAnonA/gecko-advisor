@@ -15,6 +15,7 @@ import VirtualizedEvidenceList from '../components/VirtualizedEvidenceList';
 import { ScoreDialSkeleton, CardSkeleton, EvidenceCardSkeleton } from '../components/Skeleton';
 import { ErrorState } from '../components/ErrorBoundary';
 import Footer from '../components/Footer';
+import Header from '../components/Header';
 import GradeBadge from '../components/GradeBadge';
 import type { ReportResponse } from '@gecko-advisor/shared';
 import { computeDataSharingLevel, type DataSharingLevel } from '../lib/dataSharing';
@@ -342,6 +343,69 @@ interface EvidenceItemDisplayProps {
 
 function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
   const [showDetails, setShowDetails] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+  const [whyMattersExpanded, setWhyMattersExpanded] = React.useState(false);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(evidence.title);
+      setCopied(true);
+      toast.success('Finding copied to clipboard!');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
+  // Get severity icon and color based on severity level
+  const getSeverityVisual = (severity: number) => {
+    if (severity >= 4) {
+      return {
+        icon: (
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <circle cx="10" cy="10" r="8" />
+          </svg>
+        ),
+        color: 'text-red-400',
+        bgColor: 'bg-red-500/10',
+        label: 'Critical'
+      };
+    }
+    if (severity === 3) {
+      return {
+        icon: (
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <circle cx="10" cy="10" r="8" />
+          </svg>
+        ),
+        color: 'text-orange-400',
+        bgColor: 'bg-orange-500/10',
+        label: 'High'
+      };
+    }
+    if (severity === 2) {
+      return {
+        icon: (
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <circle cx="10" cy="10" r="8" />
+          </svg>
+        ),
+        color: 'text-yellow-400',
+        bgColor: 'bg-yellow-500/10',
+        label: 'Medium'
+      };
+    }
+    return {
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+          <circle cx="10" cy="10" r="8" />
+        </svg>
+      ),
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/10',
+      label: 'Low'
+    };
+  };
 
   // Determine status based on severity
   const getStatusClass = (severity: number): 'good' | 'warning' | 'bad' => {
@@ -351,28 +415,29 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
   };
 
   const status = getStatusClass(evidence.severity);
+  const severityVisual = getSeverityVisual(evidence.severity);
 
   const statusConfig = {
     good: {
-      bg: 'bg-green-50',
-      border: 'border-l-4 border-green-500',
+      bg: 'bg-score-trust/10 dark:bg-score-trust/20',
+      border: 'border-l-4 border-score-trust',
       icon: '✅',
-      iconColor: 'text-green-600',
-      textColor: 'text-green-900'
+      iconColor: 'text-score-trust',
+      textColor: 'text-light-primary'
     },
     warning: {
-      bg: 'bg-amber-50',
-      border: 'border-l-4 border-amber-500',
+      bg: 'bg-score-caution/10 dark:bg-score-caution/20',
+      border: 'border-l-4 border-score-caution',
       icon: '⚠️',
-      iconColor: 'text-amber-600',
-      textColor: 'text-amber-900'
+      iconColor: 'text-score-caution',
+      textColor: 'text-light-primary'
     },
     bad: {
-      bg: 'bg-red-50',
-      border: 'border-l-4 border-red-500',
+      bg: 'bg-score-danger/10 dark:bg-score-danger/20',
+      border: 'border-l-4 border-score-danger',
       icon: '❌',
-      iconColor: 'text-red-600',
-      textColor: 'text-red-900'
+      iconColor: 'text-score-danger',
+      textColor: 'text-light-primary'
     }
   };
 
@@ -397,7 +462,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
 
   return (
     <div
-      className={`${config.bg} ${config.border} rounded-lg p-4 mb-3 transition-all duration-200 hover:shadow-md`}
+      className={`${config.bg} ${config.border} rounded-lg p-4 mb-3 transition-all duration-200 hover:shadow-md group`}
       data-testid="evidence-item"
       role="article"
       aria-label={`${evidence.title} - Severity ${evidence.severity}`}
@@ -412,25 +477,49 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h3 className={`font-semibold ${config.textColor} text-base`}>
+            <h3 className={`font-semibold ${config.textColor} text-base flex-1`}>
               {evidence.title}
             </h3>
-            <span
-              className="text-xs text-gray-600 flex-shrink-0 px-2 py-1 bg-white bg-opacity-50 rounded"
-              aria-label={`Severity level ${evidence.severity} out of 5`}
-            >
-              Severity {evidence.severity}/5
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={copyToClipboard}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-dark-elevated focus:outline-none focus:ring-2 focus:ring-advisor-500"
+                aria-label="Copy finding to clipboard"
+                title="Copy finding"
+              >
+                {copied ? (
+                  <svg className="w-4 h-4 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-light-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${severityVisual.bgColor} border border-${severityVisual.color.replace('text-', '')}/30`}
+                aria-label={`${severityVisual.label} severity`}
+                title={`Severity: ${severityVisual.label} (${evidence.severity}/5)`}
+              >
+                <span className={severityVisual.color}>
+                  {severityVisual.icon}
+                </span>
+                <span className={`text-xs font-medium ${severityVisual.color}`}>
+                  {severityVisual.label}
+                </span>
+              </div>
+            </div>
           </div>
 
           {evidence.details && (
             <>
               <button
                 onClick={() => setShowDetails(!showDetails)}
-                className={`text-sm font-medium mt-2 focus:outline-none focus:ring-2 focus:ring-security-blue rounded px-2 py-1 transition-colors ${
-                  status === 'bad' ? 'text-red-700 hover:text-red-900 hover:bg-red-100' :
-                  status === 'warning' ? 'text-amber-700 hover:text-amber-900 hover:bg-amber-100' :
-                  'text-green-700 hover:text-green-900 hover:bg-green-100'
+                className={`text-sm font-medium mt-2 focus:outline-none focus:ring-2 focus:ring-advisor-500 rounded px-2 py-1 transition-colors ${
+                  status === 'bad' ? 'text-score-danger hover:bg-score-danger/10' :
+                  status === 'warning' ? 'text-score-caution hover:bg-score-caution/10' :
+                  'text-score-trust hover:bg-score-trust/10'
                 }`}
                 aria-expanded={showDetails}
                 aria-controls={`details-${evidence.id}`}
@@ -441,9 +530,9 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
               {showDetails && (
                 <div
                   id={`details-${evidence.id}`}
-                  className="mt-3 p-3 bg-white bg-opacity-70 rounded border border-gray-300 shadow-sm"
+                  className="mt-3 p-3 bg-dark-elevated/70 rounded border border-dark-border shadow-sm"
                 >
-                  <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono overflow-x-auto">
+                  <pre className="text-xs text-light-secondary whitespace-pre-wrap font-mono overflow-x-auto">
                     {typeof evidence.details === 'string'
                       ? evidence.details
                       : safeStringify(sanitizeDetails(evidence.details))}
@@ -453,15 +542,37 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
             </>
           )}
 
-          {/* "Why this matters" info box */}
+          {/* "Why this matters" info box - Collapsible */}
           {whyItMatters && (
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900 flex items-start gap-2">
-                <span className="text-lg flex-shrink-0" aria-hidden="true">💡</span>
-                <span>
-                  <strong className="font-semibold">Why this matters:</strong> {whyItMatters}
+            <div className="mt-3">
+              <button
+                onClick={() => setWhyMattersExpanded(!whyMattersExpanded)}
+                className="w-full text-left p-3 bg-white/[0.03] border border-white/5 rounded-lg hover:bg-white/[0.05] transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 flex items-center justify-between gap-2"
+                aria-expanded={whyMattersExpanded}
+                aria-controls={`why-matters-${evidence.id}`}
+              >
+                <span className="text-sm text-light-primary flex items-center gap-2">
+                  <span className="text-lg flex-shrink-0" aria-hidden="true">💡</span>
+                  <strong className="font-semibold">Why this matters</strong>
                 </span>
-              </p>
+                <svg
+                  className={`w-4 h-4 text-light-secondary transition-transform duration-200 ${whyMattersExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {whyMattersExpanded && (
+                <div
+                  id={`why-matters-${evidence.id}`}
+                  className="mt-2 p-3 bg-white/[0.03] border border-white/5 rounded-lg text-sm text-light-secondary animate-fade-in"
+                >
+                  {whyItMatters}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -502,7 +613,7 @@ export default function ReportPage() {
         <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-sm font-medium text-security-blue hover:text-security-blue-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-security-blue focus-visible:ring-offset-2 rounded"
+            className="inline-flex items-center gap-1 text-sm font-medium text-advisor-400 hover:text-advisor-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-bg rounded"
             aria-label="Back to home"
           >
             <span aria-hidden="true">&larr;</span>
@@ -822,13 +933,18 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
   return (
     <>
+      {/* Desktop header */}
+      <div className="hidden md:block">
+        <Header />
+      </div>
+
       {/* Mobile sticky header */}
-      <div className="sticky top-0 z-10 bg-white border-b shadow-sm md:hidden">
+      <div className="sticky top-0 z-10 bg-dark-surface/95 backdrop-blur-sm border-b border-dark-border shadow-sm md:hidden">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Link
               to="/"
-              className="text-security-blue hover:text-security-blue-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-security-blue rounded p-1"
+              className="text-advisor-400 hover:text-advisor-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 rounded p-1"
               aria-label="Back to home"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -836,8 +952,8 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               </svg>
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{scan.input}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-sm font-medium text-light-primary truncate">{scan.input}</div>
+              <div className="text-xs text-light-secondary">
                 {scan.label} ({scan.score}%)
               </div>
             </div>
@@ -845,9 +961,9 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
           <div className="flex-shrink-0">
             <div className={`
               w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold
-              ${(scan.score ?? 0) >= 70 ? 'bg-green-100 text-green-700' :
-                (scan.score ?? 0) >= 40 ? 'bg-amber-100 text-amber-700' :
-                'bg-red-100 text-red-700'}
+              ${(scan.score ?? 0) >= 70 ? 'bg-score-trust/20 text-score-trust' :
+                (scan.score ?? 0) >= 40 ? 'bg-score-caution/20 text-score-caution' :
+                'bg-score-danger/20 text-score-danger'}
             `}>
               {scan.score ?? 0}
             </div>
@@ -855,70 +971,116 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 text-sm font-medium text-security-blue hover:text-security-blue-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-security-blue focus-visible:ring-offset-2 rounded"
-            aria-label="Back to home"
-          >
-            <span aria-hidden="true">&larr;</span>
-            Home
-          </Link>
-        </div>
-      <header className="flex flex-col md:flex-row items-start md:items-center gap-4">
-        <div className="flex-shrink-0 mx-auto md:mx-0">
-          <EnhancedScoreDial score={scan.score ?? 0} size="lg" label={scan.label ?? undefined} />
-        </div>
-        <div className="flex-1 text-center md:text-left">
-          <div className="flex flex-col md:flex-row md:items-center gap-3 justify-center md:justify-start mb-2">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Privacy Report: {scan.label}
-            </h1>
-            <GradeBadge score={scan.score ?? 0} size="lg" showLabel={true} />
+      <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
+      {/* Refined report header - clean, spacious layout */}
+      <header className="bg-gradient-to-br from-dark-surface/30 to-dark-surface/10 border border-dark-border rounded-2xl p-8 md:p-10">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+
+          {/* LEFT: Score Dial (25% width on desktop) */}
+          <div className="flex flex-col items-center gap-3 mx-auto md:mx-0 md:w-1/4">
+            <EnhancedScoreDial score={scan.score ?? 0} size="lg" label={scan.label ?? undefined} />
           </div>
-          <div className="text-lg font-semibold text-gray-700">
-            Score: {scan.score ?? 'n/a'}/100
+
+          {/* RIGHT: Report Information (75% width on desktop) */}
+          <div className="flex-1 space-y-5 text-center md:text-left">
+
+            {/* Heading - Clean, no status label */}
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-light-primary mb-3">
+                Privacy Report
+              </h1>
+
+              {/* URL with inline copy button */}
+              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap mb-4">
+                <p className="text-light-secondary text-base break-all">
+                  {scan.input}
+                </p>
+                <CopyButton text={typeof window !== 'undefined' ? window.location.href : ''} />
+              </div>
+
+              {/* Grade Badge - Standalone, prominent */}
+              <div className="flex justify-center md:justify-start">
+                <GradeBadge score={scan.score ?? 0} size="lg" showLabel={true} />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap pt-2">
+
+              {/* Primary action - Scan Another */}
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#00d985] hover:bg-[#00c278] text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-dark-bg"
+                aria-label="Scan another website"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Scan Another</span>
+              </Link>
+
+              {/* Secondary icon buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      navigator.clipboard.writeText(window.location.href);
+                    }
+                  }}
+                  className="p-3 bg-dark-surface/40 hover:bg-dark-surface/60 border border-dark-border rounded-lg text-light-secondary hover:text-light-primary transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  title="Copy report link"
+                  aria-label="Copy report link"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={() => window.print()}
+                  className="p-3 bg-dark-surface/40 hover:bg-dark-surface/60 border border-dark-border rounded-lg text-light-secondary hover:text-light-primary transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  title="Print report"
+                  aria-label="Print report"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={exportJson}
+                  className="p-3 bg-dark-surface/40 hover:bg-dark-surface/60 border border-dark-border rounded-lg text-light-secondary hover:text-light-primary transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  title="Export as JSON"
+                  aria-label="Export report as JSON"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
           </div>
-          <p className="text-slate-600 break-all">{scan.input}</p>
-          <div className="mt-1 text-xs text-slate-600">
-            Score legend: <span className="text-green-700 font-medium">Safe &gt;= 70</span> • <span className="text-amber-700 font-medium">Caution 40-69</span> • <span className="text-red-700 font-medium">High Risk &lt; 40</span>{' '}
-            <a href="/docs#scoring" className="underline text-security-blue">Learn more</a>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2 w-full md:w-auto justify-center md:justify-end">
-          <CopyButton text={typeof window !== 'undefined' ? window.location.href : ''} />
-          <button onClick={exportJson} className="px-3 py-3 min-h-[44px] rounded border text-sm">
-            Export JSON
-          </button>
-          <a href="/docs" className="text-sm underline text-security-blue min-h-[44px] flex items-center">
-            Docs
-          </a>
         </div>
       </header>
 
       {/* Summary Box */}
-      <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-6">
-        <h2 className="text-blue-900 font-semibold text-lg mb-2 flex items-center gap-2">
+      <div className="bg-advisor-500/10 border-2 border-advisor-500/30 rounded-xl p-6">
+        <h2 className="text-light-primary font-semibold text-lg mb-2 flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Quick Summary
         </h2>
-        <p className="text-blue-800 leading-relaxed">
+        <p className="text-light-secondary leading-relaxed">
           {generateSummary(scan, evidence)}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Stats Row - Removed duplicate Score card, showing only unique data */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
-          <div className="text-xs text-slate-500 inline-flex items-center gap-2">
-            <InfoPopover label="Score">Deterministic deductions from 100</InfoPopover>
-          </div>
-          <div className="mt-2 text-2xl font-semibold">{scan.score ?? 0}</div>
-        </Card>
-        <Card>
-          <div className="text-xs text-slate-500 inline-flex items-center gap-2">
+          <div className="text-xs text-light-tertiary inline-flex items-center gap-2">
             Data Sharing Risk
             <InfoPopover label="Data Sharing Risk">
               Indicates the level of data sharing based on trackers, third-party connections, and cookies. Lower is better.
@@ -926,10 +1088,10 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
           </div>
           {/* QUICK WIN #3: Enhanced color coding with background colors and status icons */}
           <div className={`mt-2 px-3 py-1.5 rounded-lg inline-flex items-center gap-2 ${
-            dataSharingLevel === 'None' ? 'bg-green-100 text-green-800' :
-            dataSharingLevel === 'Low' ? 'bg-green-50 text-green-700' :
-            dataSharingLevel === 'Medium' ? 'bg-amber-100 text-amber-800' :
-            'bg-red-100 text-red-800'
+            dataSharingLevel === 'None' ? 'bg-score-trust/20 text-score-trust' :
+            dataSharingLevel === 'Low' ? 'bg-score-trust/10 text-score-trust' :
+            dataSharingLevel === 'Medium' ? 'bg-score-caution/20 text-score-caution' :
+            'bg-score-danger/20 text-score-danger'
           }`}>
             {/* Add status icons for visual clarity and accessibility */}
             {dataSharingLevel === 'None' && <span className="text-xl" aria-hidden="true">✅</span>}
@@ -939,31 +1101,31 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
             <span className="text-2xl font-bold">{dataSharingLevel}</span>
           </div>
           {/* Helpful description for each level */}
-          <p className="text-xs text-gray-600 mt-1.5">
+          <p className="text-xs text-light-secondary mt-1.5">
             {dataSharingLevel === 'None' && 'No trackers or third-party data sharing detected'}
             {dataSharingLevel === 'Low' && 'Minimal data sharing with limited third parties'}
             {dataSharingLevel === 'Medium' && 'Moderate data sharing with several third parties'}
             {dataSharingLevel === 'High' && 'Extensive data sharing with many third parties'}
           </p>
-          <div className="text-xs text-slate-600 mt-1">
+          <div className="text-xs text-light-secondary mt-1">
             <span className="sr-only">Breakdown: </span>
             Trackers: {trackerDomains.length}
-            <span className="mx-1 text-slate-400" aria-hidden="true">•</span>
+            <span className="mx-1 text-light-tertiary" aria-hidden="true">•</span>
             Third-party: {thirdpartyDomains.length}
-            <span className="mx-1 text-slate-400" aria-hidden="true">•</span>
+            <span className="mx-1 text-light-tertiary" aria-hidden="true">•</span>
             Cookies: {cookieIssues}
           </div>
         </Card>
         <Card>
-          <div className="text-xs text-slate-500">TLS/HTTPS</div>
-          <div className="mt-2 text-2xl font-semibold">{sslStatus}</div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-light-tertiary">TLS/HTTPS</div>
+          <div className="mt-2 text-2xl font-semibold text-light-primary">{sslStatus}</div>
+          <div className="text-xs text-light-secondary">
             {tlsGrade ? `TLS grade: ${tlsGrade}` : 'TLS grade: Not rated'}
           </div>
         </Card>
         <Card>
-          <div className="text-xs text-slate-500">Top trackers</div>
-          <div className="mt-2 text-sm text-slate-700">
+          <div className="text-xs text-light-tertiary">Top trackers</div>
+          <div className="mt-2 text-sm text-light-secondary">
             {topTrackers.length > 0 ? topTrackers.join(', ') : 'None detected'}
           </div>
         </Card>
@@ -975,19 +1137,23 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
             key={option.key}
             role="tab"
             aria-selected={sevFilter === option.key}
-            className={`px-3 py-3 min-h-[44px] rounded-full border ${sevFilter === option.key ? 'bg-security-blue text-white' : 'bg-white'}`}
+            className={`px-3 py-3 min-h-[44px] rounded-full border transition-colors ${
+              sevFilter === option.key
+                ? 'bg-advisor-500 text-dark-bg border-advisor-400'
+                : 'bg-dark-elevated border-dark-border text-light-primary hover:bg-dark-hover'
+            }`}
             onClick={() => setSevFilter(option.key)}
           >
             {option.label}
           </button>
         ))}
-        <span className="text-xs text-slate-500 hidden sm:inline">
+        <span className="text-xs text-light-tertiary hidden sm:inline">
           <span className="sr-only">Keyboard shortcuts: </span>
           Keys: 1=All, 2=High, 3=Med, 4=Low
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2 text-xs text-slate-700">
+      <div className="flex flex-wrap gap-2 text-xs">
         {groupEntries.map(([type, list]) => {
           const high = list.filter((item) => item.severity >= 4).length;
           const medium = list.filter((item) => item.severity === 3).length;
@@ -996,14 +1162,14 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
             <a
               key={type}
               href={`#${sectionId(type)}`}
-              className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-security-blue"
+              className="px-2 py-1 rounded-full bg-dark-elevated text-light-primary border border-dark-border hover:bg-dark-hover text-xs focus:outline-none focus:ring-2 focus:ring-advisor-500 transition-colors"
               aria-label={`${getCategoryLabel(type)} ${list.length} items: ${high} high, ${medium} medium, ${low} low`}
             >
               <span>{getCategoryLabel(type)}</span>
               <span className="ml-1 font-semibold">{list.length}</span>
               <span className="ml-2 inline-flex items-center gap-1">
                 <span
-                  className="px-1 rounded-full text-2xs font-medium bg-privacy-danger-100 text-privacy-danger-800 border border-privacy-danger-300"
+                  className="px-1 rounded-full text-2xs font-medium bg-score-danger/20 text-score-danger border border-score-danger/30"
                   title="High severity issues"
                   role="status"
                   aria-label={`${high} high severity issues`}
@@ -1011,7 +1177,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                   <span aria-hidden="true">⚠️</span> {high}
                 </span>
                 <span
-                  className="px-1 rounded-full text-2xs font-medium bg-privacy-caution-100 text-privacy-caution-800 border border-privacy-caution-300"
+                  className="px-1 rounded-full text-2xs font-medium bg-score-caution/20 text-score-caution border border-score-caution/30"
                   title="Medium severity issues"
                   role="status"
                   aria-label={`${medium} medium severity issues`}
@@ -1019,7 +1185,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                   <span aria-hidden="true">⚡</span> {medium}
                 </span>
                 <span
-                  className="px-1 rounded-full text-2xs font-medium bg-slate-100 text-slate-700 border border-slate-300"
+                  className="px-1 rounded-full text-2xs font-medium bg-dark-elevated text-light-secondary border border-dark-border"
                   title="Low severity issues"
                   role="status"
                   aria-label={`${low} low severity issues`}
@@ -1034,12 +1200,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
       {/* Categorized Evidence Overview - Priority 1 Task 1.2 */}
       {evidence.length > 0 && (
-        <div className="space-y-6 bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-6 border border-slate-200">
+        <div className="space-y-6 bg-dark-surface/50 rounded-xl p-6 border border-dark-border">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-light-primary flex items-center gap-2">
               <span className="text-2xl" aria-hidden="true">📊</span>
               Evidence Categories
-              <span className="text-sm font-normal text-gray-500">
+              <span className="text-sm font-normal text-light-secondary">
                 ({evidence.length} total findings)
               </span>
             </h2>
@@ -1053,17 +1219,17 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               if (filteredCategoryItems.length === 0) return null;
 
               return (
-                <div key={key} className="bg-white rounded-lg p-5 shadow-sm border border-slate-200">
+                <div key={key} className="bg-dark-elevated rounded-lg p-5 shadow-sm border border-dark-border">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-light-primary flex items-center gap-2">
                       <span className="text-2xl" aria-hidden="true">{category.icon}</span>
                       {category.title}
                     </h2>
-                    <span className="text-sm text-gray-600 bg-slate-100 px-3 py-1 rounded-full font-medium">
+                    <span className="text-sm text-light-secondary bg-dark-surface px-3 py-1 rounded-full font-medium border border-dark-border">
                       {filteredCategoryItems.length} {filteredCategoryItems.length === 1 ? 'item' : 'items'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">{category.description}</p>
+                  <p className="text-sm text-light-secondary mb-4">{category.description}</p>
                   <div className="space-y-2">
                     {filteredCategoryItems.map((item) => (
                       <EvidenceItemDisplay key={`cat-${key}-${item.id}`} evidence={item} />
@@ -1077,13 +1243,13 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       )}
 
       {/* Evidence section controls */}
-      <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-lg border border-slate-200">
-        <div className="text-sm text-slate-600">
-          <span className="font-medium text-slate-900">
+      <div className="flex items-center justify-between py-3 px-4 bg-dark-surface/50 rounded-lg border border-dark-border">
+        <div className="text-sm text-light-secondary">
+          <span className="font-medium text-light-primary">
             {groupEntries.filter(([type]) => open[type]).length}
           </span>
           {' of '}
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-light-primary">
             {groupEntries.length}
           </span>
           {' technical categories visible'}
@@ -1096,13 +1262,13 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               groupEntries.forEach(([type]) => { allOpen[type] = true; });
               setOpen(allOpen);
             }}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-security-blue hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium text-advisor-400 hover:bg-advisor-500/10 border border-transparent hover:border-advisor-500/30 transition-colors"
             aria-label="Expand all evidence categories"
           >
             Expand all
           </button>
 
-          <div className="w-px h-4 bg-slate-300" />
+          <div className="w-px h-4 bg-dark-border" />
 
           <button
             onClick={() => {
@@ -1110,7 +1276,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               groupEntries.forEach(([type]) => { allClosed[type] = false; });
               setOpen(allClosed);
             }}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 border border-transparent hover:border-slate-300 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium text-light-secondary hover:bg-dark-elevated border border-transparent hover:border-dark-border transition-colors"
             aria-label="Collapse all evidence categories"
           >
             Collapse all
@@ -1119,18 +1285,18 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       </div>
 
       <div className="text-center">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">Technical Details by Type</h2>
-        <p className="text-sm text-gray-500">Expand sections below for granular technical findings</p>
+        <h2 className="text-lg font-semibold text-light-primary mb-2">Technical Details by Type</h2>
+        <p className="text-sm text-light-secondary">Expand sections below for granular technical findings</p>
       </div>
 
       {groupEntries.length === 0 ? (
         <Card>
           <div className="text-center py-12">
             <div className="text-4xl mb-4">✅</div>
-            <p className="text-gray-900 font-semibold mb-2">
+            <p className="text-light-primary font-semibold mb-2">
               No privacy issues found
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-light-secondary">
               This site appears to have excellent privacy practices.
             </p>
           </div>
@@ -1140,21 +1306,38 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
           const filteredItems = list.filter((item) => matchesFilter(item.severity));
           const hasFilteredItems = filteredItems.length > 0;
 
+          // Calculate max severity for section label
+          const maxSeverity = Math.max(...list.map(item => item.severity));
+          const hasCriticalIssues = maxSeverity >= 3;
+
+          const getSectionSeverityLabel = (maxSev: number) => {
+            if (maxSev >= 4) return { label: 'Critical', color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-400/30' };
+            if (maxSev === 3) return { label: 'High', color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-400/30' };
+            if (maxSev === 2) return { label: 'Medium', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-400/30' };
+            return { label: 'Low', color: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-400/30' };
+          };
+
+          const sectionSeverity = getSectionSeverityLabel(maxSeverity);
+
           return (
-            <Card key={type}>
+            <Card key={type} className={hasCriticalIssues ? 'border-l-4 border-orange-500/50' : ''}>
               <button
-                className="w-full flex items-center justify-between py-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-security-blue rounded transition-colors duration-150 hover:bg-slate-50"
+                className="w-full flex items-center justify-between py-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-advisor-500 rounded transition-colors duration-150 hover:bg-dark-hover"
                 aria-expanded={open[type] ? 'true' : 'false'}
                 aria-controls={sectionId(type)}
                 onClick={() => toggle(type)}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <h2 className="font-semibold text-lg text-slate-900">
+                  <h2 className="font-semibold text-lg text-light-primary">
                     {getCategoryLabel(type)}
                   </h2>
 
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${sectionSeverity.bgColor} border ${sectionSeverity.borderColor} text-xs font-semibold ${sectionSeverity.color}`}>
+                    {sectionSeverity.label}
+                  </span>
+
                   {!open[type] && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-dark-elevated text-light-secondary text-xs font-medium border border-dark-border">
                       {list.length} item{list.length !== 1 ? 's' : ''} collapsed
                     </span>
                   )}
@@ -1172,29 +1355,29 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                         <>
                           {highCount > 0 && (
                             <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 border border-red-200 text-xs font-bold"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-score-danger/20 border border-score-danger/30 text-xs font-bold"
                               title={`${highCount} high severity issue${highCount !== 1 ? 's' : ''}`}
                             >
                               <span className="text-base">⚠️</span>
-                              <span className="text-red-700">{highCount}</span>
+                              <span className="text-score-danger">{highCount}</span>
                             </span>
                           )}
                           {mediumCount > 0 && (
                             <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-200 text-xs font-bold"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-score-caution/20 border border-score-caution/30 text-xs font-bold"
                               title={`${mediumCount} medium severity issue${mediumCount !== 1 ? 's' : ''}`}
                             >
                               <span className="text-base">⚡</span>
-                              <span className="text-amber-700">{mediumCount}</span>
+                              <span className="text-score-caution">{mediumCount}</span>
                             </span>
                           )}
                           {lowCount > 0 && !open[type] && (
                             <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-elevated border border-dark-border text-xs font-bold"
                               title={`${lowCount} low severity issue${lowCount !== 1 ? 's' : ''}`}
                             >
                               <span className="text-base">ℹ️</span>
-                              <span className="text-slate-700">{lowCount}</span>
+                              <span className="text-light-secondary">{lowCount}</span>
                             </span>
                           )}
                         </>
@@ -1204,7 +1387,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
                   {/* Expand/Collapse icon with rotation animation */}
                   <svg
-                    className={`w-5 h-5 text-slate-500 transition-transform duration-200 ${open[type] ? 'rotate-180' : 'rotate-0'}`}
+                    className={`w-5 h-5 text-light-tertiary transition-transform duration-200 ${open[type] ? 'rotate-180' : 'rotate-0'}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1222,12 +1405,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               {open[type] && (
                 <>
                   {!hasFilteredItems ? (
-                    <div className="text-center py-8 mt-2 border-t">
+                    <div className="text-center py-8 mt-2 border-t border-dark-border">
                       <div className="text-3xl mb-3">✅</div>
-                      <p className="text-gray-600 mb-2">
+                      <p className="text-light-secondary mb-2">
                         No {sevFilter !== 'all' ? sevFilter + ' severity' : ''} issues found in this category.
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-light-tertiary">
                         {sevFilter !== 'all' ? 'Try viewing other severity levels or select "All".' : 'This is a good sign!'}
                       </p>
                     </div>
@@ -1242,7 +1425,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                             sanitizeDetails={sanitizeDetails}
                             containerHeight={300}
                             itemHeight={80}
-                            className="border rounded"
+                            className="border border-dark-border rounded"
                           />
                         </div>
                       ) : (
@@ -1256,12 +1439,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                   )}
                   {TIPS[type] && hasFilteredItems && (
                     <div className="mt-3 text-sm">
-                      <div className="font-semibold">How to fix</div>
-                      <ul className="list-disc pl-5 text-slate-700">
+                      <div className="font-semibold text-light-primary">How to fix</div>
+                      <ul className="list-disc pl-5 text-light-secondary">
                         {TIPS[type].map((tip, index) => (
                           <li key={index}>
                             {tip.url ? (
-                              <a className="text-security-blue underline" href={tip.url} target="_blank" rel="noreferrer">
+                              <a className="text-advisor-400 hover:text-advisor-300 underline" href={tip.url} target="_blank" rel="noreferrer">
                                 {tip.text}
                               </a>
                             ) : (
@@ -1280,10 +1463,10 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       )}
 
       {/* Score Breakdown Section */}
-      <div className="mt-8 mb-6 border-t pt-6">
+      <div className="mt-8 mb-6 border-t border-dark-border pt-6">
         <button
           onClick={() => setShowBreakdown(!showBreakdown)}
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-security-blue focus-visible:ring-offset-2 rounded px-1 py-1"
+          className="flex items-center gap-2 text-light-primary hover:text-advisor-400 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-bg rounded px-1 py-1"
           aria-expanded={showBreakdown}
           aria-controls="score-breakdown-details"
         >
@@ -1302,53 +1485,53 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
         {showBreakdown && (
           <div
             id="score-breakdown-details"
-            className="mt-4 bg-gray-50 rounded-lg p-6 animate-fade-in"
+            className="mt-4 bg-dark-surface/50 rounded-lg p-6 animate-fade-in border border-dark-border"
             role="region"
             aria-label="Score breakdown details"
           >
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-300">
-                    <th className="text-left py-2 px-3 font-semibold text-gray-700">Category</th>
-                    <th className="text-left py-2 px-3 font-semibold text-gray-700">Finding</th>
-                    <th className="text-right py-2 px-3 font-semibold text-gray-700">Impact</th>
+                  <tr className="border-b border-dark-border">
+                    <th className="text-left py-2 px-3 font-semibold text-light-primary">Category</th>
+                    <th className="text-left py-2 px-3 font-semibold text-light-primary">Finding</th>
+                    <th className="text-right py-2 px-3 font-semibold text-light-primary">Impact</th>
                   </tr>
                 </thead>
                 <tbody>
                   {calculateBreakdown(scan, evidence).map((item, idx) => (
-                    <tr key={idx} className="border-b border-gray-200">
-                      <td className="py-2 px-3">{item.category}</td>
-                      <td className="py-2 px-3 text-gray-600">{item.finding}</td>
+                    <tr key={idx} className="border-b border-dark-border">
+                      <td className="py-2 px-3 text-light-primary">{item.category}</td>
+                      <td className="py-2 px-3 text-light-secondary">{item.finding}</td>
                       <td className={`py-2 px-3 text-right font-semibold ${
-                        item.positive ? 'text-green-600' : item.points === 0 ? 'text-gray-600' : 'text-red-600'
+                        item.positive ? 'text-score-trust' : item.points === 0 ? 'text-light-secondary' : 'text-score-danger'
                       }`}>
                         {item.points > 0 && '+'}{item.points}
                       </td>
                     </tr>
                   ))}
-                  <tr className="border-t-2 border-gray-400 font-bold">
-                    <td colSpan={2} className="py-3 px-3">Final Score</td>
-                    <td className="py-3 px-3 text-right text-lg">{scan.score ?? 0}/100</td>
+                  <tr className="border-t-2 border-dark-border font-bold">
+                    <td colSpan={2} className="py-3 px-3 text-light-primary">Final Score</td>
+                    <td className="py-3 px-3 text-right text-lg text-light-primary">{scan.score ?? 0}/100</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-gray-600">
-              <strong>Note:</strong> This is a simplified breakdown. The actual scoring algorithm considers additional factors including privacy policies, security headers, and data sharing patterns.
+            <p className="mt-4 text-sm text-light-secondary">
+              <strong className="text-light-primary">Note:</strong> This is a simplified breakdown. The actual scoring algorithm considers additional factors including privacy policies, security headers, and data sharing patterns.
             </p>
           </div>
         )}
       </div>
 
-      <footer className="text-xs text-slate-500 space-y-1">
+      <footer className="text-xs text-light-tertiary space-y-1">
         <div>Sources: EasyPrivacy (server-side; attribution), WhoTracks.me (CC BY 4.0), Public Suffix List</div>
         <div>
-          Share: <button className="underline text-security-blue" onClick={shareCurrentUrl}>Copy / Share Link</button>
+          Share: <button className="underline text-advisor-400 hover:text-advisor-300" onClick={shareCurrentUrl}>Copy / Share Link</button>
           {' - '}
-          <button className="underline text-security-blue" onClick={copyCurrentUrl}>Save Result</button>
+          <button className="underline text-advisor-400 hover:text-advisor-300" onClick={copyCurrentUrl}>Save Result</button>
           {' - '}
-          <a className="underline text-security-blue" href={`/compare?left=${encodeURIComponent(slug)}`}>Compare</a>
+          <a className="underline text-advisor-400 hover:text-advisor-300" href={`/compare?left=${encodeURIComponent(slug)}`}>Compare</a>
         </div>
       </footer>
     </main>
