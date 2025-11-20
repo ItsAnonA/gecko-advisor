@@ -48,31 +48,31 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
 }: EnhancedTrustIndicatorProps) {
   const variantConfig = {
     gecko: {
-      gradient: 'bg-gradient-to-br from-gecko-50 via-gecko-50/50 to-white',
-      border: 'border-gecko-200 hover:border-gecko-300',
-      iconGradient: 'from-gecko-500 to-gecko-600',
-      iconShadow: 'shadow-lg shadow-gecko-500/30',
-      titleColor: 'text-gecko-900',
-      descColor: 'text-gecko-700',
-      decorationBg: 'bg-gecko-200/30'
+      gradient: 'bg-gradient-to-br from-dark-elevated via-dark-surface to-dark-bg',
+      border: 'border-advisor-500/30 hover:border-advisor-500/50',
+      iconGradient: 'from-advisor-500 to-advisor-600',
+      iconShadow: 'shadow-lg shadow-advisor-500/40',
+      titleColor: 'text-light-primary',
+      descColor: 'text-light-secondary',
+      decorationBg: 'bg-advisor-500/10'
     },
     blue: {
-      gradient: 'bg-gradient-to-br from-blue-50 via-blue-50/50 to-white',
-      border: 'border-blue-200 hover:border-blue-300',
-      iconGradient: 'from-blue-500 to-blue-600',
-      iconShadow: 'shadow-lg shadow-blue-500/30',
-      titleColor: 'text-blue-900',
-      descColor: 'text-blue-700',
-      decorationBg: 'bg-blue-200/30'
+      gradient: 'bg-gradient-to-br from-dark-elevated via-dark-surface to-dark-bg',
+      border: 'border-trust-600/30 hover:border-trust-600/50',
+      iconGradient: 'from-trust-500 to-trust-600',
+      iconShadow: 'shadow-lg shadow-trust-500/40',
+      titleColor: 'text-light-primary',
+      descColor: 'text-light-secondary',
+      decorationBg: 'bg-trust-500/10'
     },
     amber: {
-      gradient: 'bg-gradient-to-br from-amber-50 via-amber-50/50 to-white',
-      border: 'border-amber-200 hover:border-amber-300',
-      iconGradient: 'from-amber-500 to-amber-600',
-      iconShadow: 'shadow-lg shadow-amber-500/30',
-      titleColor: 'text-amber-900',
-      descColor: 'text-amber-700',
-      decorationBg: 'bg-amber-200/30'
+      gradient: 'bg-gradient-to-br from-dark-elevated via-dark-surface to-dark-bg',
+      border: 'border-score-caution/30 hover:border-score-caution/50',
+      iconGradient: 'from-score-caution to-amber-600',
+      iconShadow: 'shadow-lg shadow-score-caution/40',
+      titleColor: 'text-light-primary',
+      descColor: 'text-light-secondary',
+      decorationBg: 'bg-score-caution/10'
     }
   };
 
@@ -123,10 +123,10 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
 
       {/* Content */}
       <div className="flex-1 relative z-10">
-        <div className={`font-semibold text-base ${config.titleColor} leading-snug`}>
+        <div className={`font-semibold text-base ${config.titleColor} leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]`}>
           {title}
         </div>
-        <p className={`text-sm ${config.descColor} mt-1.5 leading-relaxed`}>
+        <p className={`text-sm ${config.descColor} mt-1.5 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]`}>
           {description}
         </p>
       </div>

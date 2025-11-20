@@ -54,8 +54,9 @@ const variantConfig = {
       </svg>
     ),
     text: 'Open Source & Auditable',
-    bgColor: 'bg-slate-100',
-    textColor: 'text-slate-800',
+    bgColor: 'bg-dark-elevated',
+    textColor: 'text-light-primary',
+    borderColor: 'border-dark-border',
   },
   'standards': {
     icon: (
@@ -64,8 +65,9 @@ const variantConfig = {
       </svg>
     ),
     text: 'WCAG AA Compliant',
-    bgColor: 'bg-blue-100',
-    textColor: 'text-blue-800',
+    bgColor: 'bg-trust-600/20',
+    textColor: 'text-trust-300',
+    borderColor: 'border-trust-600/30',
   },
   'evidence-based': {
     icon: (
@@ -74,8 +76,9 @@ const variantConfig = {
       </svg>
     ),
     text: 'Evidence-Based Analysis',
-    bgColor: 'bg-advisor-100',
-    textColor: 'text-advisor-800',
+    bgColor: 'bg-advisor-600/20',
+    textColor: 'text-advisor-300',
+    borderColor: 'border-advisor-600/30',
   },
   'transparent': {
     icon: (
@@ -85,8 +88,9 @@ const variantConfig = {
       </svg>
     ),
     text: 'Transparent Methodology',
-    bgColor: 'bg-violet-100',
-    textColor: 'text-violet-800',
+    bgColor: 'bg-privacy-gecko-600/20',
+    textColor: 'text-privacy-gecko-300',
+    borderColor: 'border-privacy-gecko-600/30',
   },
 };
 
@@ -121,7 +125,7 @@ export default function ProfessionalBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-lg font-medium ${config.bgColor} ${config.textColor} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center gap-2 rounded-lg font-medium border ${config.bgColor} ${config.textColor} ${config.borderColor} ${sizeClasses[size]} drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${className}`}
       role="status"
       aria-label={config.text}
       data-testid={`professional-badge-${variant}`}

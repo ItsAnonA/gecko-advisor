@@ -98,15 +98,15 @@ const ScanProgress = React.memo(function ScanProgress({
   const getStatusInfo = () => {
     switch (status) {
       case 'pending':
-        return { color: 'text-blue-600', bgColor: 'bg-blue-50', message: 'Starting scan...' };
+        return { color: 'text-advisor-400', bgColor: 'bg-advisor-600/20', message: 'Starting scan...' };
       case 'processing':
-        return { color: 'text-blue-600', bgColor: 'bg-blue-50', message: 'Scanning in progress...' };
+        return { color: 'text-advisor-400', bgColor: 'bg-advisor-600/20', message: 'Scanning in progress...' };
       case 'done':
-        return { color: 'text-green-700', bgColor: 'bg-green-50', message: 'Scan completed!' };
+        return { color: 'text-score-safe', bgColor: 'bg-score-safe/20', message: 'Scan completed!' };
       case 'error':
-        return { color: 'text-red-600', bgColor: 'bg-red-50', message: 'Scan failed' };
+        return { color: 'text-score-danger', bgColor: 'bg-score-danger/20', message: 'Scan failed' };
       default:
-        return { color: 'text-gray-600', bgColor: 'bg-gray-50', message: 'Unknown status' };
+        return { color: 'text-light-secondary', bgColor: 'bg-dark-elevated', message: 'Unknown status' };
     }
   };
 
@@ -140,7 +140,7 @@ const ScanProgress = React.memo(function ScanProgress({
 
         {/* Time remaining or typical duration */}
         {status === 'processing' && (
-          <div className="text-sm text-gray-600 text-center">
+          <div className="text-sm text-light-secondary text-center drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             {estimatedTimeRemaining && estimatedTimeRemaining > 0 ? (
               <>Estimated time remaining: {formatTimeRemaining(estimatedTimeRemaining)}</>
             ) : (
@@ -151,7 +151,7 @@ const ScanProgress = React.memo(function ScanProgress({
 
         {/* Reassurance message for long-running scans */}
         {status === 'processing' && elapsedSeconds > 20 && (
-          <div className="text-xs text-gray-500 text-center max-w-md px-4">
+          <div className="text-xs text-light-tertiary text-center max-w-md px-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             This may take up to 30 seconds for complex sites. Your scan is progressing normally.
           </div>
         )}
@@ -159,7 +159,7 @@ const ScanProgress = React.memo(function ScanProgress({
 
       {/* Step progress visualization */}
       <div className="space-y-3">
-        <div className="text-sm font-medium text-gray-700 text-center">
+        <div className="text-sm font-medium text-light-primary text-center drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
           Scan Progress
         </div>
 
@@ -177,9 +177,9 @@ const ScanProgress = React.memo(function ScanProgress({
                 className={clsx(
                   'flex items-center gap-2 sm:gap-3 p-2 rounded-lg transition-all duration-300',
                   {
-                    'bg-green-50 border border-green-200': isCompleted,
-                    'bg-blue-50 border border-blue-200 shadow-sm': isActive,
-                    'bg-gray-50 border border-gray-200': isPending
+                    'bg-score-safe/20 border border-score-safe/30': isCompleted,
+                    'bg-advisor-600/20 border border-advisor-500/30 shadow-sm': isActive,
+                    'bg-dark-elevated border border-dark-border': isPending
                   }
                 )}
                 data-testid={`scan-step-${step.id}`}
@@ -189,9 +189,9 @@ const ScanProgress = React.memo(function ScanProgress({
                   className={clsx(
                     'w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm transition-colors flex-shrink-0',
                     {
-                      'bg-green-500 text-white': isCompleted,
-                      'bg-blue-500 text-white animate-pulse': isActive,
-                      'bg-gray-300 text-gray-600': isPending
+                      'bg-score-safe text-dark-bg': isCompleted,
+                      'bg-advisor-500 text-dark-bg animate-pulse': isActive,
+                      'bg-dark-surface text-light-tertiary': isPending
                     }
                   )}
                   aria-hidden="true"
@@ -203,11 +203,11 @@ const ScanProgress = React.memo(function ScanProgress({
                 <div className="flex-1 min-w-0">
                   <div
                     className={clsx(
-                      'text-xs sm:text-sm font-medium transition-colors truncate',
+                      'text-xs sm:text-sm font-medium transition-colors truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
                       {
-                        'text-green-700': isCompleted,
-                        'text-blue-700': isActive,
-                        'text-gray-500': isPending
+                        'text-score-safe': isCompleted,
+                        'text-advisor-400': isActive,
+                        'text-light-tertiary': isPending
                       }
                     )}
                   >
@@ -216,9 +216,9 @@ const ScanProgress = React.memo(function ScanProgress({
 
                   {/* Progress bar for active step */}
                   {isActive && (
-                    <div className="mt-1 w-full bg-gray-200 rounded-full h-1 sm:h-1.5">
+                    <div className="mt-1 w-full bg-dark-surface rounded-full h-1 sm:h-1.5">
                       <div
-                        className="bg-blue-500 h-1 sm:h-1.5 rounded-full transition-all duration-300"
+                        className="bg-advisor-500 h-1 sm:h-1.5 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(10,174,84,0.5)]"
                         style={{
                           width: `${Math.min(100, ((progress - rangeStart) / (rangeEnd - rangeStart)) * 100)}%`
                         }}
@@ -237,9 +237,9 @@ const ScanProgress = React.memo(function ScanProgress({
                   className={clsx(
                     'text-2xs sm:text-xs px-1 sm:px-2 py-1 rounded transition-colors whitespace-nowrap',
                     {
-                      'bg-green-100 text-green-700': isCompleted,
-                      'bg-blue-100 text-blue-700': isActive,
-                      'bg-gray-100 text-gray-500': isPending
+                      'bg-score-safe/20 text-score-safe': isCompleted,
+                      'bg-advisor-600/20 text-advisor-400': isActive,
+                      'bg-dark-surface text-light-tertiary': isPending
                     }
                   )}
                 >
@@ -252,17 +252,17 @@ const ScanProgress = React.memo(function ScanProgress({
       </div>
 
       {/* Trust indicators */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-gray-600">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
         <span className="inline-flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-green-500 inline-block" aria-hidden="true"/>
+          <span className="w-2 h-2 rounded-full bg-score-safe inline-block" aria-hidden="true"/>
           Secure connection
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" aria-hidden="true"/>
+          <span className="w-2 h-2 rounded-full bg-advisor-500 inline-block" aria-hidden="true"/>
           Transparent scan
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" aria-hidden="true"/>
+          <span className="w-2 h-2 rounded-full bg-score-caution inline-block" aria-hidden="true"/>
           No data stored
         </span>
       </div>

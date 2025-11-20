@@ -41,27 +41,27 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
   const getScoreCategory = (score: number) => {
     if (score >= 70) return {
       level: 'safe',
-      color: '#16a34a', // green-600
-      bgColor: '#dcfce7', // green-100
-      textColor: '#166534', // green-800
+      color: '#22c55e', // score-safe
+      bgColor: 'bg-score-safe/20',
+      textColor: 'text-score-safe',
       label: 'Safe',
       description: 'Low privacy risk',
       pattern: 'none'
     };
     if (score >= 40) return {
       level: 'caution',
-      color: '#f59e0b', // amber-500
-      bgColor: '#fef3c7', // amber-100
-      textColor: '#92400e', // amber-800
+      color: '#fbbf24', // score-caution
+      bgColor: 'bg-score-caution/20',
+      textColor: 'text-score-caution',
       label: 'Caution',
       description: 'Medium privacy risk',
       pattern: 'diagonal-lines'
     };
     return {
       level: 'danger',
-      color: '#ef4444', // red-500
-      bgColor: '#fee2e2', // red-100
-      textColor: '#991b1b', // red-800
+      color: '#f87171', // score-danger
+      bgColor: 'bg-score-danger/20',
+      textColor: 'text-score-danger',
       label: 'High Risk',
       description: 'High privacy risk',
       pattern: 'dots'
@@ -102,7 +102,7 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
           cx="50"
           cy="50"
           r={r}
-          stroke="#e5e7eb"
+          stroke="#1f2937"
           strokeWidth={8}
           fill="none"
         />
@@ -144,8 +144,9 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
           textAnchor="middle"
           fontSize={fontSize}
           fontWeight={700}
-          fill="#0f172a"
+          fill="#f9fafb"
           id="score-title"
+          className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
         >
           {score}
         </text>
@@ -168,15 +169,11 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
         aria-hidden="true"
       >
         <div
-          className={`text-sm font-semibold px-2 py-1 rounded-full`}
-          style={{
-            backgroundColor: scoreCategory.bgColor,
-            color: scoreCategory.textColor
-          }}
+          className={`text-sm font-semibold px-2 py-1 rounded-full ${scoreCategory.bgColor} ${scoreCategory.textColor} drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]`}
         >
           {scoreCategory.label}
         </div>
-        <div className="text-xs text-gray-600 mt-1">
+        <div className="text-xs text-light-secondary mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
           {scoreCategory.description}
         </div>
       </div>

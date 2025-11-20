@@ -104,7 +104,7 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
     >
       <div
         ref={containerRef}
-        className="overflow-auto border border-gray-200 rounded-lg"
+        className="overflow-auto border border-dark-border rounded-lg bg-dark-surface"
         style={{ height: containerHeight }}
         onScroll={handleScroll}
         data-testid="virtualized-evidence-container"
@@ -118,7 +118,7 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
               return (
                 <div
                   key={item.id}
-                  className="border-b border-gray-100 last:border-b-0"
+                  className="border-b border-dark-border last:border-b-0"
                   style={{
                     height: dynamicHeight,
                     minHeight: itemHeight
@@ -127,16 +127,16 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
                   aria-expanded={isExpanded}
                   data-testid={`evidence-item-${item.id}`}
                 >
-                  <div className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3 p-3 hover:bg-dark-elevated transition-colors">
                     <SeverityIndicator severity={item.severity} />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 text-sm">
+                      <div className="font-medium text-light-primary text-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                         {item.title}
                       </div>
                       <SeverityBadge severity={item.severity} />
 
                       <button
-                        className="mt-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded px-3 py-3 min-h-[44px]"
+                        className="mt-2 text-xs text-advisor-400 hover:text-advisor-300 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 rounded px-3 py-3 min-h-[44px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                         onClick={() => toggleExpanded(item.id)}
                         aria-expanded={isExpanded}
                         aria-controls={`details-${item.id}`}
@@ -148,7 +148,7 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
                       {isExpanded && (
                         <div
                           id={`details-${item.id}`}
-                          className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border overflow-auto max-h-32"
+                          className="mt-2 p-2 bg-dark-elevated rounded text-xs text-light-secondary border border-dark-border overflow-auto max-h-32"
                           data-testid={`details-${item.id}`}
                         >
                           <div className="font-mono text-2xs break-all whitespace-pre-wrap">
@@ -172,7 +172,7 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
 
       {/* Performance stats for development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+        <div className="text-xs text-light-tertiary mt-2 p-2 bg-dark-elevated rounded border border-dark-border drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
           Virtual list stats: {visibleItems.length} rendered of {filteredItems.length} total
           (items {visibleStart + 1}-{visibleEnd})
         </div>

@@ -12,3 +12,111 @@
 @tailwind utilities;
 
 * { scroll-behavior: smooth; }
+
+@layer base {
+  /* Force dark theme globally */
+  html.dark {
+    color-scheme: dark;
+    background-color: #0a0e17;
+    color: #f9fafb;
+  }
+
+  /* Dark scrollbar */
+  html.dark ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  html.dark ::-webkit-scrollbar-track {
+    background: #12161f;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 6px;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+  }
+
+  /* Selection color */
+  html.dark ::selection {
+    background-color: rgba(16, 185, 129, 0.3);
+    color: #f9fafb;
+  }
+
+  /* Autofill styles for dark mode */
+  html.dark input:-webkit-autofill,
+  html.dark input:-webkit-autofill:hover,
+  html.dark input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f9fafb;
+    -webkit-box-shadow: 0 0 0 1000px #1a1f2e inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+@layer utilities {
+  /* Smooth transitions for dark mode */
+  .transition-colors-fast {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+}
+
+/* Print styles for report page */
+@media print {
+  /* Hide navigation, buttons, and interactive elements */
+  nav,
+  footer,
+  button:not(.print-preserve),
+  .no-print,
+  [role="navigation"],
+  [aria-label="Back to home"],
+  .sticky {
+    display: none !important;
+  }
+
+  /* Optimize layout for printing */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Ensure content fits on page */
+  .max-w-4xl {
+    max-width: 100% !important;
+  }
+
+  /* Remove shadows and borders that waste ink */
+  .shadow-xl,
+  .shadow-lg,
+  .shadow-md,
+  .drop-shadow-lg {
+    box-shadow: none !important;
+  }
+
+  /* Simplify colors for print */
+  .bg-dark-elevated,
+  .bg-dark-surface,
+  .bg-dark-bg {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .text-light-primary,
+  .text-light-secondary {
+    color: black !important;
+  }
+
+  /* Prevent page breaks inside important elements */
+  .evidence-item,
+  .score-breakdown,
+  header {
+    page-break-inside: avoid;
+  }
+
+  /* Add page breaks between major sections */
+  .evidence-section {
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+}

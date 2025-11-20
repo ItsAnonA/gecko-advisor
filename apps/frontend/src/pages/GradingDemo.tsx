@@ -33,31 +33,31 @@ export default function GradingDemo() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <header className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-gray-900">
+        <h1 className="text-4xl font-bold text-light-primary drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
           Letter Grading System (A-F)
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-light-secondary">
           Universal privacy score grading for better UX
         </p>
       </header>
 
       {/* All Grades Overview */}
       <Card>
-        <h2 className="text-2xl font-semibold mb-4">All Grades at a Glance</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-light-primary">All Grades at a Glance</h2>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {testScores.map(({ score }) => {
             const gradeInfo = getGradeInfo(score);
             return (
               <div
                 key={score}
-                className="text-center p-4 rounded-lg border-2 hover:shadow-md transition-shadow"
+                className="text-center p-4 rounded-lg border-2 border-dark-border hover:bg-dark-hover hover:shadow-md transition-all"
               >
-                <div className="text-5xl font-bold mb-2">{gradeInfo.letter}</div>
-                <div className="text-sm font-medium text-gray-700 mb-1">
+                <div className="text-5xl font-bold mb-2 text-light-primary">{gradeInfo.letter}</div>
+                <div className="text-sm font-medium text-light-secondary mb-1">
                   {gradeInfo.label}
                 </div>
                 <div className="text-2xl mb-2">{gradeInfo.emoji}</div>
-                <div className="text-xs text-gray-500">{score}/100</div>
+                <div className="text-xs text-light-tertiary">{score}/100</div>
               </div>
             );
           })}
@@ -66,11 +66,11 @@ export default function GradingDemo() {
 
       {/* Size Variants */}
       <Card>
-        <h2 className="text-2xl font-semibold mb-4">Size Variants</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-light-primary">Size Variants</h2>
         <div className="space-y-6">
           {['sm', 'md', 'lg'].map((size) => (
             <div key={size} className="space-y-3">
-              <h3 className="text-lg font-medium capitalize">Size: {size}</h3>
+              <h3 className="text-lg font-medium capitalize text-light-primary">Size: {size}</h3>
               <div className="flex flex-wrap gap-3 items-center">
                 {testScores.map(({ score }) => (
                   <GradeBadge
@@ -88,10 +88,10 @@ export default function GradingDemo() {
 
       {/* With and Without Labels */}
       <Card>
-        <h2 className="text-2xl font-semibold mb-4">Label Configurations</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-light-primary">Label Configurations</h2>
         <div className="space-y-6">
           <div className="space-y-3">
-            <h3 className="text-lg font-medium">With Labels</h3>
+            <h3 className="text-lg font-medium text-light-primary">With Labels</h3>
             <div className="flex flex-wrap gap-3 items-center">
               {testScores.map(({ score }) => (
                 <GradeBadge key={score} score={score} size="md" showLabel={true} />

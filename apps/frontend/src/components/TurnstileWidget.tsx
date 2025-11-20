@@ -41,7 +41,7 @@ export default function TurnstileWidget({ onSuccess, onError, onExpire }: Turnst
         ref={turnstileRef}
         siteKey={siteKey}
         options={{
-          theme: 'light',
+          theme: 'dark',
           size: 'invisible', // Invisible widget - no UI needed
           action: 'scan',
           appearance: 'interaction-only',

@@ -10,13 +10,13 @@ export default function ProgressDial({ percent, 'data-testid': dataTestId }: { p
   const pct = Math.max(0, Math.min(100, percent));
   const offset = c - (pct / 100) * c;
   return (
-    <svg width={120} height={120} viewBox="0 0 100 100" role="img" aria-label={`Progress ${pct}%`} data-testid={dataTestId}>
-      <circle cx="50" cy="50" r={r} stroke="#e5e7eb" strokeWidth={8} fill="none" />
+    <svg width={120} height={120} viewBox="0 0 100 100" role="img" aria-label={`Progress ${pct}%`} data-testid={dataTestId} className="drop-shadow-sm">
+      <circle cx="50" cy="50" r={r} stroke="#1f2937" strokeWidth={8} fill="none" />
       <circle
         cx="50"
         cy="50"
         r={r}
-        stroke={'#2563eb'}
+        stroke={'#0ea5e9'}
         strokeWidth={8}
         fill="none"
         strokeDasharray={c}
@@ -24,7 +24,7 @@ export default function ProgressDial({ percent, 'data-testid': dataTestId }: { p
         strokeLinecap="round"
         transform="rotate(-90 50 50)"
       />
-      <text x="50" y="54" textAnchor="middle" fontSize="20" fontWeight={700} fill="#0f172a">{pct}%</text>
+      <text x="50" y="54" textAnchor="middle" fontSize="20" fontWeight={700} fill="#f9fafb" className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{pct}%</text>
     </svg>
   );
 }

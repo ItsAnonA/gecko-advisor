@@ -53,20 +53,20 @@ export default function ComingSoonNotice({
   // Variant-specific styling
   const variantStyles = {
     info: {
-      container: 'bg-blue-50 border-blue-200',
-      icon: 'text-security-blue',
-      title: 'text-blue-900',
-      body: 'text-blue-700',
-      link: 'text-trust-600 hover:text-trust-700 focus:ring-trust-500',
-      dismissBtn: 'text-blue-400 hover:text-blue-600 focus:ring-trust-500'
+      container: 'bg-trust-600/20 border-trust-600/30',
+      icon: 'text-trust-400',
+      title: 'text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      body: 'text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      link: 'text-trust-300 hover:text-trust-200 focus:ring-trust-500',
+      dismissBtn: 'text-trust-400 hover:text-trust-300 focus:ring-trust-500'
     },
     warning: {
-      container: 'bg-amber-50 border-amber-200',
-      icon: 'text-amber-600',
-      title: 'text-amber-900',
-      body: 'text-amber-700',
-      link: 'text-amber-700 hover:text-amber-900 focus:ring-amber-500',
-      dismissBtn: 'text-amber-400 hover:text-amber-600 focus:ring-amber-500'
+      container: 'bg-score-caution/20 border-score-caution/30',
+      icon: 'text-score-caution',
+      title: 'text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      body: 'text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      link: 'text-score-caution hover:text-score-caution/80 focus:ring-score-caution',
+      dismissBtn: 'text-score-caution hover:text-score-caution/80 focus:ring-score-caution'
     }
   };
 
@@ -122,7 +122,7 @@ export default function ComingSoonNotice({
         {/* Dismiss button - Touch-friendly 44x44px */}
         <button
           onClick={handleDismiss}
-          className={`flex-shrink-0 w-10 h-10 min-w-[44px] min-h-[44px] inline-flex items-center justify-center ${styles.dismissBtn} focus:outline-none focus:ring-2 rounded-full transition-colors duration-150`}
+          className={`flex-shrink-0 w-10 h-10 min-w-[44px] min-h-[44px] inline-flex items-center justify-center ${styles.dismissBtn} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg rounded-full transition-colors duration-150`}
           aria-label={`Dismiss ${feature} coming soon notice`}
         >
           <svg

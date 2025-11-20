@@ -41,23 +41,23 @@ const EnhancedSeverityBadge = React.memo(function EnhancedSeverityBadge({
 }: EnhancedSeverityBadgeProps) {
   const severityConfig = {
     high: {
-      bg: 'bg-red-100',
-      border: 'border-red-200',
-      text: 'text-red-700',
+      bg: 'bg-score-danger/20',
+      border: 'border-score-danger/30',
+      text: 'text-score-danger',
       emoji: '⚠️',
       label: 'high'
     },
     medium: {
-      bg: 'bg-amber-100',
-      border: 'border-amber-200',
-      text: 'text-amber-700',
+      bg: 'bg-score-caution/20',
+      border: 'border-score-caution/30',
+      text: 'text-score-caution',
       emoji: '⚡',
       label: 'medium'
     },
     low: {
-      bg: 'bg-slate-100',
-      border: 'border-slate-200',
-      text: 'text-slate-700',
+      bg: 'bg-dark-elevated',
+      border: 'border-dark-border',
+      text: 'text-light-secondary',
       emoji: 'ℹ️',
       label: 'low'
     }
@@ -76,6 +76,7 @@ const EnhancedSeverityBadge = React.memo(function EnhancedSeverityBadge({
         text-sm font-medium
         transition-transform duration-150
         hover:scale-105
+        drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
         ${className}
       `}
       title={`${count} ${config.label} severity issue${count !== 1 ? 's' : ''}`}

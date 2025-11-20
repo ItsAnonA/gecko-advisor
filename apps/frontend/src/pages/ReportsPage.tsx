@@ -84,12 +84,12 @@ export default function ReportsPage() {
   // Loading State
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-advisor-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 font-medium">Loading recent scans...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-advisor-500 mx-auto"></div>
+            <p className="mt-4 text-light-secondary font-medium">Loading recent scans...</p>
           </div>
         </main>
         <Footer />
@@ -100,12 +100,12 @@ export default function ReportsPage() {
   // Error State
   if (isError) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-4">
             <svg
-              className="mx-auto h-12 w-12 text-red-500"
+              className="mx-auto h-12 w-12 text-score-danger"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -118,13 +118,13 @@ export default function ReportsPage() {
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">Failed to Load Scans</h3>
-            <p className="mt-2 text-sm text-gray-500">
+            <h3 className="mt-4 text-lg font-medium text-light-primary">Failed to Load Scans</h3>
+            <p className="mt-2 text-sm text-light-secondary">
               {error instanceof Error ? error.message : 'An unexpected error occurred'}
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-advisor-600 hover:bg-advisor-700 transition-colors"
+              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-dark-bg bg-advisor-500 hover:bg-advisor-400 transition-colors"
             >
               Try Again
             </button>
@@ -138,22 +138,22 @@ export default function ReportsPage() {
   // Empty State
   if (items.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+              <h1 className="text-3xl md:text-4xl font-bold text-light-primary drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                 Recent Privacy Scans
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-light-secondary">
                 Browse all publicly available privacy scans from our community
               </p>
             </div>
 
             <div className="text-center py-12">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className="mx-auto h-12 w-12 text-light-tertiary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -166,14 +166,14 @@ export default function ReportsPage() {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">No scans yet</h3>
-              <p className="mt-2 text-sm text-gray-500">
+              <h3 className="mt-4 text-lg font-medium text-light-primary">No scans yet</h3>
+              <p className="mt-2 text-sm text-light-secondary">
                 Get started by scanning your first website.
               </p>
               <div className="mt-6">
                 <button
                   onClick={() => navigate('/')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-advisor-600 hover:bg-advisor-700 transition-colors"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-dark-bg bg-advisor-500 hover:bg-advisor-400 transition-colors"
                 >
                   Start a Scan
                 </button>
@@ -188,25 +188,25 @@ export default function ReportsPage() {
 
   // Success State - Display Reports
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <h1 className="text-3xl md:text-4xl font-bold text-light-primary drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
               Recent Privacy Scans
             </h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-light-secondary">
               Browse all publicly available privacy scans from our community
             </p>
           </div>
 
           {/* Stats Bar */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="text-sm text-gray-600">
-              Showing <span className="font-semibold text-gray-900">{items.length}</span> recent {items.length === 1 ? 'scan' : 'scans'}
+            <div className="text-sm text-light-secondary">
+              Showing <span className="font-semibold text-light-primary">{items.length}</span> recent {items.length === 1 ? 'scan' : 'scans'}
             </div>
           </div>
 
@@ -234,7 +234,7 @@ export default function ReportsPage() {
                     <div className="flex items-start justify-between gap-4">
                       {/* Left: Domain + favicon */}
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex-shrink-0 w-8 h-8 rounded bg-gray-100 flex items-center justify-center overflow-hidden">
+                        <div className="flex-shrink-0 w-8 h-8 rounded bg-dark-elevated flex items-center justify-center overflow-hidden">
                           <img
                             src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
                             alt=""
@@ -248,10 +248,10 @@ export default function ReportsPage() {
                           />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 truncate" title={domain}>
+                          <h3 className="font-semibold text-light-primary truncate" title={domain}>
                             {domain}
                           </h3>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-light-tertiary mt-0.5">
                             {getRelativeTime(report.createdAt)} • {report.evidenceCount} checks
                           </p>
                         </div>
@@ -269,7 +269,7 @@ export default function ReportsPage() {
                         e.stopPropagation();
                         navigate(`/r/${report.slug}`);
                       }}
-                      className="mt-4 w-full text-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                      className="mt-4 w-full text-center px-4 py-2 bg-dark-elevated hover:bg-dark-hover rounded-lg text-sm font-medium text-light-primary transition-colors"
                       aria-label={`View privacy report for ${domain}`}
                     >
                       View Report →
@@ -281,16 +281,16 @@ export default function ReportsPage() {
           </div>
 
           {/* Call to Action */}
-          <div className="mt-12 text-center bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="mt-12 text-center bg-dark-surface rounded-2xl shadow-lg p-8 border border-dark-border">
+            <h2 className="text-2xl font-bold text-light-primary mb-2">
               Want to scan your own site?
             </h2>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Use our free privacy scanner to analyze any website for trackers, cookies, and security issues. Get a detailed report in seconds.
+            <p className="text-light-secondary mb-6 max-w-2xl mx-auto">
+              Use our privacy scanner to analyze any website for trackers, cookies, and security issues. Get a detailed report in seconds.
             </p>
             <button
               onClick={() => navigate('/')}
-              className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-advisor-600 hover:bg-advisor-700 active:bg-advisor-800 transition-all duration-200"
+              className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-dark-bg bg-advisor-500 hover:bg-advisor-400 active:bg-advisor-600 transition-all duration-200"
             >
               <svg
                 className="w-5 h-5 mr-2"

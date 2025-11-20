@@ -15,10 +15,30 @@ import type { Config } from 'tailwindcss';
  * All colors meet WCAG AA contrast requirements
  */
 export default {
+  darkMode: 'class', // Enable class-based dark mode
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
+        // Modern Minimalist Dark Theme Colors
+        'dark': {
+          'bg': '#0a0e17',        // Deep background (near black with blue tint)
+          'surface': '#12161f',    // Elevated surfaces
+          'elevated': '#1a1f2e',   // Cards, panels
+          'border': '#1f2937',     // Subtle borders
+          'hover': '#374151',      // Hover states
+        },
+        'light': {
+          'primary': '#f9fafb',    // High contrast white
+          'secondary': '#e5e7eb',  // Medium gray text
+          'tertiary': '#9ca3af',   // Subtle text
+        },
+        // Privacy score colors (brightened for dark mode)
+        'score': {
+          'safe': '#34d399',       // emerald-400 (brighter)
+          'caution': '#fcd34d',    // amber-300 (brighter)
+          'danger': '#fca5a5',     // red-300 (softer)
+        },
         // Privacy Gecko Master Brand (professional sky blue)
         'privacy-gecko': {
           50: '#f0f9ff',
@@ -198,6 +218,10 @@ export default {
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.5rem',
+      },
+
+      backgroundImage: {
+        'dark-gradient': 'linear-gradient(to bottom, rgba(10,14,23,0.3), rgba(10,14,23,0.9))',
       },
 
       boxShadow: {

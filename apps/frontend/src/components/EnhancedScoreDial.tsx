@@ -97,11 +97,11 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
       return {
         level: 'safe',
         gradientId: 'gradient-safe',
-        gradientColors: { start: '#2ecc71', stop: '#27ae60' }, // gecko-500 to gecko-600
-        glowColor: 'rgba(46, 204, 113, 0.3)', // gecko-500 with opacity
-        bgGlow: 'bg-gecko-100',
-        labelBg: 'bg-gecko-100',
-        labelText: 'text-gecko-800',
+        gradientColors: { start: '#22c55e', stop: '#16a34a' }, // score-safe to green-600
+        glowColor: 'rgba(34, 197, 94, 0.4)', // score-safe with opacity
+        bgGlow: 'bg-score-safe/10',
+        labelBg: 'bg-score-safe/20',
+        labelText: 'text-score-safe',
         label: label || 'SAFE',
         patternId: 'pattern-safe',
         patternType: 'none'
@@ -111,11 +111,11 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
       return {
         level: 'caution',
         gradientId: 'gradient-caution',
-        gradientColors: { start: '#f59e0b', stop: '#d97706' }, // amber-500 to amber-600
-        glowColor: 'rgba(245, 158, 11, 0.3)', // amber-500 with opacity
-        bgGlow: 'bg-amber-100',
-        labelBg: 'bg-amber-100',
-        labelText: 'text-amber-800',
+        gradientColors: { start: '#fbbf24', stop: '#f59e0b' }, // score-caution to amber-500
+        glowColor: 'rgba(251, 191, 36, 0.4)', // score-caution with opacity
+        bgGlow: 'bg-score-caution/10',
+        labelBg: 'bg-score-caution/20',
+        labelText: 'text-score-caution',
         label: label || 'CAUTION',
         patternId: 'pattern-caution',
         patternType: 'diagonal'
@@ -124,11 +124,11 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
     return {
       level: 'danger',
       gradientId: 'gradient-danger',
-      gradientColors: { start: '#ef4444', stop: '#dc2626' }, // red-500 to red-600
-      glowColor: 'rgba(239, 68, 68, 0.3)', // red-500 with opacity
-      bgGlow: 'bg-red-100',
-      labelBg: 'bg-red-100',
-      labelText: 'text-red-800',
+      gradientColors: { start: '#f87171', stop: '#ef4444' }, // score-danger to red-500
+      glowColor: 'rgba(248, 113, 113, 0.4)', // score-danger with opacity
+      bgGlow: 'bg-score-danger/10',
+      labelBg: 'bg-score-danger/20',
+      labelText: 'text-score-danger',
       label: label || 'HIGH RISK',
       patternId: 'pattern-danger',
       patternType: 'dots'
@@ -199,7 +199,7 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
             cx="50"
             cy="50"
             r={radius}
-            stroke="#e5e7eb"
+            stroke="#1f2937"
             strokeWidth={config.strokeWidth}
             fill="none"
             strokeLinecap="round"
@@ -249,8 +249,8 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
             x="50"
             y="58"
             textAnchor="middle"
-            className={`${config.scoreSize} font-extrabold tabular-nums`}
-            fill="#0f172a"
+            className={`${config.scoreSize} font-extrabold tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}
+            fill="#f9fafb"
             id={`score-title-${uniqueGradientId}`}
           >
             {normalizedScore}
@@ -270,7 +270,7 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
 
       {/* Label badge */}
       <div
-        className={`mt-3 px-3 py-1.5 rounded-full ${style.labelBg} ${style.labelText} ${config.labelSize} font-bold tracking-wide`}
+        className={`mt-3 px-3 py-1.5 rounded-full ${style.labelBg} ${style.labelText} ${config.labelSize} font-bold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] border border-${style.level === 'safe' ? 'score-safe' : style.level === 'caution' ? 'score-caution' : 'score-danger'}/30`}
         aria-hidden="true"
       >
         {style.label}

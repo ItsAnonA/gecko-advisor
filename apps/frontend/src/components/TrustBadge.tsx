@@ -19,19 +19,19 @@ export interface TrustBadgeProps {
 }
 
 /**
- * TrustBadge - Prominent badge for "Free Forever" messaging
+ * TrustBadge - Prominent badge for open-source and transparency messaging
  *
  * Design Specifications:
  * - Rounded-full pill shape for friendly, approachable feel
  * - High contrast colors meeting WCAG AA standards
  * - Icon + Text composition for clarity
- * - Semantic color coding (green=free, blue=no-account, purple=unlimited)
+ * - Semantic color coding (green=capability, blue=trust, purple=quality)
  * - Responsive sizing with appropriate touch targets
  *
  * Color Rationale:
- * - Green (#10B981/emerald-500): Freedom, openness, "go" signal
+ * - Green (#10B981/emerald-500): Analysis capability, technical excellence
  * - Blue (#3B82F6/blue-500): Trust, reliability, professionalism
- * - Purple (#8B5CF6/violet-500): Premium quality without cost
+ * - Purple (#8B5CF6/violet-500): Community-driven quality
  * - Dark backgrounds for emphasis, light backgrounds for subtlety
  *
  * Usage:
@@ -64,12 +64,12 @@ const TrustBadge = React.memo(function TrustBadge({
     'privacy-first': 'Privacy-First Analysis'
   };
 
-  // Variant configurations with WCAG AA compliant colors
+  // Variant configurations with dark theme colors
   const variantConfig = {
     'free': {
       // Professional green: Analysis capability, not "free tier"
-      container: 'bg-advisor-600 text-white',
-      lightContainer: 'bg-advisor-100 text-advisor-800',
+      container: 'bg-advisor-600/90 text-white border border-advisor-500/30',
+      lightContainer: 'bg-advisor-600/20 text-advisor-300 border border-advisor-500/30',
       icon: (
         <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -78,8 +78,8 @@ const TrustBadge = React.memo(function TrustBadge({
     },
     'no-account': {
       // Professional trust blue, not marketing
-      container: 'bg-trust-600 text-white',
-      lightContainer: 'bg-trust-100 text-trust-800',
+      container: 'bg-trust-600/90 text-white border border-trust-500/30',
+      lightContainer: 'bg-trust-600/20 text-trust-300 border border-trust-500/30',
       icon: (
         <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -88,8 +88,8 @@ const TrustBadge = React.memo(function TrustBadge({
     },
     'no-limits': {
       // Professional sky blue (Privacy Gecko brand), not marketing purple
-      container: 'bg-privacy-gecko-600 text-white',
-      lightContainer: 'bg-privacy-gecko-100 text-privacy-gecko-800',
+      container: 'bg-privacy-gecko-600/90 text-white border border-privacy-gecko-500/30',
+      lightContainer: 'bg-privacy-gecko-600/20 text-privacy-gecko-300 border border-privacy-gecko-500/30',
       icon: (
         <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -98,8 +98,8 @@ const TrustBadge = React.memo(function TrustBadge({
     },
     'open-source': {
       // Professional charcoal (neutral, not marketing)
-      container: 'bg-gecko-700 text-white',
-      lightContainer: 'bg-gecko-100 text-gecko-800',
+      container: 'bg-dark-elevated text-light-primary border border-dark-border',
+      lightContainer: 'bg-dark-elevated text-light-primary border border-dark-border',
       icon: (
         <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -108,8 +108,8 @@ const TrustBadge = React.memo(function TrustBadge({
     },
     'privacy-first': {
       // Professional advisor green (safety, analysis)
-      container: 'bg-advisor-600 text-white',
-      lightContainer: 'bg-advisor-100 text-advisor-800',
+      container: 'bg-advisor-600/90 text-white border border-advisor-500/30',
+      lightContainer: 'bg-advisor-600/20 text-advisor-300 border border-advisor-500/30',
       icon: (
         <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -159,6 +159,7 @@ const TrustBadge = React.memo(function TrustBadge({
         ${sizing.text}
         shadow-sm
         transition-all duration-200
+        drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
         ${className}
       `}
       role="status"

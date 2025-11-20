@@ -103,7 +103,7 @@ export default function PublicScanWarning({ className }: PublicScanWarningProps)
   return (
     <div
       className={clsx(
-        'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-lg p-4',
+        'bg-score-caution/20 border border-score-caution/30 rounded-lg p-4',
         'transition-all duration-200',
         isVisible ? 'opacity-100' : 'opacity-0',
         className
@@ -116,7 +116,7 @@ export default function PublicScanWarning({ className }: PublicScanWarningProps)
       <div className="flex items-start gap-3">
         {/* Warning Icon */}
         <svg
-          className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"
+          className="w-5 h-5 text-score-caution flex-shrink-0 mt-0.5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -133,7 +133,7 @@ export default function PublicScanWarning({ className }: PublicScanWarningProps)
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-medium text-amber-900">
+            <p className="text-sm font-medium text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
               <span className="inline-flex items-center gap-1.5" aria-label="Info">
                 <span aria-hidden="true">ℹ️</span>
                 <span>Scan results are publicly accessible to support privacy research and transparency.</span>
@@ -145,9 +145,9 @@ export default function PublicScanWarning({ className }: PublicScanWarningProps)
               onClick={handleDismiss}
               className={clsx(
                 'flex-shrink-0 p-1 rounded-md',
-                'text-amber-600 hover:text-amber-800 hover:bg-amber-100',
+                'text-score-caution hover:text-score-caution/80 hover:bg-score-caution/10',
                 'transition-colors duration-150',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2'
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-score-caution focus-visible:ring-offset-2 focus-visible:ring-offset-dark-bg'
               )}
               aria-label="Dismiss public scan warning"
               title="Dismiss this warning"
@@ -171,7 +171,7 @@ export default function PublicScanWarning({ className }: PublicScanWarningProps)
           </div>
 
           {/* Additional Info */}
-          <p className="text-xs text-amber-800 mt-2">
+          <p className="text-xs text-light-secondary mt-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             <span className="font-semibold">Transparency note:</span> Scan results appear in Recent Reports
             to enable privacy research and help identify widespread tracking practices across the web.
           </p>

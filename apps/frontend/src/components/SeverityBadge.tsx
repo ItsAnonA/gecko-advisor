@@ -42,9 +42,9 @@ export default function SeverityBadge({
         level: 'high',
         label: 'High',
         description: 'High severity issue requiring immediate attention',
-        bgClass: 'bg-privacy-danger-100',
-        textClass: 'text-privacy-danger-800',
-        borderClass: 'border-privacy-danger-300',
+        bgClass: 'bg-score-danger/20',
+        textClass: 'text-score-danger',
+        borderClass: 'border-score-danger/30',
         icon: '⚠️',
         pattern: 'diagonal-lines'
       };
@@ -54,9 +54,9 @@ export default function SeverityBadge({
         level: 'medium',
         label: 'Medium',
         description: 'Medium severity issue requiring attention',
-        bgClass: 'bg-privacy-caution-100',
-        textClass: 'text-privacy-caution-800',
-        borderClass: 'border-privacy-caution-300',
+        bgClass: 'bg-score-caution/20',
+        textClass: 'text-score-caution',
+        borderClass: 'border-score-caution/30',
         icon: '⚡',
         pattern: 'dots'
       };
@@ -65,9 +65,9 @@ export default function SeverityBadge({
       level: 'low',
       label: 'Low',
       description: 'Low severity issue with minimal impact',
-      bgClass: 'bg-slate-100',
-      textClass: 'text-slate-700',
-      borderClass: 'border-slate-300',
+      bgClass: 'bg-dark-elevated',
+      textClass: 'text-light-secondary',
+      borderClass: 'border-dark-border',
       icon: 'ℹ️',
       pattern: 'none'
     };
@@ -144,6 +144,7 @@ export default function SeverityBadge({
           rounded-full font-medium border
           ${config.bgClass} ${config.textClass} ${config.borderClass}
           relative overflow-hidden
+          drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
         `}
         role="status"
         aria-label={`Severity level ${normalizedSeverity}: ${config.label}${showDescription ? `. ${config.description}` : ''}`}

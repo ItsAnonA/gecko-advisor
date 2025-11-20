@@ -102,9 +102,9 @@ export function getGradeInfo(score: number): GradeInfo {
         label: 'Excellent',
         emoji: '🎉',
         colors: {
-          bg: 'bg-green-100',
-          text: 'text-green-800',
-          border: 'border-green-200'
+          bg: 'bg-score-safe/20',
+          text: 'text-score-safe',
+          border: 'border-score-safe/30'
         }
       };
     case 'B':
@@ -113,9 +113,9 @@ export function getGradeInfo(score: number): GradeInfo {
         label: 'Good',
         emoji: '✅',
         colors: {
-          bg: 'bg-green-50',
-          text: 'text-green-700',
-          border: 'border-green-200'
+          bg: 'bg-score-safe/15',
+          text: 'text-score-safe',
+          border: 'border-score-safe/30'
         }
       };
     case 'C':
@@ -124,9 +124,9 @@ export function getGradeInfo(score: number): GradeInfo {
         label: 'Fair',
         emoji: '⚠️',
         colors: {
-          bg: 'bg-blue-100',
-          text: 'text-blue-700',
-          border: 'border-blue-200'
+          bg: 'bg-trust-600/20',
+          text: 'text-trust-300',
+          border: 'border-trust-600/30'
         }
       };
     case 'D':
@@ -135,9 +135,9 @@ export function getGradeInfo(score: number): GradeInfo {
         label: 'Poor',
         emoji: '⚠️',
         colors: {
-          bg: 'bg-amber-100',
-          text: 'text-amber-800',
-          border: 'border-amber-200'
+          bg: 'bg-score-caution/20',
+          text: 'text-score-caution',
+          border: 'border-score-caution/30'
         }
       };
     case 'F':
@@ -146,9 +146,9 @@ export function getGradeInfo(score: number): GradeInfo {
         label: 'Bad',
         emoji: '❌',
         colors: {
-          bg: 'bg-red-100',
-          text: 'text-red-800',
-          border: 'border-red-200'
+          bg: 'bg-score-danger/20',
+          text: 'text-score-danger',
+          border: 'border-score-danger/30'
         }
       };
   }

@@ -47,7 +47,7 @@ export const schemas = {
     '@type': 'WebSite',
     name: 'Gecko Advisor',
     url: 'https://geckoadvisor.com',
-    description: 'Free, open-source privacy scanner for websites',
+    description: 'Open-source privacy scanner for websites',
     potentialAction: {
       '@type': 'SearchAction',
       target: 'https://geckoadvisor.com/?url={search_term_string}',

@@ -51,18 +51,18 @@ const EnhancedExpandControls = React.memo(function EnhancedExpandControls({
       className={`
         flex items-center justify-between
         py-3 px-4
-        bg-slate-50 rounded-lg
-        border border-slate-200
+        bg-dark-elevated rounded-lg
+        border border-dark-border
         ${className}
       `}
     >
       {/* Status indicator */}
-      <div className="text-sm text-slate-600">
-        <span className="font-semibold text-slate-900">
+      <div className="text-sm text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <span className="font-semibold text-light-primary">
           {expandedCount}
         </span>
         {' of '}
-        <span className="font-semibold text-slate-900">
+        <span className="font-semibold text-light-primary">
           {totalCount}
         </span>
         {' categories visible'}
@@ -75,12 +75,13 @@ const EnhancedExpandControls = React.memo(function EnhancedExpandControls({
           className="
             px-3 py-1.5 min-h-[40px]
             text-sm font-medium
-            text-security-blue hover:text-blue-700
-            bg-blue-50 hover:bg-blue-100
-            border border-blue-200 hover:border-blue-300
+            text-advisor-400 hover:text-advisor-300
+            bg-advisor-600/20 hover:bg-advisor-600/30
+            border border-advisor-500/30 hover:border-advisor-500/50
             rounded-md
             transition-all duration-150
-            focus:outline-none focus:ring-2 focus:ring-security-blue focus:ring-offset-1
+            focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 focus:ring-offset-dark-bg
+            drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
           "
           aria-label="Expand all evidence categories"
         >
@@ -89,7 +90,7 @@ const EnhancedExpandControls = React.memo(function EnhancedExpandControls({
 
         {/* Divider - proper vertical line instead of "|" */}
         <div
-          className="w-px h-5 bg-slate-300"
+          className="w-px h-5 bg-dark-border"
           aria-hidden="true"
         />
 
@@ -98,12 +99,13 @@ const EnhancedExpandControls = React.memo(function EnhancedExpandControls({
           className="
             px-3 py-1.5 min-h-[40px]
             text-sm font-medium
-            text-slate-600 hover:text-slate-800
-            bg-white hover:bg-slate-100
-            border border-slate-200 hover:border-slate-300
+            text-light-primary hover:text-advisor-400
+            bg-dark-surface hover:bg-dark-hover
+            border border-dark-border hover:border-advisor-500/30
             rounded-md
             transition-all duration-150
-            focus:outline-none focus:ring-2 focus:ring-security-blue focus:ring-offset-1
+            focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 focus:ring-offset-dark-bg
+            drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
           "
           aria-label="Collapse all evidence categories"
         >

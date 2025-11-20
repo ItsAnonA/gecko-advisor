@@ -39,7 +39,7 @@ const Skeleton = React.memo(function Skeleton({
   lines = 1
 }: SkeletonProps) {
   const baseClasses = clsx(
-    'bg-gray-200 dark:bg-gray-700',
+    'bg-dark-surface',
     {
       'animate-pulse': animation === 'pulse',
       'animate-bounce': animation === 'wave',
@@ -142,7 +142,7 @@ export const EvidenceCardSkeleton = React.memo(function EvidenceCardSkeleton({
   className?: string;
 }) {
   return (
-    <div className={`p-4 border border-gray-200 rounded-lg space-y-3 ${className}`}>
+    <div className={`p-4 border border-dark-border rounded-lg space-y-3 bg-dark-surface ${className}`}>
       <div className="flex items-center justify-between">
         <Skeleton width={120} height={20} variant="text" />
         <Skeleton width={60} height={16} variant="rounded" />
@@ -176,7 +176,7 @@ export const CardSkeleton = React.memo(function CardSkeleton({
   children?: React.ReactNode;
 }) {
   return (
-    <div className={`p-4 border border-gray-200 rounded-lg ${className}`}>
+    <div className={`p-4 border border-dark-border rounded-lg bg-dark-surface ${className}`}>
       {children || (
         <div className="space-y-3">
           <Skeleton width={100} height={14} variant="text" />

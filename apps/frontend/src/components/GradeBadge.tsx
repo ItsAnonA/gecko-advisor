@@ -78,6 +78,7 @@ export function GradeBadge({
         inline-flex items-center rounded-full font-bold border
         ${gradeInfo.colors.bg} ${gradeInfo.colors.text} ${gradeInfo.colors.border}
         ${sizeClasses[size]}
+        drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
         ${className}
       `.trim().replace(/\s+/g, ' ')}
       aria-label={getGradeAriaLabel(score)}
