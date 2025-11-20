@@ -10,8 +10,14 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
+import { Layout } from './components/Layout';
 import './lib/performance'; // Initialize performance monitoring
 import './styles.css';
+
+// Force dark mode globally
+if (typeof window !== 'undefined') {
+  document.documentElement.classList.add('dark');
+}
 
 // Lazy load components for code splitting
 const Home = React.lazy(() => import('./pages/Home'));
@@ -20,7 +26,11 @@ const Report = React.lazy(() => import('./pages/ReportPage'));
 const Reports = React.lazy(() => import('./pages/ReportsPage'));
 const Compare = React.lazy(() => import('./pages/Compare'));
 const Docs = React.lazy(() => import('./pages/Docs'));
+const Faq = React.lazy(() => import('./pages/Faq'));
 const About = React.lazy(() => import('./pages/About'));
+const Roadmap = React.lazy(() => import('./pages/Roadmap'));
+const Security = React.lazy(() => import('./pages/Security'));
+const Legal = React.lazy(() => import('./pages/Legal'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -82,10 +92,42 @@ const router = createBrowserRouter([
     )
   },
   {
+    path: '/faq',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <Faq />
+      </React.Suspense>
+    )
+  },
+  {
     path: '/about',
     element: (
       <React.Suspense fallback={<PageLoader />}>
         <About />
+      </React.Suspense>
+    )
+  },
+  {
+    path: '/roadmap',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <Roadmap />
+      </React.Suspense>
+    )
+  },
+  {
+    path: '/security',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <Security />
+      </React.Suspense>
+    )
+  },
+  {
+    path: '/legal',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <Legal />
       </React.Suspense>
     )
   },
@@ -156,21 +198,24 @@ createRoot(document.getElementById('root')!).render(
       >
         <QueryClientProvider client={qc}>
           <AuthProvider>
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: '#1e293b',
-                  color: '#fff',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                },
-              }}
-            />
-            <RouterProvider router={router} />
+            <Layout>
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: '#1a1f2e',
+                    color: '#f9fafb',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #1f2937',
+                  },
+                }}
+              />
+              <RouterProvider router={router} />
+            </Layout>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
