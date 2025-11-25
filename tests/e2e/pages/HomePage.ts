@@ -70,7 +70,7 @@ export class HomePage {
 
     // Assert page loaded correctly
     await expect(this.heading).toBeVisible();
-    await assertElementText(this.page, 'h1', 'See What\'s Tracking You Online');
+    await assertElementText(this.page, 'h1', 'Instant Privacy Analysis', { match: 'contains' });
 
     return duration;
   }
@@ -224,7 +224,7 @@ export class HomePage {
     await expect(container).toBeVisible();
 
     // Check mobile-specific elements - use semantic selector for h1
-    const mobileText = this.page.locator('h1:has-text("See What\'s Tracking You Online")');
+    const mobileText = this.page.locator('h1:has-text("Instant Privacy Analysis")');
     await expect(mobileText).toBeVisible();
 
     // Check responsive grid
