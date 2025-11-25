@@ -55,9 +55,9 @@ const EnhancedSeverityBadge = React.memo(function EnhancedSeverityBadge({
       label: 'medium'
     },
     low: {
-      bg: 'bg-dark-elevated',
-      border: 'border-dark-border',
-      text: 'text-light-secondary',
+      bg: 'bg-white',
+      border: 'border-gray-200',
+      text: 'text-zinc-600',
       emoji: 'ℹ️',
       label: 'low'
     }

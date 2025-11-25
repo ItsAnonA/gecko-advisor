@@ -54,9 +54,9 @@ const variantConfig = {
       </svg>
     ),
     text: 'Open Source & Auditable',
-    bgColor: 'bg-dark-elevated',
-    textColor: 'text-light-primary',
-    borderColor: 'border-dark-border',
+    bgColor: 'bg-white',
+    textColor: 'text-zinc-900',
+    borderColor: 'border-gray-200',
   },
   'standards': {
     icon: (

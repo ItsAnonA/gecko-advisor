@@ -52,8 +52,8 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
       border: 'border-advisor-500/30 hover:border-advisor-500/50',
       iconGradient: 'from-advisor-500 to-advisor-600',
       iconShadow: 'shadow-lg shadow-advisor-500/40',
-      titleColor: 'text-light-primary',
-      descColor: 'text-light-secondary',
+      titleColor: 'text-zinc-900',
+      descColor: 'text-zinc-600',
       decorationBg: 'bg-advisor-500/10'
     },
     blue: {
@@ -61,8 +61,8 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
       border: 'border-trust-600/30 hover:border-trust-600/50',
       iconGradient: 'from-trust-500 to-trust-600',
       iconShadow: 'shadow-lg shadow-trust-500/40',
-      titleColor: 'text-light-primary',
-      descColor: 'text-light-secondary',
+      titleColor: 'text-zinc-900',
+      descColor: 'text-zinc-600',
       decorationBg: 'bg-trust-500/10'
     },
     amber: {
@@ -70,8 +70,8 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
       border: 'border-score-caution/30 hover:border-score-caution/50',
       iconGradient: 'from-score-caution to-amber-600',
       iconShadow: 'shadow-lg shadow-score-caution/40',
-      titleColor: 'text-light-primary',
-      descColor: 'text-light-secondary',
+      titleColor: 'text-zinc-900',
+      descColor: 'text-zinc-600',
       decorationBg: 'bg-score-caution/10'
     }
   };

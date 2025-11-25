@@ -353,7 +353,7 @@ function RecentReports() {
     <Card>
       {/* ✅ Improvement #1: Section header with icon and larger font */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-light-primary flex items-center gap-2.5">
+        <h2 className="text-2xl font-bold text-zinc-900 flex items-center gap-2.5">
           {/* Activity/Radar icon for "Recent" */}
           <svg className="w-6 h-6 text-advisor-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -389,7 +389,7 @@ function RecentReports() {
               {/* Left side: Favicon + Domain + Meta */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Favicon */}
-                <div className="flex-shrink-0 w-10 h-10 rounded bg-dark-elevated flex items-center justify-center overflow-hidden border-2 border-dark-border">
+                <div className="flex-shrink-0 w-10 h-10 rounded bg-white flex items-center justify-center overflow-hidden border-2 border-gray-200">
                   <img
                     src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
                     alt=""
@@ -405,8 +405,8 @@ function RecentReports() {
 
                 {/* Domain info */}
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-light-primary truncate">{domain}</div>
-                  <div className="text-xs text-light-secondary flex items-center gap-2 mt-0.5">
+                  <div className="font-semibold text-zinc-900 truncate">{domain}</div>
+                  <div className="text-xs text-zinc-600 flex items-center gap-2 mt-0.5">
                     <span>{getRelativeTime(report.createdAt)}</span>
                     <span className="text-dark-border">•</span>
                     <span>{report.evidenceCount} checks</span>

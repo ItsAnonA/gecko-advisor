@@ -98,8 +98,8 @@ const TrustBadge = React.memo(function TrustBadge({
     },
     'open-source': {
       // Professional charcoal (neutral, not marketing)
-      container: 'bg-dark-elevated text-light-primary border border-dark-border',
-      lightContainer: 'bg-dark-elevated text-light-primary border border-dark-border',
+      container: 'bg-gecko-700 text-white border border-gecko-600',
+      lightContainer: 'bg-gecko-100 text-gecko-800 border border-gecko-200',
       icon: (
         <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />

@@ -177,7 +177,7 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
         >
           {scoreCategory.label}
         </div>
-        <div className="text-xs text-light-secondary mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <div className="text-xs text-zinc-600 mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
           {scoreCategory.description}
         </div>
       </div>

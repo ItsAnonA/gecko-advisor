@@ -65,9 +65,9 @@ export default function SeverityBadge({
       level: 'low',
       label: 'Low',
       description: 'Low severity issue with minimal impact',
-      bgClass: 'bg-dark-elevated',
-      textClass: 'text-light-secondary',
-      borderClass: 'border-dark-border',
+      bgClass: 'bg-gray-100',
+      textClass: 'text-zinc-600',
+      borderClass: 'border-gray-200',
       icon: 'ℹ️',
       pattern: 'none'
     };

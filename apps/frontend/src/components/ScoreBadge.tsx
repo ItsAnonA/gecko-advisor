@@ -9,7 +9,7 @@ const BAND_STYLES: Record<ScoreBand, string> = {
   safe: 'bg-score-safe/20 text-score-safe border-score-safe/30',
   risky: 'bg-score-caution/20 text-score-caution border-score-caution/30',
   dangerous: 'bg-score-danger/20 text-score-danger border-score-danger/30',
-  unknown: 'bg-dark-elevated text-light-secondary border-dark-border',
+  unknown: 'bg-white text-zinc-600 border-gray-200',
 };
 
 export interface ScoreBadgeProps {

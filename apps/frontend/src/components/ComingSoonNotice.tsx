@@ -55,16 +55,16 @@ export default function ComingSoonNotice({
     info: {
       container: 'bg-trust-600/20 border-trust-600/30',
       icon: 'text-trust-400',
-      title: 'text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
-      body: 'text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      title: 'text-zinc-900 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      body: 'text-zinc-600 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
       link: 'text-trust-300 hover:text-trust-200 focus:ring-trust-500',
       dismissBtn: 'text-trust-400 hover:text-trust-300 focus:ring-trust-500'
     },
     warning: {
       container: 'bg-score-caution/20 border-score-caution/30',
       icon: 'text-score-caution',
-      title: 'text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
-      body: 'text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      title: 'text-zinc-900 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+      body: 'text-zinc-600 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
       link: 'text-score-caution hover:text-score-caution/80 focus:ring-score-caution',
       dismissBtn: 'text-score-caution hover:text-score-caution/80 focus:ring-score-caution'
     }

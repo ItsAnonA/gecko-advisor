@@ -94,16 +94,18 @@
     box-shadow: none !important;
   }
 
-  /* Simplify colors for print */
-  .bg-dark-elevated,
-  .bg-dark-surface,
-  .bg-dark-bg {
+  /* Simplify colors for print - ensure light backgrounds print as white */
+  .bg-white,
+  .bg-stone-50,
+  .bg-gray-50,
+  .bg-gray-100 {
     background: white !important;
     border: 1px solid #e5e7eb !important;
   }
 
-  .text-light-primary,
-  .text-light-secondary {
+  .text-zinc-900,
+  .text-zinc-600,
+  .text-zinc-500 {
     color: black !important;
   }
 

@@ -60,37 +60,37 @@ export function EvidenceList({ items, filter, onFilterChange, pageSize = PAGE_SI
             onClick={() => onFilterChange(option.key)}
             className={clsx(
               'px-3 py-1 rounded-full border text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-advisor-500',
-              filter === option.key ? 'bg-advisor-600 text-white border-advisor-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]' : 'bg-dark-elevated text-light-primary border-dark-border hover:bg-dark-hover',
+              filter === option.key ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white text-zinc-900 border-gray-200 hover:bg-gray-100',
             )}
           >
             {option.label}
-            <span className="ml-1 text-xs text-light-tertiary">[{option.shortcut}]</span>
+            <span className="ml-1 text-xs text-zinc-500">[{option.shortcut}]</span>
           </button>
         ))}
-        <span className="text-xs text-light-tertiary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Use keys 1-4 to switch views</span>
+        <span className="text-xs text-zinc-500">Use keys 1-4 to switch views</span>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded border border-dashed border-dark-border bg-dark-surface p-4 text-sm text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">No evidence found for this filter.</p>
+        <p className="rounded border border-dashed border-gray-200 bg-stone-50 p-4 text-sm text-zinc-600">No evidence found for this filter.</p>
       ) : (
         <div className="space-y-3">
           <ul className="space-y-3">
             {pageItems.map((item) => (
-              <li key={item.id} className="rounded-lg border border-dark-border bg-dark-surface p-4 shadow-sm">
+              <li key={item.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{item.title}</p>
-                    <p className="text-xs text-light-tertiary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{item.displayKind}{item.domain ? ` • ${item.domain}` : ''}</p>
+                    <p className="text-sm font-semibold text-zinc-900">{item.title}</p>
+                    <p className="text-xs text-zinc-500">{item.displayKind}{item.domain ? ` • ${item.domain}` : ''}</p>
                   </div>
-                  <span className={clsx('inline-flex min-w-[44px] justify-center rounded-full px-2 py-1 text-xs font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]', severityBadge(item.severity))}>
+                  <span className={clsx('inline-flex min-w-[44px] justify-center rounded-full px-2 py-1 text-xs font-semibold', severityBadge(item.severity))}>
                     Sev {item.severity}
                   </span>
                 </div>
-                <pre className="mt-2 overflow-auto rounded bg-dark-elevated p-2 text-xs text-light-secondary border border-dark-border">
+                <pre className="mt-2 overflow-auto rounded bg-gray-50 p-2 text-xs text-zinc-600 border border-gray-200">
                   {formatDetails(item.details)}
                 </pre>
                 {item.url && (
-                  <a href={item.url} className="mt-2 inline-flex text-sm font-medium text-advisor-400 underline drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" target="_blank" rel="noreferrer">
+                  <a href={item.url} className="mt-2 inline-flex text-sm font-medium text-emerald-600 underline" target="_blank" rel="noreferrer">
                     View source
                   </a>
                 )}
@@ -108,19 +108,19 @@ export function EvidenceList({ items, filter, onFilterChange, pageSize = PAGE_SI
 function Pager({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (next: number) => void }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className="flex items-center justify-between rounded-lg border border-dark-border bg-dark-surface p-2 text-sm" aria-label="Evidence pagination">
+    <nav className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-2 text-sm" aria-label="Evidence pagination">
       <button
         type="button"
-        className="min-w-[96px] rounded bg-dark-elevated px-3 py-2 font-medium text-light-primary shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 disabled:pointer-events-none disabled:opacity-60 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+        className="min-w-[96px] rounded bg-gray-100 px-3 py-2 font-medium text-zinc-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 disabled:pointer-events-none disabled:opacity-60"
         onClick={() => onChange(Math.max(0, page - 1))}
         disabled={page === 0}
       >
         Previous
       </button>
-      <span className="text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Page {page + 1} of {totalPages}</span>
+      <span className="text-zinc-600">Page {page + 1} of {totalPages}</span>
       <button
         type="button"
-        className="min-w-[96px] rounded bg-dark-elevated px-3 py-2 font-medium text-light-primary shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 disabled:pointer-events-none disabled:opacity-60 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+        className="min-w-[96px] rounded bg-gray-100 px-3 py-2 font-medium text-zinc-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 disabled:pointer-events-none disabled:opacity-60"
         onClick={() => onChange(Math.min(totalPages - 1, page + 1))}
         disabled={page >= totalPages - 1}
       >
@@ -140,7 +140,7 @@ function matchesFilter(severity: number, filter: SeverityFilter): boolean {
 function severityBadge(severity: number): string {
   if (severity >= 4) return 'bg-score-danger/20 text-score-danger border border-score-danger/30';
   if (severity === 3) return 'bg-score-caution/20 text-score-caution border border-score-caution/30';
-  return 'bg-dark-elevated text-light-secondary border border-dark-border';
+  return 'bg-gray-100 text-zinc-600 border border-gray-200';
 }
 
 function formatDetails(details: unknown): string {

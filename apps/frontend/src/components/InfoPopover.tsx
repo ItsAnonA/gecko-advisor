@@ -127,7 +127,7 @@ export default function InfoPopover({
         aria-describedby={`${id}-desc`}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-dark-border text-xs text-light-primary bg-dark-elevated hover:bg-dark-hover hover:border-advisor-500/50 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg transition-colors duration-200"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-200 text-xs text-zinc-900 bg-white hover:bg-gray-100 hover:border-advisor-500/50 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg transition-colors duration-200"
         data-testid="info-popover-trigger"
       >
         <svg
@@ -168,12 +168,12 @@ export default function InfoPopover({
             role="tooltip"
             aria-label={`Information about ${label}`}
             tabIndex={-1}
-            className={`absolute z-20 w-64 max-w-sm p-4 rounded-lg border border-dark-border bg-dark-elevated shadow-lg text-sm text-light-secondary ${getPositionClasses()}`}
+            className={`absolute z-20 w-64 max-w-sm p-4 rounded-lg border border-gray-200 bg-white shadow-lg text-sm text-zinc-600 ${getPositionClasses()}`}
             data-testid="info-popover-content"
           >
             {/* Arrow indicator */}
             <div
-              className={`absolute w-2 h-2 bg-dark-elevated border-l border-t border-dark-border transform rotate-45 ${
+              className={`absolute w-2 h-2 bg-white border-l border-t border-gray-200 transform rotate-45 ${
                 placement === 'top'
                   ? 'top-full left-1/2 -translate-x-1/2 -mt-1'
                   : placement === 'left'
@@ -187,7 +187,7 @@ export default function InfoPopover({
 
             {/* Content */}
             <div className="relative z-10">
-              <div className="font-semibold text-light-primary mb-2 text-xs uppercase tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="font-semibold text-zinc-900 mb-2 text-xs uppercase tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {label}
               </div>
               <div>
