@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { getPaginatedReports, type PaginatedReportsResponse } from '../lib/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -165,9 +166,102 @@ export default function ReportsPage() {
     );
   }
 
+  // SEO: Dynamic title based on pagination
+  const seoTitle = currentPage > 1
+    ? `Privacy Reports - Page ${currentPage} | Gecko Advisor`
+    : 'Privacy Reports - Website Privacy Scans | Gecko Advisor';
+
+  const seoDescription = currentPage > 1
+    ? `Browse page ${currentPage} of ${pagination?.totalPages || 1} of community privacy scans. View detailed tracker and security analysis for thousands of websites.`
+    : `Browse ${pagination?.totalCount || 'thousands of'} community privacy scans. Free website tracker detection and security analysis. No account required.`;
+
+  const canonicalUrl = currentPage > 1
+    ? `https://geckoadvisor.com/reports?page=${currentPage}`
+    : 'https://geckoadvisor.com/reports';
+
+  // SEO: Breadcrumb structured data
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://geckoadvisor.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Reports',
+        item: 'https://geckoadvisor.com/reports',
+      },
+    ],
+  };
+
+  // SEO: CollectionPage schema for the reports listing
+  const collectionSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Privacy Reports',
+    description: 'Collection of website privacy scans and security analyses',
+    url: canonicalUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: pagination?.totalCount || items.length,
+      itemListElement: items.slice(0, 10).map((report, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `https://geckoadvisor.com/r/${report.slug}`,
+        name: `${report.domain} Privacy Report`,
+      })),
+    },
+  };
+
   // Success State - Display Reports
   return (
     <div className="min-h-screen flex flex-col">
+      {/* SEO: Meta tags and structured data */}
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <meta
+          name="keywords"
+          content="privacy reports, website scans, tracker detection, privacy analysis, security scans, website privacy"
+        />
+        <link rel="canonical" href={canonicalUrl} />
+
+        {/* Pagination SEO */}
+        {pagination?.hasPrevPage && (
+          <link
+            rel="prev"
+            href={`https://geckoadvisor.com/reports?page=${currentPage - 1}`}
+          />
+        )}
+        {pagination?.hasNextPage && (
+          <link
+            rel="next"
+            href={`https://geckoadvisor.com/reports?page=${currentPage + 1}`}
+          />
+        )}
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content="Gecko Advisor" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(collectionSchema)}</script>
+      </Helmet>
+
       <Header />
 
       <main className="flex-1">

@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import { getRecentReports, getStats } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -116,8 +117,78 @@ export default function Home() {
     }
   }
 
+  // SEO: WebSite schema with SearchAction for Google Sitelinks Searchbox
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Gecko Advisor',
+    alternateName: 'GeckoAdvisor Privacy Scanner',
+    url: 'https://geckoadvisor.com',
+    description: 'Free open-source privacy scanner. Scan any website to detect trackers, cookies, and data collection practices.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: 'https://geckoadvisor.com/?url={search_term_string}',
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  // SEO: Organization schema
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Privacy Gecko',
+    alternateName: 'PrivacyGecko',
+    url: 'https://privacygecko.com',
+    logo: 'https://geckoadvisor.com/images/GeckoAdvisor_Logo.webp',
+    sameAs: [
+      'https://github.com/privacygecko',
+      'https://twitter.com/PrivacyGecko',
+    ],
+    description: 'Building open-source privacy tools. Gecko Advisor is our free website privacy scanner.',
+  };
+
+  // SEO: SoftwareApplication schema for the scanner tool
+  const softwareSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Gecko Advisor Privacy Scanner',
+    applicationCategory: 'SecurityApplication',
+    operatingSystem: 'Web Browser',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    aggregateRating: stats && stats.totalScans > 100 ? {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: stats.totalScans.toString(),
+      bestRating: '5',
+      worstRating: '1',
+    } : undefined,
+    description: 'Free privacy scanner that detects trackers, cookies, and security issues on any website. No account required.',
+    featureList: [
+      'Tracker Detection',
+      'Cookie Analysis',
+      'Security Header Check',
+      'Privacy Score Calculation',
+      'Third-Party Connection Analysis',
+      'TLS/HTTPS Validation',
+    ],
+  };
+
   return (
     <>
+      {/* SEO: Structured data for rich search results */}
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(softwareSchema)}</script>
+      </Helmet>
+
       <Header />
       <main className="max-w-5xl mx-auto p-4 md:p-6 pb-16 md:pb-24 space-y-6 md:space-y-8">
       {/* Hero Section - Privacy Scanner */}

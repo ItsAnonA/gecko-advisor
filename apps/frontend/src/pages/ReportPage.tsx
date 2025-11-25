@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 import React from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import { reportQueryOptions } from '../lib/api';
 import EnhancedScoreDial from '../components/EnhancedScoreDial';
@@ -931,8 +932,115 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
   const topTrackers = trackerDomains.slice(0, 2);
 
+  // Extract domain from scan input for SEO
+  const getDomainFromUrl = (url: string): string => {
+    try {
+      const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+      return parsed.hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
+  };
+
+  const domain = getDomainFromUrl(scan.input);
+  const trackerCount = trackerDomains.length;
+  const score = scan.score ?? 0;
+  const label = scan.label ?? 'Unknown';
+
+  // SEO: Generate dynamic meta title and description
+  const seoTitle = `${domain} Privacy Report - Score ${score}/100 | Gecko Advisor`;
+  const seoDescription = `Privacy analysis of ${domain}: ${label} rating with score ${score}/100. ${trackerCount} tracker${trackerCount !== 1 ? 's' : ''} detected, ${thirdpartyDomains.length} third-party connection${thirdpartyDomains.length !== 1 ? 's' : ''}. Free privacy scan from Gecko Advisor.`;
+  const canonicalUrl = `https://geckoadvisor.com/r/${slug}`;
+
+  // SEO: Structured data for search engines (Review schema)
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: {
+      '@type': 'WebSite',
+      name: domain,
+      url: scan.input.startsWith('http') ? scan.input : `https://${scan.input}`,
+    },
+    author: {
+      '@type': 'Organization',
+      name: 'Gecko Advisor',
+      url: 'https://geckoadvisor.com',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Gecko Advisor',
+      url: 'https://geckoadvisor.com',
+    },
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: score.toString(),
+      bestRating: '100',
+      worstRating: '0',
+    },
+    datePublished: scan.createdAt,
+    description: `Privacy analysis of ${domain}: ${trackerCount} trackers detected, data sharing level: ${dataSharingLevel}`,
+    reviewBody: `This privacy scan analyzed ${domain} for trackers, cookies, security headers, and third-party connections. The site received a privacy score of ${score}/100 (${label}) with ${trackerCount} trackers and ${thirdpartyDomains.length} third-party connections detected.`,
+  };
+
+  // SEO: Breadcrumb structured data
+  const breadcrumbData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://geckoadvisor.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Reports',
+        item: 'https://geckoadvisor.com/reports',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `${domain} Privacy Report`,
+        item: canonicalUrl,
+      },
+    ],
+  };
+
   return (
     <>
+      {/* SEO: Dynamic meta tags and structured data */}
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <meta name="keywords" content={`${domain} privacy, ${domain} trackers, ${domain} cookies, website privacy score, privacy analysis, tracker detection`} />
+        <link rel="canonical" href={canonicalUrl} />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content="Gecko Advisor" />
+        <meta property="og:image" content="https://geckoadvisor.com/og-image.png" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content="https://geckoadvisor.com/twitter-image.png" />
+        <meta name="twitter:site" content="@GeckoAdvisor" />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbData)}
+        </script>
+      </Helmet>
+
       {/* Desktop header */}
       <div className="hidden md:block">
         <Header />

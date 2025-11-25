@@ -1,13 +1,24 @@
-# Gecko Advisor - Privacy Scanner
+# Gecko Advisor - Free Open-Source Privacy Scanner
 # https://geckoadvisor.com
+#
+# We scan websites for trackers, cookies, and privacy issues.
+# 100% free, no account required.
 
 User-agent: *
 Allow: /
+Allow: /r/
+Allow: /blog/
+Allow: /reports
+
+# Disallow internal pages
 Disallow: /api/
 Disallow: /scan/
 Disallow: /dashboard
 Disallow: /reset-password
 Disallow: /settings
 
-# Sitemap
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Dynamic Sitemap Index (includes all report pages)
 Sitemap: https://geckoadvisor.com/sitemap.xml

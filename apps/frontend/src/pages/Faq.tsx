@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import BackToHome from '../components/BackToHome';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -75,8 +76,78 @@ export default function Faq() {
     },
   ];
 
+  // SEO: FAQPage structured data for rich snippets in Google
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
+  // SEO: Breadcrumb structured data
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://geckoadvisor.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'FAQ',
+        item: 'https://geckoadvisor.com/faq',
+      },
+    ],
+  };
+
   return (
     <>
+      {/* SEO: Meta tags and structured data */}
+      <Helmet>
+        <title>FAQ - Frequently Asked Questions | Gecko Advisor</title>
+        <meta
+          name="description"
+          content="Get answers to common questions about Gecko Advisor's free privacy scanner. Learn how we detect trackers, calculate privacy scores, and protect your data."
+        />
+        <meta
+          name="keywords"
+          content="privacy scanner FAQ, website tracker detection, privacy score explained, open source privacy tool, GDPR compliance checker"
+        />
+        <link rel="canonical" href="https://geckoadvisor.com/faq" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="FAQ - Frequently Asked Questions | Gecko Advisor" />
+        <meta
+          property="og:description"
+          content="Get answers to common questions about Gecko Advisor's free privacy scanner."
+        />
+        <meta property="og:url" content="https://geckoadvisor.com/faq" />
+        <meta property="og:site_name" content="Gecko Advisor" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="FAQ - Frequently Asked Questions | Gecko Advisor" />
+        <meta
+          name="twitter:description"
+          content="Get answers to common questions about Gecko Advisor's free privacy scanner."
+        />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+      </Helmet>
+
       <Header />
       <main className="max-w-5xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
         <BackToHome />

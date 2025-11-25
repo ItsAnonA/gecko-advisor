@@ -18,6 +18,7 @@ import { adminRouter } from "./routes/admin.js";
 import { docsRouter } from "./routes/docs.js";
 import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./health.js";
+import { sitemapRouter } from "./routes/sitemap.js";
 import { initSentry, Sentry } from "./sentry.js";
 import { problem } from "./problem.js";
 
@@ -118,6 +119,9 @@ export function createServer() {
   app.use('/api', adminRouter);
   app.use('/api/auth', authRouter);
   app.use('/docs', docsRouter);
+
+  // SEO: Dynamic sitemap routes (must be served at root level for search engines)
+  app.use('/', sitemapRouter);
 
   if (sentryEnabled) {
     Sentry.setupExpressErrorHandler(app);
