@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";

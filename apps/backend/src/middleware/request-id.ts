@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { RequestHandler } from 'express';
 import { randomUUID } from 'node:crypto';
 

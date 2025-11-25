@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { Router } from "express";
 import { adminGuard } from "../middleware/admin.js";
 import { loadDemoLists } from "../lists.js";

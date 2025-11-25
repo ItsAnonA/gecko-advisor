@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { Queue, QueueEvents } from "bullmq";
 import Redis from "ioredis";
 import process from "node:process";

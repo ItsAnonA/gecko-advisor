@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
