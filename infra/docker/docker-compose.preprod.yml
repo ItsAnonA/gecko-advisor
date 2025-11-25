@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-backend:main
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-backend:preprod
     pull_policy: always
     environment:
       NODE_ENV: production
@@ -49,7 +49,7 @@ services:
       retries: 5
 
   worker:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-worker:main
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-worker:preprod
     pull_policy: always
     environment:
       NODE_ENV: production
@@ -70,7 +70,7 @@ services:
       retries: 5
 
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-frontend:main
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-frontend:preprod
     pull_policy: always
     environment:
       APP_ENV: preprod
