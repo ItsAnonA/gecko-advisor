@@ -48,15 +48,15 @@ test.describe('Smoke Tests', () => {
     console.log('📍 Test: Homepage loads');
     await page.goto('/');
 
-    // Verify main heading is visible (actual heading from Home.tsx:143)
-    await expect(page.getByRole('heading', { name: 'See What\'s Tracking You Online' })).toBeVisible();
+    // Verify main heading is visible (h1 with multi-line text from Home.tsx)
+    await expect(page.getByRole('heading', { name: /Instant Privacy Analysis/i })).toBeVisible();
 
     // Verify scan input is present and functional
-    const scanInput = page.getByPlaceholder('Enter website URL (e.g., example.com)');
+    const scanInput = page.getByPlaceholder('Paste any URL (e.g., nytimes.com)');
     await expect(scanInput).toBeVisible();
     await expect(scanInput).toBeEnabled();
 
-    // Verify scan button is present (actual text: "Scan Now" from Home.tsx)
+    // Verify scan button is present (aria-label from Home.tsx)
     const scanButton = page.getByRole('button', { name: 'Start privacy scan' });
     await expect(scanButton).toBeVisible();
 
@@ -72,7 +72,7 @@ test.describe('Smoke Tests', () => {
 
     // Step 2: Enter URL and start scan
     console.log('Step 2: Enter URL and click scan');
-    const scanInput = page.getByPlaceholder('Enter website URL (e.g., example.com)');
+    const scanInput = page.getByPlaceholder('Paste any URL (e.g., nytimes.com)');
     await scanInput.fill('https://example.com');
 
     const scanButton = page.getByRole('button', { name: 'Start privacy scan' });
@@ -114,7 +114,7 @@ test.describe('Smoke Tests', () => {
     // First create a scan to get a report URL
     console.log('Creating a scan...');
     await page.goto('/');
-    const scanInput = page.getByPlaceholder('Enter website URL (e.g., example.com)');
+    const scanInput = page.getByPlaceholder('Paste any URL (e.g., nytimes.com)');
     await scanInput.fill('https://example.com');
 
     const scanButton = page.getByRole('button', { name: 'Start privacy scan' });
@@ -141,7 +141,7 @@ test.describe('Smoke Tests', () => {
     console.log('📍 Test: Invalid URL handling');
     await page.goto('/');
 
-    const scanInput = page.getByPlaceholder('Enter website URL (e.g., example.com)');
+    const scanInput = page.getByPlaceholder('Paste any URL (e.g., nytimes.com)');
     await scanInput.fill('not-a-valid-url');
 
     const scanButton = page.getByRole('button', { name: 'Start privacy scan' });
