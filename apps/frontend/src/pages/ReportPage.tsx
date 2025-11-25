@@ -419,25 +419,25 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
 
   const statusConfig = {
     good: {
-      bg: 'bg-score-trust/10 dark:bg-score-trust/20',
+      bg: 'bg-score-trust/10',
       border: 'border-l-4 border-score-trust',
       icon: '✅',
       iconColor: 'text-score-trust',
-      textColor: 'text-light-primary'
+      textColor: 'text-zinc-900'
     },
     warning: {
-      bg: 'bg-score-caution/10 dark:bg-score-caution/20',
+      bg: 'bg-score-caution/10',
       border: 'border-l-4 border-score-caution',
       icon: '⚠️',
       iconColor: 'text-score-caution',
-      textColor: 'text-light-primary'
+      textColor: 'text-zinc-900'
     },
     bad: {
-      bg: 'bg-score-danger/10 dark:bg-score-danger/20',
+      bg: 'bg-score-danger/10',
       border: 'border-l-4 border-score-danger',
       icon: '❌',
       iconColor: 'text-score-danger',
-      textColor: 'text-light-primary'
+      textColor: 'text-zinc-900'
     }
   };
 
@@ -477,22 +477,22 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h3 className={`font-semibold ${config.textColor} text-base flex-1`}>
+            <h3 className={`font-semibold text-zinc-900 text-base flex-1`}>
               {evidence.title}
             </h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={copyToClipboard}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-dark-elevated focus:outline-none focus:ring-2 focus:ring-advisor-500"
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 aria-label="Copy finding to clipboard"
                 title="Copy finding"
               >
                 {copied ? (
-                  <svg className="w-4 h-4 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4 text-light-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 )}
@@ -530,9 +530,9 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
               {showDetails && (
                 <div
                   id={`details-${evidence.id}`}
-                  className="mt-3 p-3 bg-dark-elevated/70 rounded border border-dark-border shadow-sm"
+                  className="mt-3 p-3 bg-gray-50 rounded border border-gray-200 shadow-sm"
                 >
-                  <pre className="text-xs text-light-secondary whitespace-pre-wrap font-mono overflow-x-auto">
+                  <pre className="text-xs text-zinc-600 whitespace-pre-wrap font-mono overflow-x-auto">
                     {typeof evidence.details === 'string'
                       ? evidence.details
                       : safeStringify(sanitizeDetails(evidence.details))}
@@ -547,16 +547,16 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
             <div className="mt-3">
               <button
                 onClick={() => setWhyMattersExpanded(!whyMattersExpanded)}
-                className="w-full text-left p-3 bg-white/[0.03] border border-white/5 rounded-lg hover:bg-white/[0.05] transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 flex items-center justify-between gap-2"
+                className="w-full text-left p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between gap-2"
                 aria-expanded={whyMattersExpanded}
                 aria-controls={`why-matters-${evidence.id}`}
               >
-                <span className="text-sm text-light-primary flex items-center gap-2">
+                <span className="text-sm text-zinc-900 flex items-center gap-2">
                   <span className="text-lg flex-shrink-0" aria-hidden="true">💡</span>
                   <strong className="font-semibold">Why this matters</strong>
                 </span>
                 <svg
-                  className={`w-4 h-4 text-light-secondary transition-transform duration-200 ${whyMattersExpanded ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 text-zinc-600 transition-transform duration-200 ${whyMattersExpanded ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -568,7 +568,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
               {whyMattersExpanded && (
                 <div
                   id={`why-matters-${evidence.id}`}
-                  className="mt-2 p-3 bg-white/[0.03] border border-white/5 rounded-lg text-sm text-light-secondary animate-fade-in"
+                  className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-zinc-600 animate-fade-in"
                 >
                   {whyItMatters}
                 </div>
@@ -613,7 +613,7 @@ export default function ReportPage() {
         <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-sm font-medium text-advisor-400 hover:text-advisor-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-bg rounded"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded"
             aria-label="Back to home"
           >
             <span aria-hidden="true">&larr;</span>
@@ -939,12 +939,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       </div>
 
       {/* Mobile sticky header */}
-      <div className="sticky top-0 z-10 bg-dark-surface/95 backdrop-blur-sm border-b border-dark-border shadow-sm md:hidden">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm md:hidden">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Link
               to="/"
-              className="text-advisor-400 hover:text-advisor-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 rounded p-1"
+              className="text-emerald-600 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
               aria-label="Back to home"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -952,8 +952,8 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               </svg>
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-light-primary truncate">{scan.input}</div>
-              <div className="text-xs text-light-secondary">
+              <div className="text-sm font-medium text-zinc-900 truncate">{scan.input}</div>
+              <div className="text-xs text-zinc-600">
                 {scan.label} ({scan.score}%)
               </div>
             </div>
@@ -973,7 +973,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
       <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
       {/* Refined report header - clean, spacious layout */}
-      <header className="bg-gradient-to-br from-dark-surface/30 to-dark-surface/10 border border-dark-border rounded-2xl p-8 md:p-10">
+      <header className="bg-gradient-to-br from-stone-50 to-white border border-gray-200 rounded-2xl p-8 md:p-10 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
 
           {/* LEFT: Score Dial (25% width on desktop) */}
@@ -986,13 +986,13 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
             {/* Heading - Clean, no status label */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-light-primary mb-3">
+              <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-3">
                 Privacy Report
               </h1>
 
               {/* URL with inline copy button */}
               <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap mb-4">
-                <p className="text-light-secondary text-base break-all">
+                <p className="text-zinc-600 text-base break-all">
                   {scan.input}
                 </p>
                 <CopyButton text={typeof window !== 'undefined' ? window.location.href : ''} />
@@ -1010,7 +1010,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               {/* Primary action - Scan Another */}
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#00d985] hover:bg-[#00c278] text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-dark-bg"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 focus:ring-offset-white"
                 aria-label="Scan another website"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1027,7 +1027,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                       navigator.clipboard.writeText(window.location.href);
                     }
                   }}
-                  className="p-3 bg-dark-surface/40 hover:bg-dark-surface/60 border border-dark-border rounded-lg text-light-secondary hover:text-light-primary transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   title="Copy report link"
                   aria-label="Copy report link"
                 >
@@ -1038,7 +1038,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
                 <button
                   onClick={() => window.print()}
-                  className="p-3 bg-dark-surface/40 hover:bg-dark-surface/60 border border-dark-border rounded-lg text-light-secondary hover:text-light-primary transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   title="Print report"
                   aria-label="Print report"
                 >
@@ -1049,7 +1049,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
                 <button
                   onClick={exportJson}
-                  className="p-3 bg-dark-surface/40 hover:bg-dark-surface/60 border border-dark-border rounded-lg text-light-secondary hover:text-light-primary transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   title="Export as JSON"
                   aria-label="Export report as JSON"
                 >
@@ -1065,14 +1065,14 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       </header>
 
       {/* Summary Box */}
-      <div className="bg-advisor-500/10 border-2 border-advisor-500/30 rounded-xl p-6">
-        <h2 className="text-light-primary font-semibold text-lg mb-2 flex items-center gap-2">
+      <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-6 shadow-sm">
+        <h2 className="text-zinc-900 font-semibold text-lg mb-2 flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Quick Summary
         </h2>
-        <p className="text-light-secondary leading-relaxed">
+        <p className="text-zinc-600 leading-relaxed">
           {generateSummary(scan, evidence)}
         </p>
       </div>
@@ -1080,7 +1080,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       {/* Stats Row - Removed duplicate Score card, showing only unique data */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
-          <div className="text-xs text-light-tertiary inline-flex items-center gap-2">
+          <div className="text-xs text-zinc-500 inline-flex items-center gap-2">
             Data Sharing Risk
             <InfoPopover label="Data Sharing Risk">
               Indicates the level of data sharing based on trackers, third-party connections, and cookies. Lower is better.
@@ -1101,31 +1101,31 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
             <span className="text-2xl font-bold">{dataSharingLevel}</span>
           </div>
           {/* Helpful description for each level */}
-          <p className="text-xs text-light-secondary mt-1.5">
+          <p className="text-xs text-zinc-600 mt-1.5">
             {dataSharingLevel === 'None' && 'No trackers or third-party data sharing detected'}
             {dataSharingLevel === 'Low' && 'Minimal data sharing with limited third parties'}
             {dataSharingLevel === 'Medium' && 'Moderate data sharing with several third parties'}
             {dataSharingLevel === 'High' && 'Extensive data sharing with many third parties'}
           </p>
-          <div className="text-xs text-light-secondary mt-1">
+          <div className="text-xs text-zinc-600 mt-1">
             <span className="sr-only">Breakdown: </span>
             Trackers: {trackerDomains.length}
-            <span className="mx-1 text-light-tertiary" aria-hidden="true">•</span>
+            <span className="mx-1 text-zinc-500" aria-hidden="true">•</span>
             Third-party: {thirdpartyDomains.length}
-            <span className="mx-1 text-light-tertiary" aria-hidden="true">•</span>
+            <span className="mx-1 text-zinc-500" aria-hidden="true">•</span>
             Cookies: {cookieIssues}
           </div>
         </Card>
         <Card>
-          <div className="text-xs text-light-tertiary">TLS/HTTPS</div>
-          <div className="mt-2 text-2xl font-semibold text-light-primary">{sslStatus}</div>
-          <div className="text-xs text-light-secondary">
+          <div className="text-xs text-zinc-500">TLS/HTTPS</div>
+          <div className="mt-2 text-2xl font-semibold text-zinc-900">{sslStatus}</div>
+          <div className="text-xs text-zinc-600">
             {tlsGrade ? `TLS grade: ${tlsGrade}` : 'TLS grade: Not rated'}
           </div>
         </Card>
         <Card>
-          <div className="text-xs text-light-tertiary">Top trackers</div>
-          <div className="mt-2 text-sm text-light-secondary">
+          <div className="text-xs text-zinc-500">Top trackers</div>
+          <div className="mt-2 text-sm text-zinc-600">
             {topTrackers.length > 0 ? topTrackers.join(', ') : 'None detected'}
           </div>
         </Card>
@@ -1139,15 +1139,15 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
             aria-selected={sevFilter === option.key}
             className={`px-3 py-3 min-h-[44px] rounded-full border transition-colors ${
               sevFilter === option.key
-                ? 'bg-advisor-500 text-dark-bg border-advisor-400'
-                : 'bg-dark-elevated border-dark-border text-light-primary hover:bg-dark-hover'
+                ? 'bg-emerald-500 text-white border-emerald-400'
+                : 'bg-gray-100 border-gray-200 text-zinc-900 hover:bg-gray-200'
             }`}
             onClick={() => setSevFilter(option.key)}
           >
             {option.label}
           </button>
         ))}
-        <span className="text-xs text-light-tertiary hidden sm:inline">
+        <span className="text-xs text-zinc-500 hidden sm:inline">
           <span className="sr-only">Keyboard shortcuts: </span>
           Keys: 1=All, 2=High, 3=Med, 4=Low
         </span>
@@ -1162,7 +1162,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
             <a
               key={type}
               href={`#${sectionId(type)}`}
-              className="px-2 py-1 rounded-full bg-dark-elevated text-light-primary border border-dark-border hover:bg-dark-hover text-xs focus:outline-none focus:ring-2 focus:ring-advisor-500 transition-colors"
+              className="px-2 py-1 rounded-full bg-white text-zinc-900 border border-gray-200 hover:bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors shadow-sm"
               aria-label={`${getCategoryLabel(type)} ${list.length} items: ${high} high, ${medium} medium, ${low} low`}
             >
               <span>{getCategoryLabel(type)}</span>
@@ -1185,7 +1185,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                   <span aria-hidden="true">⚡</span> {medium}
                 </span>
                 <span
-                  className="px-1 rounded-full text-2xs font-medium bg-dark-elevated text-light-secondary border border-dark-border"
+                  className="px-1 rounded-full text-2xs font-medium bg-gray-100 text-zinc-600 border border-gray-200"
                   title="Low severity issues"
                   role="status"
                   aria-label={`${low} low severity issues`}
@@ -1200,12 +1200,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
       {/* Categorized Evidence Overview - Priority 1 Task 1.2 */}
       {evidence.length > 0 && (
-        <div className="space-y-6 bg-dark-surface/50 rounded-xl p-6 border border-dark-border">
+        <div className="space-y-6 bg-stone-50 rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-light-primary flex items-center gap-2">
+            <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
               <span className="text-2xl" aria-hidden="true">📊</span>
               Evidence Categories
-              <span className="text-sm font-normal text-light-secondary">
+              <span className="text-sm font-normal text-zinc-600">
                 ({evidence.length} total findings)
               </span>
             </h2>
@@ -1219,17 +1219,17 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               if (filteredCategoryItems.length === 0) return null;
 
               return (
-                <div key={key} className="bg-dark-elevated rounded-lg p-5 shadow-sm border border-dark-border">
+                <div key={key} className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-light-primary flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                       <span className="text-2xl" aria-hidden="true">{category.icon}</span>
                       {category.title}
                     </h2>
-                    <span className="text-sm text-light-secondary bg-dark-surface px-3 py-1 rounded-full font-medium border border-dark-border">
+                    <span className="text-sm text-zinc-600 bg-gray-50 px-3 py-1 rounded-full font-medium border border-gray-200">
                       {filteredCategoryItems.length} {filteredCategoryItems.length === 1 ? 'item' : 'items'}
                     </span>
                   </div>
-                  <p className="text-sm text-light-secondary mb-4">{category.description}</p>
+                  <p className="text-sm text-zinc-600 mb-4">{category.description}</p>
                   <div className="space-y-2">
                     {filteredCategoryItems.map((item) => (
                       <EvidenceItemDisplay key={`cat-${key}-${item.id}`} evidence={item} />
@@ -1243,13 +1243,13 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       )}
 
       {/* Evidence section controls */}
-      <div className="flex items-center justify-between py-3 px-4 bg-dark-surface/50 rounded-lg border border-dark-border">
-        <div className="text-sm text-light-secondary">
-          <span className="font-medium text-light-primary">
+      <div className="flex items-center justify-between py-3 px-4 bg-stone-50 rounded-lg border border-gray-200">
+        <div className="text-sm text-zinc-600">
+          <span className="font-medium text-zinc-900">
             {groupEntries.filter(([type]) => open[type]).length}
           </span>
           {' of '}
-          <span className="font-medium text-light-primary">
+          <span className="font-medium text-zinc-900">
             {groupEntries.length}
           </span>
           {' technical categories visible'}
@@ -1262,13 +1262,13 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               groupEntries.forEach(([type]) => { allOpen[type] = true; });
               setOpen(allOpen);
             }}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-advisor-400 hover:bg-advisor-500/10 border border-transparent hover:border-advisor-500/30 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-colors"
             aria-label="Expand all evidence categories"
           >
             Expand all
           </button>
 
-          <div className="w-px h-4 bg-dark-border" />
+          <div className="w-px h-4 bg-gray-200" />
 
           <button
             onClick={() => {
@@ -1276,7 +1276,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               groupEntries.forEach(([type]) => { allClosed[type] = false; });
               setOpen(allClosed);
             }}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-light-secondary hover:bg-dark-elevated border border-transparent hover:border-dark-border transition-colors"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-colors"
             aria-label="Collapse all evidence categories"
           >
             Collapse all
@@ -1285,18 +1285,18 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       </div>
 
       <div className="text-center">
-        <h2 className="text-lg font-semibold text-light-primary mb-2">Technical Details by Type</h2>
-        <p className="text-sm text-light-secondary">Expand sections below for granular technical findings</p>
+        <h2 className="text-lg font-semibold text-zinc-900 mb-2">Technical Details by Type</h2>
+        <p className="text-sm text-zinc-600">Expand sections below for granular technical findings</p>
       </div>
 
       {groupEntries.length === 0 ? (
         <Card>
           <div className="text-center py-12">
             <div className="text-4xl mb-4">✅</div>
-            <p className="text-light-primary font-semibold mb-2">
+            <p className="text-zinc-900 font-semibold mb-2">
               No privacy issues found
             </p>
-            <p className="text-sm text-light-secondary">
+            <p className="text-sm text-zinc-600">
               This site appears to have excellent privacy practices.
             </p>
           </div>
@@ -1322,13 +1322,13 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
           return (
             <Card key={type} className={hasCriticalIssues ? 'border-l-4 border-orange-500/50' : ''}>
               <button
-                className="w-full flex items-center justify-between py-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-advisor-500 rounded transition-colors duration-150 hover:bg-dark-hover"
+                className="w-full flex items-center justify-between py-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded transition-colors duration-150 hover:bg-gray-50"
                 aria-expanded={open[type] ? 'true' : 'false'}
                 aria-controls={sectionId(type)}
                 onClick={() => toggle(type)}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <h2 className="font-semibold text-lg text-light-primary">
+                  <h2 className="font-semibold text-lg text-zinc-900">
                     {getCategoryLabel(type)}
                   </h2>
 
@@ -1337,7 +1337,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                   </span>
 
                   {!open[type] && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-dark-elevated text-light-secondary text-xs font-medium border border-dark-border">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-100 text-zinc-600 text-xs font-medium border border-gray-200">
                       {list.length} item{list.length !== 1 ? 's' : ''} collapsed
                     </span>
                   )}
@@ -1373,11 +1373,11 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                           )}
                           {lowCount > 0 && !open[type] && (
                             <span
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-elevated border border-dark-border text-xs font-bold"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-xs font-bold"
                               title={`${lowCount} low severity issue${lowCount !== 1 ? 's' : ''}`}
                             >
                               <span className="text-base">ℹ️</span>
-                              <span className="text-light-secondary">{lowCount}</span>
+                              <span className="text-zinc-600">{lowCount}</span>
                             </span>
                           )}
                         </>
@@ -1387,7 +1387,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
 
                   {/* Expand/Collapse icon with rotation animation */}
                   <svg
-                    className={`w-5 h-5 text-light-tertiary transition-transform duration-200 ${open[type] ? 'rotate-180' : 'rotate-0'}`}
+                    className={`w-5 h-5 text-zinc-500 transition-transform duration-200 ${open[type] ? 'rotate-180' : 'rotate-0'}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1405,12 +1405,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
               {open[type] && (
                 <>
                   {!hasFilteredItems ? (
-                    <div className="text-center py-8 mt-2 border-t border-dark-border">
+                    <div className="text-center py-8 mt-2 border-t border-gray-200">
                       <div className="text-3xl mb-3">✅</div>
-                      <p className="text-light-secondary mb-2">
+                      <p className="text-zinc-600 mb-2">
                         No {sevFilter !== 'all' ? sevFilter + ' severity' : ''} issues found in this category.
                       </p>
-                      <p className="text-sm text-light-tertiary">
+                      <p className="text-sm text-zinc-500">
                         {sevFilter !== 'all' ? 'Try viewing other severity levels or select "All".' : 'This is a good sign!'}
                       </p>
                     </div>
@@ -1425,7 +1425,7 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                             sanitizeDetails={sanitizeDetails}
                             containerHeight={300}
                             itemHeight={80}
-                            className="border border-dark-border rounded"
+                            className="border border-gray-200 rounded"
                           />
                         </div>
                       ) : (
@@ -1439,12 +1439,12 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                   )}
                   {TIPS[type] && hasFilteredItems && (
                     <div className="mt-3 text-sm">
-                      <div className="font-semibold text-light-primary">How to fix</div>
-                      <ul className="list-disc pl-5 text-light-secondary">
+                      <div className="font-semibold text-zinc-900">How to fix</div>
+                      <ul className="list-disc pl-5 text-zinc-600">
                         {TIPS[type].map((tip, index) => (
                           <li key={index}>
                             {tip.url ? (
-                              <a className="text-advisor-400 hover:text-advisor-300 underline" href={tip.url} target="_blank" rel="noreferrer">
+                              <a className="text-emerald-600 hover:text-emerald-700 underline" href={tip.url} target="_blank" rel="noreferrer">
                                 {tip.text}
                               </a>
                             ) : (
@@ -1463,10 +1463,10 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       )}
 
       {/* Score Breakdown Section */}
-      <div className="mt-8 mb-6 border-t border-dark-border pt-6">
+      <div className="mt-8 mb-6 border-t border-gray-200 pt-6">
         <button
           onClick={() => setShowBreakdown(!showBreakdown)}
-          className="flex items-center gap-2 text-light-primary hover:text-advisor-400 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-bg rounded px-1 py-1"
+          className="flex items-center gap-2 text-zinc-900 hover:text-emerald-600 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded px-1 py-1"
           aria-expanded={showBreakdown}
           aria-controls="score-breakdown-details"
         >
@@ -1485,53 +1485,53 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
         {showBreakdown && (
           <div
             id="score-breakdown-details"
-            className="mt-4 bg-dark-surface/50 rounded-lg p-6 animate-fade-in border border-dark-border"
+            className="mt-4 bg-stone-50 rounded-lg p-6 animate-fade-in border border-gray-200"
             role="region"
             aria-label="Score breakdown details"
           >
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-dark-border">
-                    <th className="text-left py-2 px-3 font-semibold text-light-primary">Category</th>
-                    <th className="text-left py-2 px-3 font-semibold text-light-primary">Finding</th>
-                    <th className="text-right py-2 px-3 font-semibold text-light-primary">Impact</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 px-3 font-semibold text-zinc-900">Category</th>
+                    <th className="text-left py-2 px-3 font-semibold text-zinc-900">Finding</th>
+                    <th className="text-right py-2 px-3 font-semibold text-zinc-900">Impact</th>
                   </tr>
                 </thead>
                 <tbody>
                   {calculateBreakdown(scan, evidence).map((item, idx) => (
-                    <tr key={idx} className="border-b border-dark-border">
-                      <td className="py-2 px-3 text-light-primary">{item.category}</td>
-                      <td className="py-2 px-3 text-light-secondary">{item.finding}</td>
+                    <tr key={idx} className="border-b border-gray-200">
+                      <td className="py-2 px-3 text-zinc-900">{item.category}</td>
+                      <td className="py-2 px-3 text-zinc-600">{item.finding}</td>
                       <td className={`py-2 px-3 text-right font-semibold ${
-                        item.positive ? 'text-score-trust' : item.points === 0 ? 'text-light-secondary' : 'text-score-danger'
+                        item.positive ? 'text-score-trust' : item.points === 0 ? 'text-zinc-600' : 'text-score-danger'
                       }`}>
                         {item.points > 0 && '+'}{item.points}
                       </td>
                     </tr>
                   ))}
-                  <tr className="border-t-2 border-dark-border font-bold">
-                    <td colSpan={2} className="py-3 px-3 text-light-primary">Final Score</td>
-                    <td className="py-3 px-3 text-right text-lg text-light-primary">{scan.score ?? 0}/100</td>
+                  <tr className="border-t-2 border-gray-200 font-bold">
+                    <td colSpan={2} className="py-3 px-3 text-zinc-900">Final Score</td>
+                    <td className="py-3 px-3 text-right text-lg text-zinc-900">{scan.score ?? 0}/100</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-light-secondary">
-              <strong className="text-light-primary">Note:</strong> This is a simplified breakdown. The actual scoring algorithm considers additional factors including privacy policies, security headers, and data sharing patterns.
+            <p className="mt-4 text-sm text-zinc-600">
+              <strong className="text-zinc-900">Note:</strong> This is a simplified breakdown. The actual scoring algorithm considers additional factors including privacy policies, security headers, and data sharing patterns.
             </p>
           </div>
         )}
       </div>
 
-      <footer className="text-xs text-light-tertiary space-y-1">
+      <footer className="text-xs text-zinc-500 space-y-1">
         <div>Sources: EasyPrivacy (server-side; attribution), WhoTracks.me (CC BY 4.0), Public Suffix List</div>
         <div>
-          Share: <button className="underline text-advisor-400 hover:text-advisor-300" onClick={shareCurrentUrl}>Copy / Share Link</button>
+          Share: <button className="underline text-emerald-600 hover:text-emerald-700" onClick={shareCurrentUrl}>Copy / Share Link</button>
           {' - '}
-          <button className="underline text-advisor-400 hover:text-advisor-300" onClick={copyCurrentUrl}>Save Result</button>
+          <button className="underline text-emerald-600 hover:text-emerald-700" onClick={copyCurrentUrl}>Save Result</button>
           {' - '}
-          <a className="underline text-advisor-400 hover:text-advisor-300" href={`/compare?left=${encodeURIComponent(slug)}`}>Compare</a>
+          <a className="underline text-emerald-600 hover:text-emerald-700" href={`/compare?left=${encodeURIComponent(slug)}`}>Compare</a>
         </div>
       </footer>
     </main>

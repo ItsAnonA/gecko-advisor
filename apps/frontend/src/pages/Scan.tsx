@@ -72,9 +72,9 @@ export default function Scan() {
     <>
     <main className="max-w-3xl mx-auto p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-end text-sm">
-        <a href="/docs" className="underline text-advisor-400 hover:text-advisor-300">Docs</a>
+        <a href="/docs" className="underline text-emerald-600 hover:text-emerald-700">Docs</a>
       </div>
-      <h1 className="text-xl md:text-2xl font-bold text-light-primary drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+      <h1 className="text-xl md:text-2xl font-bold text-zinc-900">
         {shouldShowError
           ? (hasTimedOut ? "Scan Timed Out" : isRateLimited ? "Scan Temporarily Slowed" : "Scan Status Error")
           : data?.status === 'done'
@@ -83,7 +83,7 @@ export default function Scan() {
         }
       </h1>
       <div
-        className="text-base text-light-secondary"
+        className="text-base text-zinc-600"
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -127,7 +127,7 @@ export default function Scan() {
               <div className="text-center mt-6">
                 <button
                   onClick={() => nav(-1)}
-                  className="px-4 py-2 rounded-lg bg-advisor-500 text-dark-bg hover:bg-advisor-400 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg"
+                  className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 shadow-sm"
                 >
                   View Report
                 </button>
@@ -139,12 +139,12 @@ export default function Scan() {
 
       {/* Rate limit info banner - only show when experiencing rate limiting but still polling */}
       {isRateLimited && (
-        <div className="bg-advisor-500/10 border border-advisor-500/30 rounded-lg p-4 text-sm">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-sm">
           <div className="flex items-start gap-3">
-            <div className="text-advisor-400 flex-shrink-0 text-xl" aria-hidden="true">ℹ️</div>
+            <div className="text-emerald-600 flex-shrink-0 text-xl" aria-hidden="true">ℹ️</div>
             <div className="flex-1">
-              <h3 className="font-semibold text-light-primary mb-1">Automatic Rate Limit Protection</h3>
-              <p className="text-light-secondary">
+              <h3 className="font-semibold text-zinc-900 mb-1">Automatic Rate Limit Protection</h3>
+              <p className="text-zinc-600">
                 We're automatically slowing down status checks to respect server limits.
                 Your scan is still running normally. We'll automatically speed up again once the rate limit clears.
               </p>
@@ -155,11 +155,11 @@ export default function Scan() {
 
       {/* Retry count indicator */}
       {retryCount > 0 && !shouldShowError && (
-        <div className="bg-score-caution/10 border border-score-caution/30 rounded-lg p-3 text-sm text-center">
-          <span className="font-medium text-light-primary">Retry attempt {retryCount} of 3</span>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-center">
+          <span className="font-medium text-zinc-900">Retry attempt {retryCount} of 3</span>
         </div>
       )}
-      <Link to="/" className="text-advisor-400 hover:text-advisor-300 underline">New scan</Link>
+      <Link to="/" className="text-emerald-600 hover:text-emerald-700 underline">New scan</Link>
     </main>
     <Footer />
     </>

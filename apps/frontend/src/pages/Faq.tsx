@@ -80,26 +80,26 @@ export default function Faq() {
       <main className="max-w-5xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
         {/* Header */}
         <header className="text-center space-y-4 py-8 md:py-12">
-          <h1 className="text-3xl md:text-5xl font-black text-light-primary leading-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-zinc-900 leading-tight">
             Frequently Asked Questions
           </h1>
-          <p className="text-lg md:text-xl text-light-secondary max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-zinc-600 max-w-2xl mx-auto">
             Everything you need to know about GeckoAdvisor's privacy scanning
           </p>
         </header>
 
         {/* FAQ Grid */}
-        <section className="bg-dark-elevated rounded-xl border border-dark-border p-6 md:p-8">
+        <section className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-md">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-dark-bg p-5 rounded-lg border-2 border-dark-border hover:border-advisor-500 hover:shadow-xl transition-all"
+                className="bg-stone-50 p-5 rounded-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-lg transition-all"
               >
-                <h3 className="text-lg font-semibold text-light-primary mb-2">
+                <h3 className="text-lg font-semibold text-zinc-900 mb-2">
                   {faq.question}
                 </h3>
-                <p className="text-sm md:text-base text-light-secondary leading-relaxed">
+                <p className="text-sm md:text-base text-zinc-600 leading-relaxed">
                   {faq.answer}
                 </p>
               </div>
@@ -107,19 +107,19 @@ export default function Faq() {
           </div>
 
           {/* FAQ Footer */}
-          <div className="text-center mt-6 pt-6 border-t border-dark-border">
-            <p className="text-light-secondary">
+          <div className="text-center mt-6 pt-6 border-t border-gray-200">
+            <p className="text-zinc-600">
               More questions?{' '}
               <a
                 href="/docs"
-                className="text-advisor-500 hover:text-advisor-400 font-medium hover:underline"
+                className="text-emerald-600 hover:text-emerald-700 font-medium hover:underline"
               >
                 Check our documentation
               </a>
               {' '}or{' '}
               <a
                 href="mailto:hello@geckoadvisor.com"
-                className="text-advisor-500 hover:text-advisor-400 font-medium hover:underline"
+                className="text-emerald-600 hover:text-emerald-700 font-medium hover:underline"
               >
                 contact us
               </a>
@@ -131,7 +131,7 @@ export default function Faq() {
         <div className="text-center py-8">
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-advisor-500 hover:bg-advisor-400 text-dark-bg font-semibold rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors shadow-sm"
           >
             <svg
               className="w-5 h-5"
