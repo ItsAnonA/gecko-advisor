@@ -38,15 +38,15 @@ export interface CspOptions {
 export const withCsp = ({ connectSources, imageSources, reportUri }: CspOptions): RequestHandler => {
   return (_req, res, next) => {
     const nonce = randomBytes(16).toString('base64');
-    const scriptNonce = `nonce-${nonce}`;
     const directives = [
-      buildDirectiveLine('default-src', ['none']),
-      buildDirectiveLine('base-uri', ['none']),
-      buildDirectiveLine('script-src', ['self', scriptNonce]),
+      buildDirectiveLine('default-src', ['self']),
+      buildDirectiveLine('base-uri', ['self']),
+      buildDirectiveLine('script-src', ['self']),
       buildDirectiveLine('style-src', ['self', 'unsafe-inline']),
       buildDirectiveLine('img-src', imageSources),
+      buildDirectiveLine('font-src', ['self', 'data:']),
+      buildDirectiveLine('media-src', ['none']),
       buildDirectiveLine('connect-src', connectSources),
-      buildDirectiveLine('font-src', ['self']),
       buildDirectiveLine('frame-ancestors', ['none']),
       buildDirectiveLine('object-src', ['none']),
       buildDirectiveLine('form-action', ['self']),

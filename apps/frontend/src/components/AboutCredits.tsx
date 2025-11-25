@@ -6,101 +6,184 @@ import React from 'react';
 
 export default function AboutCredits() {
   return (
-    <div className="prose prose-invert max-w-none p-6">
-      <h1 className="text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">About & Credits</h1>
-
-      <section className="mb-8 p-6 bg-advisor-600/20 border-l-4 border-advisor-500 rounded-r-lg">
-        <h2 className="text-2xl font-bold text-advisor-300 mt-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">About Gecko Advisor</h2>
-        <p className="text-lg text-light-secondary leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          Gecko Advisor helps everyone understand how websites track and collect data. Our open-source privacy scanner reveals hidden trackers, cookies, and data collection practices—making privacy transparency accessible to all.
+    <div className="max-w-none space-y-8">
+      {/* Hero Section */}
+      <section className="text-center space-y-4 py-8">
+        <h1 className="text-4xl md:text-5xl font-bold text-light-primary">About Gecko Advisor</h1>
+        <p className="text-xl text-light-secondary max-w-3xl mx-auto">
+          Making privacy transparency accessible to everyone
         </p>
-        <p className="text-lg text-light-secondary leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          Our open-source methodology ensures transparency and reproducibility. All scanning logic is public, deterministic, and auditable. We analyze privacy practices without collecting user data—our commitment to privacy extends to our own operations.
-        </p>
-        <p className="text-lg text-light-secondary leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          Founded on the principle that privacy transparency benefits everyone, Gecko Advisor is open source and accessible to anyone who wants to understand how websites handle their data.
-        </p>
-
-        <h3 className="text-xl font-bold text-advisor-400 mt-6 mb-3 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Our Approach</h3>
-        <ul className="text-base text-light-secondary space-y-2 my-4">
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Open-source methodology</strong> for full auditability</li>
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Deterministic scoring</strong> for reproducible results</li>
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Evidence-based analysis</strong> backed by recognized privacy databases</li>
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Open source and accessible</strong> for everyone who cares about privacy</li>
-        </ul>
-
-        <h3 className="text-xl font-bold text-advisor-400 mt-6 mb-3 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Our Values</h3>
-        <ul className="text-base text-light-secondary space-y-2 my-4">
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Transparency:</strong> Our code, data sources, and methodology are public</li>
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Accuracy:</strong> We cite sources and provide evidence for every finding</li>
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Privacy:</strong> We don't track users while analyzing tracking</li>
-          <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><strong className="text-light-primary">Accessibility:</strong> Open and accessible for everyone to use</li>
-        </ul>
       </section>
 
-      <h2 className="text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">What We Do</h2>
-      <p className="text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-        Gecko Advisor provides explainable privacy checks for user-submitted URLs.
-        It uses bundled, offline lists for deterministic scans in tests and production.
-      </p>
+      {/* Mission Statement */}
+      <section className="bg-gradient-to-br from-advisor-500/10 to-advisor-600/5 border border-advisor-500/20 rounded-2xl p-8 shadow-xl">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-12 h-12 bg-advisor-500/20 rounded-xl flex items-center justify-center">
+            <svg className="w-6 h-6 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-advisor-300 mb-4">Our Mission</h2>
+            <p className="text-lg text-light-secondary leading-relaxed mb-4">
+              Gecko Advisor helps everyone understand how websites track and collect data. Our open-source privacy scanner reveals hidden trackers, cookies, and data collection practices—making privacy transparency accessible to all.
+            </p>
+            <p className="text-base text-light-secondary leading-relaxed">
+              We analyze privacy practices without collecting user data—our commitment to privacy extends to our own operations. 100% free, no account required.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <h2 className="text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Data Sources & Attribution</h2>
-      <p className="text-base text-light-secondary mb-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-        Gecko Advisor's privacy analysis is powered by industry-recognized privacy databases and our own proprietary scanning engine. We transparently disclose all data sources:
-      </p>
-      <ul className="text-light-secondary">
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          <strong className="text-light-primary">EasyPrivacy</strong> — Dual licensed (GPL v3 + Creative Commons BY-SA 3.0). Used server-side for tracker detection.
-          <br />
-          <a href="https://easylist.to/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a> ·
-          <a href="https://easylist.to/easylist/easyprivacy.txt" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">License Info</a> ·
-          <a href="https://github.com/easylist/easylist" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a>
-          <br />
-          <em className="text-light-tertiary">Attribution: EasyPrivacy filter list by EasyList contributors (easylist.to)</em>
-        </li>
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          <strong className="text-light-primary">WhoTracks.me</strong> — Tracker database under Creative Commons Attribution 4.0 International License.
-          <br />
-          <a href="https://whotracks.me/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a> ·
-          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">CC BY 4.0 License</a> ·
-          <a href="https://github.com/ghostery/whotracks.me" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a>
-          <br />
-          <em className="text-light-tertiary">Attribution: WhoTracks.me data by Ghostery GmbH, used under CC BY 4.0</em>
-        </li>
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          <strong className="text-light-primary">Public Suffix List</strong> — Maintained by Mozilla contributors under Mozilla Public License.
-          <br />
-          <a href="https://publicsuffix.org/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a> ·
-          <a href="https://github.com/publicsuffix/list" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a>
-        </li>
-      </ul>
+      {/* Two Column: Approach & Values */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Our Approach */}
+        <section className="bg-dark-elevated rounded-2xl p-6 border border-dark-border">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-advisor-500/20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-advisor-400">Our Approach</h3>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Open-source methodology</strong> for full auditability</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Deterministic scoring</strong> for reproducible results</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Evidence-based analysis</strong> backed by recognized privacy databases</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Accessible to everyone</strong> who cares about privacy</span>
+            </li>
+          </ul>
+        </section>
 
-      <h2 className="text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Fonts</h2>
-      <ul className="text-light-secondary">
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-          <strong className="text-light-primary">Inter Font</strong> — Created by Rasmus Andersson, licensed under SIL Open Font License 1.1.
-          <br />
-          <a href="https://github.com/rsms/inter" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a> ·
-          <a href="https://rsms.me/inter/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a> ·
-          <a href="/fonts/OFL.txt" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">OFL License</a>
-          <br />
-          <em className="text-light-tertiary">Copyright © 2020 The Inter Project Authors</em>
-        </li>
-      </ul>
+        {/* Our Values */}
+        <section className="bg-dark-elevated rounded-2xl p-6 border border-dark-border">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-advisor-500/20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-advisor-400">Our Values</h3>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Transparency:</strong> Code, data sources, and methodology are public</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Accuracy:</strong> We cite sources and provide evidence for every finding</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Privacy:</strong> We don't track users while analyzing tracking</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-advisor-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-light-secondary"><strong className="text-light-primary">Accessibility:</strong> Free and open for everyone to use</span>
+            </li>
+          </ul>
+        </section>
+      </div>
 
-      <h2 className="text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Legal</h2>
-      <ul className="text-light-secondary">
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><a href="/terms.html" className="text-advisor-400 hover:text-advisor-300">Terms of Use</a></li>
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><a href="/privacy.html" className="text-advisor-400 hover:text-advisor-300">Privacy Policy</a></li>
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><a href="/NOTICE.md" className="text-advisor-400 hover:text-advisor-300">NOTICE</a></li>
-        <li className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"><a href="/LICENSE-THIRD-PARTY.md" className="text-advisor-400 hover:text-advisor-300">Third-Party Licenses</a></li>
-      </ul>
+      {/* Data Sources */}
+      <section className="bg-dark-elevated rounded-2xl p-6 border border-dark-border">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-advisor-500/20 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-advisor-300">Data Sources & Attribution</h2>
+        </div>
+        <p className="text-light-secondary mb-6">
+          Our privacy analysis is powered by industry-recognized databases and transparent methodologies:
+        </p>
+        <div className="space-y-4">
+          <div className="bg-dark-surface rounded-xl p-4 border border-dark-border">
+            <h3 className="font-bold text-light-primary mb-2">EasyPrivacy</h3>
+            <p className="text-sm text-light-secondary mb-2">
+              Dual licensed (GPL v3 + CC BY-SA 3.0). Used for tracker detection.
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <a href="https://easylist.to/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a>
+              <span className="text-dark-border">·</span>
+              <a href="https://github.com/easylist/easylist" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a>
+            </div>
+          </div>
+          <div className="bg-dark-surface rounded-xl p-4 border border-dark-border">
+            <h3 className="font-bold text-light-primary mb-2">WhoTracks.me</h3>
+            <p className="text-sm text-light-secondary mb-2">
+              Tracker database under CC BY 4.0 license.
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <a href="https://whotracks.me/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a>
+              <span className="text-dark-border">·</span>
+              <a href="https://github.com/ghostery/whotracks.me" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a>
+            </div>
+          </div>
+          <div className="bg-dark-surface rounded-xl p-4 border border-dark-border">
+            <h3 className="font-bold text-light-primary mb-2">Public Suffix List</h3>
+            <p className="text-sm text-light-secondary mb-2">
+              Maintained by Mozilla contributors under Mozilla Public License.
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <a href="https://publicsuffix.org/" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">Official Site</a>
+              <span className="text-dark-border">·</span>
+              <a href="https://github.com/publicsuffix/list" target="_blank" rel="noreferrer" className="text-advisor-400 hover:text-advisor-300">GitHub</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <h2 className="text-light-primary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Scanning Policy</h2>
-      <p className="text-light-secondary drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-        We only scan URLs explicitly submitted by users. Crawls are shallow (≤10 pages or ≤10s) and rate-limited.
-        For concerns, contact us via the link in the footer.
-      </p>
+      {/* Legal & Credits */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <section className="bg-dark-elevated rounded-2xl p-6 border border-dark-border">
+          <h3 className="text-xl font-bold text-advisor-400 mb-4">Legal</h3>
+          <ul className="space-y-2">
+            <li><a href="/terms.html" className="text-light-secondary hover:text-advisor-400 transition-colors">Terms of Use</a></li>
+            <li><a href="/privacy.html" className="text-light-secondary hover:text-advisor-400 transition-colors">Privacy Policy</a></li>
+            <li><a href="/NOTICE.md" className="text-light-secondary hover:text-advisor-400 transition-colors">NOTICE</a></li>
+            <li><a href="/LICENSE-THIRD-PARTY.md" className="text-light-secondary hover:text-advisor-400 transition-colors">Third-Party Licenses</a></li>
+          </ul>
+        </section>
+
+        <section className="bg-dark-elevated rounded-2xl p-6 border border-dark-border">
+          <h3 className="text-xl font-bold text-advisor-400 mb-4">Scanning Policy</h3>
+          <p className="text-light-secondary text-sm leading-relaxed">
+            We only scan URLs explicitly submitted by users. Crawls are shallow (≤10 pages or ≤10s) and rate-limited.
+            For concerns, contact us via the link in the footer.
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
