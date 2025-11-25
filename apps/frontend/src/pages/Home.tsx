@@ -2,7 +2,7 @@
 SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -14,6 +14,8 @@ import Footer from '../components/Footer';
 import Header from '../components/Header';
 import GradeBadge from '../components/GradeBadge';
 import TurnstileWidget, { useTurnstileEnabled } from '../components/TurnstileWidget';
+import UrlInput, { saveRecentScan } from '../components/UrlInput';
+import type { UrlInputRef } from '../components/UrlInput';
 import type { RecentReportsResponse } from '@gecko-advisor/shared';
 
 type RecentItem = RecentReportsResponse['items'][number] & { evidenceCount: number };
@@ -54,12 +56,13 @@ const fetchRecentReports = async (): Promise<RecentQueryResult> => {
 };
 
 export default function Home() {
-  const [input, setInput] = useState('https://example.com');
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { token } = useAuth();
   const turnstileEnabled = useTurnstileEnabled();
+  const urlInputRef = useRef<UrlInputRef>(null);
 
   // Fetch stats for total scan count
   const { data: stats } = useQuery({
@@ -77,6 +80,20 @@ export default function Home() {
 
   async function onScan() {
     try {
+      // Validate URL using the UrlInput ref
+      if (!urlInputRef.current?.isValid()) {
+        toast.error('Please enter a valid URL');
+        urlInputRef.current?.focus();
+        return;
+      }
+
+      // Get the normalized URL from the input
+      const normalizedUrl = urlInputRef.current.getNormalizedUrl();
+      if (!normalizedUrl) {
+        toast.error('Please enter a valid URL');
+        return;
+      }
+
       setLoading(true);
 
       // If Turnstile is enabled and no token, show error
@@ -84,6 +101,9 @@ export default function Home() {
         toast.error('Please wait for security check to complete');
         return;
       }
+
+      // Save to recent scans before making the request
+      saveRecentScan(normalizedUrl);
 
       // Call the v2 API endpoint
       const response = await fetch('/api/v2/scan', {
@@ -93,7 +113,7 @@ export default function Home() {
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({
-          url: input,
+          url: normalizedUrl,
           ...(turnstileToken && { turnstileToken }),
         }),
       });
@@ -280,68 +300,60 @@ export default function Home() {
           />
         </div>
 
-        {/* Unified Scanner Input */}
-        <div className="relative mb-4">
-          <input
-            id="scan-input"
-            type="url"
+        {/* Enhanced URL Input with real-time validation */}
+        <div className="mb-4">
+          <UrlInput
+            ref={urlInputRef}
             value={input}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !loading) {
-                onScan();
-              }
-            }}
-            className="
-              w-full
-              pl-6 pr-32 py-5 text-lg
-              bg-light-elevated
-              border-2 border-gray-200
-              rounded-xl
-              focus:outline-none focus:ring-4 focus:ring-advisor-500/30 focus:border-advisor-500
-              transition-all duration-200
-              text-gecko-900 placeholder-gecko-400
-            "
-            placeholder="Paste any URL (e.g., nytimes.com)"
-            aria-label="Scan input"
-            aria-describedby="scan-help-text"
+            onChange={setInput}
+            onSubmit={onScan}
+            placeholder="Enter any website (e.g., nytimes.com)"
+            disabled={loading}
+            id="scan-input"
+            ariaDescribedBy="scan-help-text"
+            debounceMs={400}
+            showRecentScans={true}
+            maxRecentScans={5}
           />
+        </div>
 
+        {/* Scan Button - Separate from input for better UX */}
+        <div className="mb-4">
           <button
             onClick={onScan}
             disabled={loading || (turnstileEnabled && !turnstileToken)}
             className="
-              absolute right-2 top-1/2 -translate-y-1/2
-              px-5 py-2.5
-              rounded-lg
+              w-full
+              px-6 py-4
+              rounded-xl
               bg-advisor-500
               hover:bg-advisor-600
               shadow-lg shadow-advisor-500/30
               hover:shadow-xl hover:shadow-advisor-600/40
-              hover:scale-105
-              active:scale-95
+              hover:scale-[1.02]
+              active:scale-[0.98]
               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
               transition-all duration-300
-              text-white font-semibold text-base
+              text-white font-semibold text-lg
               whitespace-nowrap
             "
             aria-label="Start privacy scan"
           >
-            <span className="inline-flex items-center justify-center gap-2">
+            <span className="inline-flex items-center justify-center gap-3">
               {loading ? (
                 <>
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
-                  <span className="hidden sm:inline">Scanning...</span>
+                  <span>Scanning...</span>
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span className="hidden sm:inline">Scan</span>
+                  <span>Scan for Privacy Issues</span>
                 </>
               )}
             </span>
