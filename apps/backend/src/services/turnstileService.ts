@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { Logger } from 'pino';
 import { config } from '../config.js';
 import { logger } from '../logger.js';

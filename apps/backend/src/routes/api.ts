@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { Router, type Request, type Response } from 'express';
 import crypto from 'crypto';
 import { prisma } from '../prisma.js';

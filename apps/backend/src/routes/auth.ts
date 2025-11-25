@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { Router } from 'express';
 import { z } from 'zod';
 import { AuthService, type SafeUser } from '../services/authService.js';

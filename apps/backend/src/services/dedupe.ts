@@ -1,4 +1,4 @@
-﻿import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { config } from "../config.js";
 
 export async function findReusableScan(prisma: PrismaClient, normalizedInput: string) {

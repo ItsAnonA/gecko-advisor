@@ -1,4 +1,8 @@
-﻿import type { ScanHistoryEntry } from '../lib/history';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import type { ScanHistoryEntry } from '../lib/history';
 
 export interface RecentScansProps {
   entries: ScanHistoryEntry[];

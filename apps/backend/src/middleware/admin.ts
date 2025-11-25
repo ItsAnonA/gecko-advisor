@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { timingSafeEqual } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 

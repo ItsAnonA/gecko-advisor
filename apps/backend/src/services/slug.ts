@@ -1,4 +1,4 @@
-﻿import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { customAlphabet } from "nanoid";

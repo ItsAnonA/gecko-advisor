@@ -1,4 +1,8 @@
-﻿import process from "node:process";
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import process from "node:process";
 
 function parseNumber(value: string | undefined, fallback: number): number {
   if (!value) return fallback;

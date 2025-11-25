@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { PrismaClient } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';

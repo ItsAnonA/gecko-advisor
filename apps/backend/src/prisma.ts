@@ -1,4 +1,8 @@
-﻿import { PrismaClient } from '@prisma/client';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import { PrismaClient } from '@prisma/client';
 import { logger } from './logger.js';
 
 /**

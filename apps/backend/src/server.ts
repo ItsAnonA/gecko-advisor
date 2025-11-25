@@ -1,4 +1,8 @@
-﻿import express, { type NextFunction, type Request, type Response } from "express";
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import express, { type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";

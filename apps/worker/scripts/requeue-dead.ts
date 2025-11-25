@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 import { Queue, QueueEvents } from "bullmq";
 import Redis from "ioredis";
 import process from "node:process";

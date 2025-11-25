@@ -1,4 +1,8 @@
-﻿import { useState } from 'react';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import { useState } from 'react';
 import clsx from 'clsx';
 
 export interface ShareBarProps {

@@ -1,4 +1,8 @@
 #!/usr/bin/env tsx
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 /**
  * Cleanup script to delete scans with incorrect scores from old algorithm
  * Run with: npx tsx apps/backend/src/scripts/cleanup-old-scans.ts

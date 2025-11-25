@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';

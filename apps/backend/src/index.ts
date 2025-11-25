@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { Server } from "node:http";
 import { createServer } from "./server.js";
 import { config } from "./config.js";

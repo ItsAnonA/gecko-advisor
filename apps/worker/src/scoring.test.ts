@@ -1,4 +1,8 @@
-﻿import { describe, it, expect } from 'vitest';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import { describe, it, expect } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
 import { computeScore } from './scoring.js';
 

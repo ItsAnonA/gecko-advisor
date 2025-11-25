@@ -1,4 +1,8 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import type { EvidenceView } from '../lib/adapters/scan';
 

@@ -1,4 +1,8 @@
-﻿import clsx from 'clsx';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import clsx from 'clsx';
 import type { ScoreBand } from '../lib/adapters/scan';
 
 const BAND_STYLES: Record<ScoreBand, string> = {

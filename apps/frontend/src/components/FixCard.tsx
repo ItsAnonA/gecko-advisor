@@ -1,4 +1,8 @@
-﻿import clsx from 'clsx';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import clsx from 'clsx';
 import type { TopFixView } from '../lib/adapters/scan';
 
 const SEVERITY_COLORS: Record<TopFixView['severity'], string> = {

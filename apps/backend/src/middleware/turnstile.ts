@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import type { NextFunction, Request, Response } from 'express';
 import { turnstileService } from '../services/turnstileService.js';
 import { problem } from '../problem.js';

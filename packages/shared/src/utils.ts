@@ -1,4 +1,8 @@
-﻿import type { ScoreLabel } from './types.js';
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import type { ScoreLabel } from './types.js';
 /**
  * Safely normalizes a URL input with proper validation to prevent SSRF attacks.
  * Only allows http and https protocols and validates hostname format.

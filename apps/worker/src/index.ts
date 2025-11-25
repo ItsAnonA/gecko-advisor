@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import http from "node:http";
 import { Worker, QueueEvents, Queue, type Job } from "bullmq";
 import Redis from "ioredis";

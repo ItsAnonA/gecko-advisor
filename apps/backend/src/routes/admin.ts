@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { adminGuard } from "../middleware/admin.js";
 import { loadDemoLists } from "../lists.js";
 import { prisma } from "../prisma.js";

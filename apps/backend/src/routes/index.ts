@@ -1,4 +1,8 @@
-﻿import { Router } from "express";
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+import { Router } from "express";
 import { scanV1Router } from "./v1.scan.js";
 import { reportV1Router } from "./v1.reports.js";
 import { scanV2Router } from "./v2.scan.js";

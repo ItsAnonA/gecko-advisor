@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 export * from './schemas.js';
 export * from './types.js';
 export * from './utils.js';

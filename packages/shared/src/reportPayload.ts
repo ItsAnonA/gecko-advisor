@@ -1,3 +1,7 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
 import { etldPlusOne } from './utils.js';
 
 export type ReportIssueSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';

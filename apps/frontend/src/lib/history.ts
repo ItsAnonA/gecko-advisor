@@ -1,4 +1,4 @@
-﻿export interface ScanHistoryEntry {
+export interface ScanHistoryEntry {
   slug: string;
   domain: string;
   score: number | null;
