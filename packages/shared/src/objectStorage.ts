@@ -163,4 +163,64 @@ export class ObjectStorageService {
       return false;
     }
   }
+
+  /**
+   * Fetches and parses a JSON object from storage.
+   * Returns null if not found or on error.
+   */
+  async getJson<T = unknown>(key: string): Promise<T | null> {
+    if (!this.isEnabled() || !this.client || !this.bucket) {
+      return null;
+    }
+
+    try {
+      const response = await this.client.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        })
+      );
+
+      if (!response.Body) {
+        return null;
+      }
+
+      const bodyString = await response.Body.transformToString('utf-8');
+      return JSON.parse(bodyString) as T;
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+      if (status === 404) {
+        // Object not found - this is expected for new/unmigrated scans
+        return null;
+      }
+      this.logger.error({ error, key }, 'Failed to fetch object from storage');
+      return null;
+    }
+  }
+
+  /**
+   * Checks if an object exists in storage.
+   */
+  async exists(key: string): Promise<boolean> {
+    if (!this.isEnabled() || !this.client || !this.bucket) {
+      return false;
+    }
+
+    try {
+      await this.client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        })
+      );
+      return true;
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+      if (status === 404) {
+        return false;
+      }
+      this.logger.error({ error, key }, 'Failed to check object existence');
+      return false;
+    }
+  }
 }

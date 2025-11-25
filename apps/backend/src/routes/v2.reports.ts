@@ -5,13 +5,33 @@ import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { logger } from "../logger.js";
 import { CacheService, CACHE_KEYS, CACHE_TTL } from "../cache.js";
-import { getReportDownloadUrl } from "../services/reportArchive.js";
+import { getReportDownloadUrl, getReportFromStorage } from "../services/reportArchive.js";
 
 export const reportV2Router = Router();
 
 reportV2Router.get(['/report/:slug', '/r/:slug'], async (req, res) => {
   try {
     const slug = req.params.slug;
+
+    // First, get minimal scan info to get the scanId for Object Storage lookup
+    const scanInfo = await prisma.scan.findUnique({
+      where: { slug },
+      select: { id: true, status: true },
+    });
+
+    if (!scanInfo) {
+      return problem(res, 404, 'Report not found');
+    }
+
+    // Try Object Storage first (faster, reduces DB load)
+    const cachedReport = await getReportFromStorage(scanInfo.id);
+    if (cachedReport) {
+      const archive = await getReportDownloadUrl(scanInfo.id);
+      return res.json(archive ? { ...cachedReport, archive } : cachedReport);
+    }
+
+    // Fallback to database if not in Object Storage
+    logger.debug({ slug, scanId: scanInfo.id }, 'Report not in Object Storage, fetching from DB');
     const scan = await prisma.scan.findUnique({
       where: { slug },
       include: {
@@ -23,6 +43,7 @@ reportV2Router.get(['/report/:slug', '/r/:slug'], async (req, res) => {
         },
       },
     });
+
     if (!scan) {
       return problem(res, 404, 'Report not found');
     }
@@ -42,8 +63,19 @@ reportV2Router.get(['/report/:slug', '/r/:slug'], async (req, res) => {
 
 reportV2Router.get('/scan/:id', async (req, res) => {
   try {
+    const scanId = req.params.id;
+
+    // Try Object Storage first (faster, reduces DB load)
+    const cachedReport = await getReportFromStorage(scanId);
+    if (cachedReport) {
+      const archive = await getReportDownloadUrl(scanId);
+      return res.json(archive ? { ...cachedReport, archive } : cachedReport);
+    }
+
+    // Fallback to database if not in Object Storage
+    logger.debug({ scanId }, 'Report not in Object Storage, fetching from DB');
     const scan = await prisma.scan.findUnique({
-      where: { id: req.params.id },
+      where: { id: scanId },
       include: {
         evidence: {
           orderBy: { createdAt: 'asc' },
@@ -53,9 +85,11 @@ reportV2Router.get('/scan/:id', async (req, res) => {
         },
       },
     });
+
     if (!scan) {
       return problem(res, 404, 'Scan not found');
     }
+
     const payload = buildReportPayload(scan, {
       evidence: scan.evidence ?? [],
       issues: scan.issues ?? [],
