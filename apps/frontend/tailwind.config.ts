@@ -20,18 +20,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Modern Minimalist Dark Theme Colors
+        // "Gecko in the Light" - Natural Transparency Theme
+        // Warm, professional, trustworthy light theme with nature-inspired colors
+        'light': {
+          'bg': '#FAFAF9',         // Warm white (stone-50) - primary background
+          'surface': '#FFFFFF',     // Pure white for cards
+          'elevated': '#F5F5F4',    // Slightly darker (stone-100) for depth
+          'sage': '#F0FDF4',        // Light sage (green-50) for subtle accents
+          'border': '#E7E5E4',      // stone-200 for subtle borders
+          'hover': '#F5F5F4',       // stone-100 for hover states
+        },
         'dark': {
-          'bg': '#0a0e17',        // Deep background (near black with blue tint)
+          'bg': '#0a0e17',        // Deep background (optional dark mode)
           'surface': '#12161f',    // Elevated surfaces
           'elevated': '#1a1f2e',   // Cards, panels
           'border': '#1f2937',     // Subtle borders
           'hover': '#374151',      // Hover states
-        },
-        'light': {
-          'primary': '#f9fafb',    // High contrast white
-          'secondary': '#e5e7eb',  // Medium gray text
-          'tertiary': '#9ca3af',   // Subtle text
         },
         // Privacy score colors (brightened for dark mode)
         'score': {
@@ -225,6 +229,12 @@ export default {
       },
 
       boxShadow: {
+        // Soft, natural shadows for light theme
+        'soft': '0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'soft-md': '0 4px 12px 0 rgba(0, 0, 0, 0.08)',
+        'soft-lg': '0 10px 24px 0 rgba(0, 0, 0, 0.10)',
+        'soft-xl': '0 20px 40px 0 rgba(0, 0, 0, 0.12)',
+        // Legacy privacy shadows
         'privacy': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         'privacy-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         'privacy-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',

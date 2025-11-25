@@ -9,15 +9,21 @@ interface LayoutProps {
 }
 
 /**
- * Main layout wrapper with professional gradient background
- * Provides consistent, clean background across all pages
+ * Main layout wrapper with "Gecko in the Light" theme
+ * Warm, natural, professional light background that builds trust
  */
 export function Layout({ children }: LayoutProps) {
   return (
     <>
-      {/* Professional gradient background - clean and trustworthy */}
+      {/* Warm natural background - trustworthy and approachable */}
       <div
-        className="fixed inset-0 -z-10 bg-gradient-to-br from-dark-bg via-dark-surface to-dark-elevated"
+        className="fixed inset-0 -z-10 bg-light-bg"
+        aria-hidden="true"
+      />
+
+      {/* Subtle sage accent overlay for natural gecko-inspired feel */}
+      <div
+        className="fixed inset-0 -z-10 bg-gradient-to-b from-light-sage/30 via-transparent to-transparent pointer-events-none"
         aria-hidden="true"
       />
 

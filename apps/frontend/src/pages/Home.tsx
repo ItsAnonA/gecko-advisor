@@ -110,13 +110,13 @@ export default function Home() {
       <header className="text-center space-y-6 py-8 md:py-16">
         {/* Trust Signals - Above headline */}
         <div className="flex items-center justify-center gap-3 mb-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-500/10 border border-advisor-500/20 text-xs font-semibold text-advisor-400">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-semibold text-advisor-700">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
             Open Source
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-500/10 border border-advisor-500/20 text-xs font-semibold text-advisor-400">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-semibold text-advisor-700">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
@@ -126,7 +126,7 @@ export default function Home() {
             href="https://github.com/privacygecko/gecko-advisor"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-500/10 border border-advisor-500/20 text-xs font-semibold text-advisor-400 hover:bg-advisor-500/20 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-semibold text-advisor-700 hover:bg-advisor-100 transition-colors"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
@@ -137,39 +137,37 @@ export default function Home() {
 
         {/* Main Headline - Clean, professional messaging */}
         <h1 className="leading-tight max-w-4xl mx-auto px-4">
-          <span className="block text-4xl sm:text-5xl md:text-6xl font-bold text-light-primary drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+          <span className="block text-4xl sm:text-5xl md:text-6xl font-bold text-gecko-900">
             Instant Privacy Analysis
           </span>
-          <span className="block text-3xl sm:text-4xl md:text-5xl font-bold text-advisor-500 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] mt-2">
+          <span className="block text-3xl sm:text-4xl md:text-5xl font-bold text-advisor-600 mt-2">
             for Any Website
           </span>
         </h1>
 
         {/* Subheadline - Benefit-focused */}
-        <p className="text-lg md:text-xl text-light-secondary mb-10 max-w-2xl mx-auto leading-relaxed px-4">
+        <p className="text-lg md:text-xl text-gecko-600 mb-10 max-w-2xl mx-auto leading-relaxed px-4">
           Scan any website to reveal hidden trackers, cookies, and data collection practices.
           100% free, transparent, and privacy-respecting.
         </p>
       </header>
 
-      {/* Floating Command Center Scan Box - Enhanced with depth */}
+      {/* Privacy Scanner Box - Clean, professional light theme */}
       <div className="
         relative z-10
         max-w-3xl mx-auto
-        bg-gradient-to-br from-dark-elevated/95 via-dark-surface/90 to-dark-bg/85
+        bg-white
         rounded-2xl
-        shadow-[0_20px_60px_-15px_rgba(16,185,129,0.2),0_0_40px_-10px_rgba(16,185,129,0.1)]
-        border border-advisor-500/30
-        backdrop-blur-xl
+        shadow-soft-lg
+        border border-advisor-200
         p-6 md:p-8
-        before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-br before:from-advisor-500/40 before:via-advisor-500/10 before:to-transparent before:-z-10
-        hover:shadow-[0_25px_70px_-15px_rgba(16,185,129,0.25),0_0_50px_-10px_rgba(16,185,129,0.15)]
-        transition-shadow duration-300
+        hover:shadow-soft-xl hover:border-advisor-300
+        transition-all duration-300
       ">
         {/* Status Indicator */}
         <div className="flex items-center gap-2 mb-4">
           <div className="w-2 h-2 rounded-full bg-advisor-500 animate-pulse"></div>
-          <span className="text-xs uppercase tracking-wider font-bold text-advisor-500">
+          <span className="text-xs uppercase tracking-wider font-bold text-advisor-600">
             Privacy Scanner
           </span>
         </div>
@@ -204,12 +202,12 @@ export default function Home() {
             className="
               w-full
               pl-6 pr-32 py-5 text-lg
-              bg-dark-bg/50 backdrop-blur-sm
-              border-2 border-dark-border
+              bg-light-elevated
+              border-2 border-light-border
               rounded-xl
-              focus:outline-none focus:ring-4 focus:ring-[#00d985]/50 focus:border-[#00d985]
+              focus:outline-none focus:ring-4 focus:ring-advisor-500/30 focus:border-advisor-500
               transition-all duration-200
-              text-light-primary placeholder-light-secondary/60
+              text-gecko-900 placeholder-gecko-400
             "
             placeholder="Paste any URL (e.g., nytimes.com)"
             aria-label="Scan input"
@@ -223,15 +221,15 @@ export default function Home() {
               absolute right-2 top-1/2 -translate-y-1/2
               px-5 py-2.5
               rounded-lg
-              bg-[#00d985]
-              hover:bg-[#00c278]
-              shadow-lg shadow-[#00d985]/30
-              hover:shadow-xl hover:shadow-[#00c278]/50
+              bg-advisor-500
+              hover:bg-advisor-600
+              shadow-lg shadow-advisor-500/30
+              hover:shadow-xl hover:shadow-advisor-600/40
               hover:scale-105
               active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
               transition-all duration-300
-              text-dark-bg font-semibold text-base
+              text-white font-semibold text-base
               whitespace-nowrap
             "
             aria-label="Start privacy scan"
@@ -258,76 +256,76 @@ export default function Home() {
         </div>
 
         {/* Help Text */}
-        <p className="text-xs text-light-secondary/80 text-center" id="scan-help-text">
+        <p className="text-xs text-gecko-500 text-center" id="scan-help-text">
           Results in ~60 seconds • Privacy score (A-F) with evidence
         </p>
       </div>
 
       {/* How It Works - Unified 3-step workflow */}
       <section className="max-w-4xl mx-auto mt-16 md:mt-24 mb-12 md:mb-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-light-primary mb-6 md:mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-gecko-900 mb-6 md:mb-8">
           How It Works
         </h2>
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
           {/* Step 1: Scan */}
           <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-advisor-500/20 bg-gradient-to-b from-dark-surface/80 to-dark-bg/60 shadow-[0_8px_30px_rgba(16,185,129,0.08)] backdrop-blur-sm animate-fadeInUp opacity-0 [animation-delay:100ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-[0_12px_40px_rgba(16,185,129,0.12)] hover:border-advisor-500/30 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-advisor-500/20 to-advisor-600/10 border border-advisor-500/30 flex items-center justify-center shadow-lg shadow-advisor-500/20 transition-all duration-200 hover:scale-110 hover:shadow-advisor-500/40">
-                <svg className="w-7 h-7 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <div className="text-center p-8 rounded-xl border border-light-border bg-white shadow-soft-md animate-fadeInUp opacity-0 [animation-delay:100ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-soft-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-soft transition-all duration-200 hover:scale-110 hover:shadow-soft-md">
+                <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-light-primary mb-1">
+              <h3 className="text-lg md:text-xl font-bold text-gecko-900 mb-1">
                 Scan the Website
               </h3>
-              <div className="h-[1px] w-6 bg-dark-border/50 mx-auto mb-2"></div>
-              <p className="text-[13px] text-light-tertiary leading-relaxed">
+              <div className="h-[1px] w-6 bg-light-border mx-auto mb-2"></div>
+              <p className="text-[13px] text-gecko-600 leading-relaxed">
                 Cookies, Trackers, Security Headers
               </p>
             </div>
           </div>
 
           {/* Arrow */}
-          <div className="text-3xl text-gray-500/70 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-16" aria-hidden="true">
+          <div className="text-3xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-16" aria-hidden="true">
             →
           </div>
 
           {/* Step 2: Analyze */}
           <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-advisor-500/20 bg-gradient-to-b from-dark-surface/80 to-dark-bg/60 shadow-[0_8px_30px_rgba(16,185,129,0.08)] backdrop-blur-sm animate-fadeInUp opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-[0_12px_40px_rgba(16,185,129,0.12)] hover:border-advisor-500/30 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-advisor-500/20 to-advisor-600/10 border border-advisor-500/30 flex items-center justify-center shadow-lg shadow-advisor-500/20 transition-all duration-200 hover:scale-110 hover:shadow-advisor-500/40">
-                <svg className="w-7 h-7 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <div className="text-center p-8 rounded-xl border border-light-border bg-white shadow-soft-md animate-fadeInUp opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-soft-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-soft transition-all duration-200 hover:scale-110 hover:shadow-soft-md">
+                <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-light-primary mb-1">
+              <h3 className="text-lg md:text-xl font-bold text-gecko-900 mb-1">
                 Analyze the Data
               </h3>
-              <div className="h-[1px] w-6 bg-dark-border/50 mx-auto mb-2"></div>
-              <p className="text-[13px] text-light-tertiary leading-relaxed">
+              <div className="h-[1px] w-6 bg-light-border mx-auto mb-2"></div>
+              <p className="text-[13px] text-gecko-600 leading-relaxed">
                 Cross-referencing, Detection Engine
               </p>
             </div>
           </div>
 
           {/* Arrow */}
-          <div className="text-3xl text-gray-500/70 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-16" aria-hidden="true">
+          <div className="text-3xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-16" aria-hidden="true">
             →
           </div>
 
           {/* Step 3: Report */}
           <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-advisor-500/20 bg-gradient-to-b from-dark-surface/80 to-dark-bg/60 shadow-[0_8px_30px_rgba(16,185,129,0.08)] backdrop-blur-sm animate-fadeInUp opacity-0 [animation-delay:300ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-[0_12px_40px_rgba(16,185,129,0.12)] hover:border-advisor-500/30 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-advisor-500/20 to-advisor-600/10 border border-advisor-500/30 flex items-center justify-center shadow-lg shadow-advisor-500/20 transition-all duration-200 hover:scale-110 hover:shadow-advisor-500/40">
-                <svg className="w-7 h-7 text-advisor-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <div className="text-center p-8 rounded-xl border border-light-border bg-white shadow-soft-md animate-fadeInUp opacity-0 [animation-delay:300ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-soft-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-soft transition-all duration-200 hover:scale-110 hover:shadow-soft-md">
+                <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-light-primary mb-1">
+              <h3 className="text-lg md:text-xl font-bold text-gecko-900 mb-1">
                 Report
               </h3>
-              <div className="h-[1px] w-6 bg-dark-border/50 mx-auto mb-2"></div>
-              <p className="text-[13px] text-light-tertiary leading-relaxed">
+              <div className="h-[1px] w-6 bg-light-border mx-auto mb-2"></div>
+              <p className="text-[13px] text-gecko-600 leading-relaxed">
                 Privacy Score, Evidence, Recommendations
               </p>
             </div>
