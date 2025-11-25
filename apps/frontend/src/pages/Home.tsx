@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { getRecentReports } from '../lib/api';
+import { getRecentReports, getStats } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import Card from '../components/Card';
 import Footer from '../components/Footer';
@@ -59,6 +59,20 @@ export default function Home() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const turnstileEnabled = useTurnstileEnabled();
+
+  // Fetch stats for total scan count
+  const { data: stats } = useQuery({
+    queryKey: ['stats'],
+    queryFn: getStats,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Format number with K/M suffix for large numbers
+  const formatCount = (count: number): string => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
 
   async function onScan() {
     try {
@@ -133,6 +147,14 @@ export default function Home() {
             </svg>
             GitHub
           </a>
+          {stats && stats.totalScans > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-semibold text-advisor-700">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {formatCount(stats.totalScans)}+ Scans
+            </span>
+          )}
         </div>
 
         {/* Main Headline - Clean, professional messaging */}

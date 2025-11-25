@@ -37,6 +37,7 @@ redis.on('reconnecting', () => {
  */
 export const CACHE_KEYS = {
   RECENT_REPORTS: 'recent_reports',
+  STATS: 'global_stats',
   SCAN_STATUS: (scanId: string) => `scan_status:${scanId}`,
   REPORT_PAYLOAD: (scanId: string) => `report_payload:${scanId}`,
   EVIDENCE_COUNT: (scanId: string) => `evidence_count:${scanId}`,
@@ -47,6 +48,7 @@ export const CACHE_KEYS = {
  */
 export const CACHE_TTL = {
   RECENT_REPORTS: 300, // 5 minutes
+  STATS: 300, // 5 minutes
   SCAN_STATUS: 60, // 1 minute
   REPORT_PAYLOAD: 900, // 15 minutes (for completed scans)
   EVIDENCE_COUNT: 600, // 10 minutes

@@ -4,6 +4,8 @@ SPDX-License-Identifier: MIT
 */
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getStats } from '../lib/api';
 
 /**
  * Footer Component - Minimal Navigation
@@ -17,12 +19,25 @@ import { Link } from 'react-router-dom';
  * - Transparent with backdrop blur
  * - Minimal copyright text
  * - Fully responsive with flex-wrap
+ * - Total scans count display
  *
  * @example
  * <Footer />
  */
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+
+  // Fetch stats for total scan count
+  const { data: stats } = useQuery({
+    queryKey: ['stats'],
+    queryFn: getStats,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Format number with commas for readability
+  const formatNumber = (num: number): string => {
+    return num.toLocaleString();
+  };
 
   return (
     <footer className="backdrop-blur-md bg-white/80 border-t border-gray-200 mt-16">
@@ -55,6 +70,11 @@ export default function Footer() {
 
         <p className="text-center text-xs text-gecko-500 mt-4">
           © {currentYear} Gecko Advisor. Open source privacy scanner.
+          {stats && stats.totalScans > 0 && (
+            <span className="ml-2 text-advisor-600 font-medium">
+              • {formatNumber(stats.totalScans)} websites scanned
+            </span>
+          )}
         </p>
       </div>
     </footer>

@@ -154,6 +154,27 @@ reportV2Router.get('/reports/recent', async (_req, res) => {
   }
 });
 
+// Stats endpoint - total scans count for credibility display
+reportV2Router.get('/stats', async (_req, res) => {
+  try {
+    const stats = await CacheService.getOrSet(
+      CACHE_KEYS.STATS,
+      async () => {
+        const totalScans = await prisma.scan.count({
+          where: { status: 'done' },
+        });
+        return { totalScans };
+      },
+      CACHE_TTL.STATS
+    );
+
+    res.json(stats);
+  } catch (error) {
+    logger.error({ error }, 'Error fetching stats');
+    return problem(res, 500, 'Failed to load stats');
+  }
+});
+
 // Paginated reports endpoint for ReportsPage
 reportV2Router.get('/reports/all', async (req, res) => {
   try {

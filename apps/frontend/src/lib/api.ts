@@ -192,6 +192,24 @@ export async function getRecentReports() {
   return parseJson(res, RecentReportsResponseSchema);
 }
 
+// Stats API
+export interface StatsResponse {
+  totalScans: number;
+}
+
+export async function getStats(): Promise<StatsResponse> {
+  const res = await fetch('/api/stats');
+  if (!res.ok) throw new Error('Failed to load stats');
+  return res.json();
+}
+
+export const statsQueryOptions = () => ({
+  queryKey: ['stats'],
+  queryFn: () => getStats(),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 15 * 60 * 1000, // 15 minutes
+});
+
 export interface PaginatedReportsResponse {
   items: Array<{
     slug: string;
