@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import React, { useState } from 'react';
+import BackToHome from '../components/BackToHome';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -15,6 +16,7 @@ export default function Legal() {
     <>
       <Header />
       <main className="max-w-5xl mx-auto p-6 pb-16 md:pb-24 space-y-8">
+        <BackToHome />
         <div className="text-center space-y-4 py-8">
           <h1 className="text-4xl md:text-5xl font-bold text-zinc-900">
             Legal

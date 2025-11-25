@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import React from 'react';
+import BackToHome from '../components/BackToHome';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -78,6 +79,7 @@ export default function Faq() {
     <>
       <Header />
       <main className="max-w-5xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
+        <BackToHome />
         {/* Header */}
         <header className="text-center space-y-4 py-8 md:py-12">
           <h1 className="text-3xl md:text-5xl font-black text-zinc-900 leading-tight">

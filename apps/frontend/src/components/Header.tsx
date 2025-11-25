@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { BRAND } from '../config/branding';
 
 /**
@@ -14,7 +14,6 @@ import { BRAND } from '../config/branding';
  *
  * Features:
  * - Gecko Advisor logo (left)
- * - Back to Home button (when not on home page)
  * - GitHub repository link (right)
  * - Fully responsive
  * - Transparent with backdrop blur
@@ -23,49 +22,24 @@ import { BRAND } from '../config/branding';
  * <Header />
  */
 export default function Header() {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
-
   return (
     <header className="backdrop-blur-sm bg-white/90 sticky top-0 z-40 border-b border-gray-200">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left section: Back button + Logo */}
-          <div className="flex items-center gap-3">
-            {/* Back to Home button - shown on all pages except home */}
-            {!isHomePage && (
-              <Link
-                to="/"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gecko-600 hover:text-advisor-600 bg-gray-50 hover:bg-advisor-50 border border-gray-200 hover:border-advisor-300 rounded-full transition-all duration-200 group"
-                aria-label="Back to Home"
-              >
-                <svg
-                  className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span>Home</span>
-              </Link>
-            )}
-
-            {/* Logo - Clean and professional */}
-            <Link
-              to="/"
-              className="flex items-center group"
-              aria-label="Gecko Advisor Home"
-            >
-              <div className="relative">
-                <img
-                  src={BRAND.logo.src}
-                  alt={BRAND.logo.alt}
-                  className="h-12 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-            </Link>
-          </div>
+          {/* Logo - Clean and professional */}
+          <Link
+            to="/"
+            className="flex items-center group"
+            aria-label="Gecko Advisor Home"
+          >
+            <div className="relative">
+              <img
+                src={BRAND.logo.src}
+                alt={BRAND.logo.alt}
+                className="h-12 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+          </Link>
 
           {/* Navigation Links */}
           <div className="flex items-center gap-4">

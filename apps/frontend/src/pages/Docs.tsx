@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import React from 'react';
+import BackToHome from '../components/BackToHome';
 import Card from '../components/Card';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -12,6 +13,7 @@ export default function Docs() {
     <>
       <Header />
       <main className="max-w-3xl mx-auto p-6 space-y-6">
+        <BackToHome />
         <header>
           <h1 className="text-3xl font-bold text-zinc-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">Gecko Advisor Docs</h1>
           <p className="text-zinc-600">How we compute scores and labels.</p>
