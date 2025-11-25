@@ -107,7 +107,7 @@ export default function Home() {
       <Header />
       <main className="max-w-5xl mx-auto p-4 md:p-6 pb-16 md:pb-24 space-y-6 md:space-y-8">
       {/* Hero Section - Privacy Scanner */}
-      <header className="text-center space-y-6 py-8 md:py-16">
+      <header className="text-center space-y-4 py-4 md:py-8">
         {/* Trust Signals - Above headline */}
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-semibold text-advisor-700">
@@ -146,7 +146,7 @@ export default function Home() {
         </h1>
 
         {/* Subheadline - Benefit-focused */}
-        <p className="text-lg md:text-xl text-gecko-600 mb-10 max-w-2xl mx-auto leading-relaxed px-4">
+        <p className="text-lg md:text-xl text-gecko-600 mb-4 max-w-2xl mx-auto leading-relaxed px-4">
           Scan any website to reveal hidden trackers, cookies, and data collection practices.
           100% free, transparent, and privacy-respecting.
         </p>
@@ -262,23 +262,23 @@ export default function Home() {
       </div>
 
       {/* How It Works - Unified 3-step workflow */}
-      <section className="max-w-4xl mx-auto mt-16 md:mt-24 mb-12 md:mb-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-gecko-900 mb-6 md:mb-8">
+      <section className="max-w-4xl mx-auto mt-8 md:mt-12 mb-6 md:mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-gecko-900 mb-4 md:mb-6">
           How It Works
         </h2>
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
           {/* Step 1: Scan */}
-          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:100ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
-                <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[200px]">
+            <div className="text-center p-5 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:100ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
+                <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gecko-900 mb-1">
+              <h3 className="text-base md:text-lg font-bold text-gecko-900 mb-1">
                 Scan the Website
               </h3>
-              <div className="h-[1px] w-6 bg-light-border mx-auto mb-2"></div>
+              <div className="h-[1px] w-6 bg-light-border mx-auto mb-1"></div>
               <p className="text-[13px] text-gecko-600 leading-relaxed">
                 Cookies, Trackers, Security Headers
               </p>
@@ -286,22 +286,22 @@ export default function Home() {
           </div>
 
           {/* Arrow */}
-          <div className="text-3xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-16" aria-hidden="true">
+          <div className="text-2xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-8" aria-hidden="true">
             →
           </div>
 
           {/* Step 2: Analyze */}
-          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
-                <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[200px]">
+            <div className="text-center p-5 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
+                <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gecko-900 mb-1">
+              <h3 className="text-base md:text-lg font-bold text-gecko-900 mb-1">
                 Analyze the Data
               </h3>
-              <div className="h-[1px] w-6 bg-light-border mx-auto mb-2"></div>
+              <div className="h-[1px] w-6 bg-light-border mx-auto mb-1"></div>
               <p className="text-[13px] text-gecko-600 leading-relaxed">
                 Cross-referencing, Detection Engine
               </p>
@@ -309,22 +309,22 @@ export default function Home() {
           </div>
 
           {/* Arrow */}
-          <div className="text-3xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-16" aria-hidden="true">
+          <div className="text-2xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-8" aria-hidden="true">
             →
           </div>
 
           {/* Step 3: Report */}
-          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:300ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
-                <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[200px]">
+            <div className="text-center p-5 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:300ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
+                <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gecko-900 mb-1">
+              <h3 className="text-base md:text-lg font-bold text-gecko-900 mb-1">
                 Report
               </h3>
-              <div className="h-[1px] w-6 bg-light-border mx-auto mb-2"></div>
+              <div className="h-[1px] w-6 bg-light-border mx-auto mb-1"></div>
               <p className="text-[13px] text-gecko-600 leading-relaxed">
                 Privacy Score, Evidence, Recommendations
               </p>

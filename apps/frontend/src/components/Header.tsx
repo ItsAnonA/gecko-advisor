@@ -44,6 +44,12 @@ export default function Header() {
           {/* Navigation Links */}
           <div className="flex items-center gap-4">
             <Link
+              to="/reports"
+              className="flex items-center gap-2 px-3 py-2 text-gecko-600 hover:text-advisor-600 transition-colors text-sm font-medium"
+            >
+              Recent Scans
+            </Link>
+            <Link
               to="/about"
               className="flex items-center gap-2 px-3 py-2 text-gecko-600 hover:text-advisor-600 transition-colors text-sm font-medium"
             >

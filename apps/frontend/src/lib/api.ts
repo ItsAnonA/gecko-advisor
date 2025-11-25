@@ -191,3 +191,28 @@ export async function getRecentReports() {
   if (!res.ok) throw new Error('Recent reports not found');
   return parseJson(res, RecentReportsResponseSchema);
 }
+
+export interface PaginatedReportsResponse {
+  items: Array<{
+    slug: string;
+    score: number;
+    label: string;
+    domain: string;
+    createdAt: string;
+    evidenceCount: number;
+  }>;
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export async function getPaginatedReports(page: number = 1, limit: number = 12): Promise<PaginatedReportsResponse> {
+  const res = await fetch(`/api/reports/all?page=${page}&limit=${limit}`);
+  if (!res.ok) throw new Error('Failed to load reports');
+  return res.json();
+}

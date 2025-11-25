@@ -4,24 +4,20 @@ SPDX-License-Identifier: MIT
 */
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { getRecentReports } from '../lib/api';
-import type { RecentReportsResponse } from '@gecko-advisor/shared';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getPaginatedReports, type PaginatedReportsResponse } from '../lib/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Card from '../components/Card';
 import GradeBadge from '../components/GradeBadge';
-
-type RecentItem = RecentReportsResponse['items'][number] & { evidenceCount: number };
-type RecentQueryResult = { items: RecentItem[] };
 
 /**
  * Helper function for converting dates to relative time strings
  * @param value - Date object or ISO string
  * @returns Human-readable relative time string
  */
-const getRelativeTime = (value: RecentItem['createdAt']): string => {
-  const date = typeof value === 'string' ? new Date(value) : value;
+const getRelativeTime = (value: string): string => {
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
 
   const now = new Date();
@@ -36,50 +32,33 @@ const getRelativeTime = (value: RecentItem['createdAt']): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-/**
- * Fetch recent reports from the API
- * Ensures evidenceCount is always a number (defaults to 0)
- */
-const fetchRecentReports = async (): Promise<RecentQueryResult> => {
-  const response = await getRecentReports();
-  return {
-    items: response.items.map((item) => ({
-      ...item,
-      evidenceCount: item.evidenceCount ?? 0,
-    })),
-  };
-};
+const ITEMS_PER_PAGE = 12;
 
 /**
- * ReportsPage Component - Recent Privacy Scans Listing
+ * ReportsPage Component - Recent Privacy Scans Listing with Pagination
  *
  * A comprehensive page that displays all publicly available privacy scans
- * from the community. Features include:
- *
- * - Grid layout with responsive design (1/2/3 columns)
- * - Each report card shows domain, favicon, grade, and metadata
- * - Hover effects and smooth transitions
- * - Loading state with spinner
- * - Empty state with call-to-action
- * - Error handling
- * - Accessibility compliant (ARIA labels, semantic HTML)
- *
- * @example
- * ```tsx
- * <ReportsPage />
- * ```
+ * from the community with bottom pagination.
  */
 export default function ReportsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
-  const { data, isLoading, isError, error } = useQuery<RecentQueryResult>({
-    queryKey: ['recent-reports'],
-    queryFn: fetchRecentReports,
+  const { data, isLoading, isError, error } = useQuery<PaginatedReportsResponse>({
+    queryKey: ['reports-paginated', currentPage],
+    queryFn: () => getPaginatedReports(currentPage, ITEMS_PER_PAGE),
     staleTime: 60_000, // 1 minute
     gcTime: 5 * 60_000, // 5 minutes
   });
 
   const items = data?.items ?? [];
+  const pagination = data?.pagination;
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams({ page: newPage.toString() });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Loading State
   if (isLoading) {
@@ -136,14 +115,14 @@ export default function ReportsPage() {
   }
 
   // Empty State
-  if (items.length === 0) {
+  if (items.length === 0 && currentPage === 1) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+              <h1 className="text-3xl md:text-4xl font-bold text-zinc-900">
                 Recent Privacy Scans
               </h1>
               <p className="mt-2 text-zinc-600">
@@ -195,7 +174,7 @@ export default function ReportsPage() {
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            <h1 className="text-3xl md:text-4xl font-bold text-zinc-900">
               Recent Privacy Scans
             </h1>
             <p className="mt-2 text-zinc-600">
@@ -206,7 +185,13 @@ export default function ReportsPage() {
           {/* Stats Bar */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="text-sm text-zinc-600">
-              Showing <span className="font-semibold text-zinc-900">{items.length}</span> recent {items.length === 1 ? 'scan' : 'scans'}
+              Showing <span className="font-semibold text-zinc-900">{items.length}</span> of{' '}
+              <span className="font-semibold text-zinc-900">{pagination?.totalCount || 0}</span> scans
+              {pagination && pagination.totalPages > 1 && (
+                <span className="ml-2">
+                  (Page {pagination.page} of {pagination.totalPages})
+                </span>
+              )}
             </div>
           </div>
 
@@ -280,6 +265,68 @@ export default function ReportsPage() {
             })}
           </div>
 
+          {/* Pagination */}
+          {pagination && pagination.totalPages > 1 && (
+            <nav className="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!pagination.hasPrevPage}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  pagination.hasPrevPage
+                    ? 'border-gray-300 bg-white text-zinc-700 hover:bg-gray-50 hover:border-advisor-400'
+                    : 'border-gray-200 bg-gray-100 text-zinc-400 cursor-not-allowed'
+                }`}
+                aria-label="Go to previous page"
+              >
+                ← Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {generatePageNumbers(currentPage, pagination.totalPages).map((pageNum, index) => {
+                  if (pageNum === '...') {
+                    return (
+                      <span key={`ellipsis-${index}`} className="px-3 py-2 text-zinc-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  const isActive = pageNum === currentPage;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum as number)}
+                      className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-advisor-500 text-white shadow-md'
+                          : 'border border-gray-300 bg-white text-zinc-700 hover:bg-gray-50 hover:border-advisor-400'
+                      }`}
+                      aria-label={`Go to page ${pageNum}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!pagination.hasNextPage}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  pagination.hasNextPage
+                    ? 'border-gray-300 bg-white text-zinc-700 hover:bg-gray-50 hover:border-advisor-400'
+                    : 'border-gray-200 bg-gray-100 text-zinc-400 cursor-not-allowed'
+                }`}
+                aria-label="Go to next page"
+              >
+                Next →
+              </button>
+            </nav>
+          )}
+
           {/* Call to Action */}
           <div className="mt-12 text-center bg-stone-50 rounded-2xl shadow-lg p-8 border border-gray-200">
             <h2 className="text-2xl font-bold text-zinc-900 mb-2">
@@ -315,4 +362,41 @@ export default function ReportsPage() {
       <Footer />
     </div>
   );
+}
+
+/**
+ * Generate page numbers for pagination with ellipsis for large page counts
+ */
+function generatePageNumbers(currentPage: number, totalPages: number): (number | string)[] {
+  const pages: (number | string)[] = [];
+  const delta = 2; // Number of pages to show on each side of current page
+
+  // Always show first page
+  pages.push(1);
+
+  // Calculate range around current page
+  const rangeStart = Math.max(2, currentPage - delta);
+  const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
+
+  // Add ellipsis after first page if needed
+  if (rangeStart > 2) {
+    pages.push('...');
+  }
+
+  // Add pages in range
+  for (let i = rangeStart; i <= rangeEnd; i++) {
+    pages.push(i);
+  }
+
+  // Add ellipsis before last page if needed
+  if (rangeEnd < totalPages - 1) {
+    pages.push('...');
+  }
+
+  // Always show last page (if more than 1 page)
+  if (totalPages > 1) {
+    pages.push(totalPages);
+  }
+
+  return pages;
 }

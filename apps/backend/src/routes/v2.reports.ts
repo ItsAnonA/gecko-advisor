@@ -119,3 +119,72 @@ reportV2Router.get('/reports/recent', async (_req, res) => {
     return problem(res, 500, 'Failed to load recent reports');
   }
 });
+
+// Paginated reports endpoint for ReportsPage
+reportV2Router.get('/reports/all', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 12));
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const totalCount = await prisma.scan.count({
+      where: { status: 'done' },
+    });
+
+    const scans = await prisma.scan.findMany({
+      where: { status: 'done' },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        slug: true,
+        input: true,
+        score: true,
+        label: true,
+        createdAt: true,
+        _count: {
+          select: {
+            evidence: true,
+          },
+        },
+      },
+    });
+
+    const items = scans.map((scan) => {
+      let domain = scan.input;
+      try {
+        const url = new URL(scan.input);
+        domain = etldPlusOne(url.hostname);
+      } catch {
+        // ignore
+      }
+      return {
+        slug: scan.slug,
+        score: scan.score ?? 0,
+        label: scan.label ?? 'Caution',
+        domain,
+        createdAt: scan.createdAt,
+        evidenceCount: scan._count.evidence,
+      };
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.json({
+      items,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error fetching all reports');
+    return problem(res, 500, 'Failed to load reports');
+  }
+});
