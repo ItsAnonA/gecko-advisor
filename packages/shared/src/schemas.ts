@@ -165,3 +165,70 @@ export type TopFix = z.infer<typeof TopFixSchema>;
 export type ReportResponse = z.infer<typeof ReportResponseSchema>;
 export type LegacyReportResponse = z.infer<typeof LegacyReportResponseSchema>;
 export type RecentReportsResponse = z.infer<typeof RecentReportsResponseSchema>;
+
+// ============================================================================
+// Blog Schemas
+// ============================================================================
+
+export const BlogPostStatus = z.enum(['DRAFT', 'PUBLISHED']);
+
+export const BlogPostSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  excerpt: z.string(),
+  content: z.string(),
+  coverImage: z.string().nullable().optional(),
+  metaTitle: z.string().nullable().optional(),
+  metaDescription: z.string().nullable().optional(),
+  status: BlogPostStatus,
+  publishedAt: z.string().or(z.date()).nullable().optional(),
+  readTimeMinutes: z.number().int().min(1).default(5),
+  createdAt: z.string().or(z.date()),
+  updatedAt: z.string().or(z.date()),
+});
+
+export const BlogPostListItemSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  excerpt: z.string(),
+  coverImage: z.string().nullable().optional(),
+  publishedAt: z.string().or(z.date()).nullable().optional(),
+  readTimeMinutes: z.number().int().min(1).default(5),
+});
+
+export const BlogPostsListResponseSchema = z.object({
+  items: z.array(BlogPostListItemSchema),
+  pagination: z.object({
+    page: z.number().int().min(1),
+    limit: z.number().int().min(1).max(50),
+    totalCount: z.number().int().min(0),
+    totalPages: z.number().int().min(0),
+    hasNextPage: z.boolean(),
+    hasPrevPage: z.boolean(),
+  }),
+});
+
+export const CreateBlogPostSchema = z.object({
+  slug: z.string().min(3).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'Slug must be lowercase alphanumeric with hyphens only',
+  }),
+  title: z.string().min(3).max(200),
+  excerpt: z.string().min(10).max(500),
+  content: z.string().min(50),
+  coverImage: z.string().url().optional(),
+  metaTitle: z.string().max(70).optional(),
+  metaDescription: z.string().max(160).optional(),
+  status: BlogPostStatus.default('DRAFT'),
+  publishedAt: z.string().datetime().optional(),
+  readTimeMinutes: z.number().int().min(1).max(60).default(5),
+});
+
+export const UpdateBlogPostSchema = CreateBlogPostSchema.partial();
+
+export type BlogPost = z.infer<typeof BlogPostSchema>;
+export type BlogPostListItem = z.infer<typeof BlogPostListItemSchema>;
+export type BlogPostsListResponse = z.infer<typeof BlogPostsListResponseSchema>;
+export type CreateBlogPost = z.infer<typeof CreateBlogPostSchema>;
+export type UpdateBlogPost = z.infer<typeof UpdateBlogPostSchema>;

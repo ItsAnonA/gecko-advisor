@@ -216,3 +216,91 @@ export async function getPaginatedReports(page: number = 1, limit: number = 12):
   if (!res.ok) throw new Error('Failed to load reports');
   return res.json();
 }
+
+// ============================================================================
+// Blog API
+// ============================================================================
+
+export interface BlogPostListItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImage: string | null;
+  publishedAt: string | null;
+  readTimeMinutes: number;
+}
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  status: 'DRAFT' | 'PUBLISHED';
+  publishedAt: string | null;
+  readTimeMinutes: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaginatedBlogPostsResponse {
+  items: BlogPostListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+/**
+ * Fetch paginated blog posts (public)
+ */
+export async function getBlogPosts(page: number = 1, limit: number = 10): Promise<PaginatedBlogPostsResponse> {
+  const res = await fetch(`/api/blog/posts?page=${page}&limit=${limit}`);
+  if (!res.ok) throw new Error('Failed to load blog posts');
+  return res.json();
+}
+
+/**
+ * Fetch a single blog post by slug (public)
+ */
+export async function getBlogPost(slug: string): Promise<BlogPost> {
+  const res = await fetch(`/api/blog/posts/${slug}`);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Blog post not found');
+    throw new Error('Failed to load blog post');
+  }
+  return res.json();
+}
+
+/**
+ * React Query configuration for blog posts list
+ */
+export const blogPostsQueryOptions = (page: number = 1, limit: number = 10) => ({
+  queryKey: ['blog-posts', page, limit],
+  queryFn: () => getBlogPosts(page, limit),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 15 * 60 * 1000, // 15 minutes
+});
+
+/**
+ * React Query configuration for single blog post
+ */
+export const blogPostQueryOptions = (slug: string) => ({
+  queryKey: ['blog-post', slug],
+  queryFn: () => getBlogPost(slug),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+  gcTime: 30 * 60 * 1000, // 30 minutes
+  retry: (failureCount: number, error: Error) => {
+    // Don't retry 404 errors
+    if (error.message?.includes('not found')) return false;
+    return failureCount < 2;
+  },
+});

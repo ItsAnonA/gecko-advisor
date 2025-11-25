@@ -33,6 +33,8 @@ const Security = React.lazy(() => import('./pages/Security'));
 const Legal = React.lazy(() => import('./pages/Legal'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const BlogList = React.lazy(() => import('./pages/BlogListPage'));
+const BlogPost = React.lazy(() => import('./pages/BlogPostPage'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Loading component for Suspense fallback
@@ -128,6 +130,22 @@ const router = createBrowserRouter([
     element: (
       <React.Suspense fallback={<PageLoader />}>
         <Legal />
+      </React.Suspense>
+    )
+  },
+  {
+    path: '/blog',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <BlogList />
+      </React.Suspense>
+    )
+  },
+  {
+    path: '/blog/:slug',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <BlogPost />
       </React.Suspense>
     )
   },

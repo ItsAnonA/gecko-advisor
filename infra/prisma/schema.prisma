@@ -219,3 +219,30 @@ model WalletLink {
 
   @@index([walletAddressHash])
 }
+
+// Blog post status enum
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// Blog posts for content marketing
+model BlogPost {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  title           String
+  excerpt         String         @db.Text
+  content         String         @db.Text
+  coverImage      String?
+  metaTitle       String?
+  metaDescription String?        @db.Text
+  status          BlogPostStatus @default(DRAFT)
+  publishedAt     DateTime?
+  readTimeMinutes Int            @default(5)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Optimized indexes for blog queries
+  @@index([status, publishedAt(sort: Desc)], map: "BlogPost_published_idx")
+  @@index([slug], map: "BlogPost_slug_idx")
+}

@@ -50,6 +50,12 @@ export default function Header() {
               Recent Scans
             </Link>
             <Link
+              to="/blog"
+              className="flex items-center gap-2 px-3 py-2 text-gecko-600 hover:text-advisor-600 transition-colors text-sm font-medium"
+            >
+              Blog
+            </Link>
+            <Link
               to="/about"
               className="flex items-center gap-2 px-3 py-2 text-gecko-600 hover:text-advisor-600 transition-colors text-sm font-medium"
             >
