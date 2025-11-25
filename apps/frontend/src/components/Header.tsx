@@ -25,7 +25,7 @@ export default function Header() {
   return (
     <header className="backdrop-blur-sm bg-white/90 sticky top-0 z-40 border-b border-gray-200">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-14">
           {/* Logo - Clean and professional */}
           <Link
             to="/"
@@ -36,7 +36,7 @@ export default function Header() {
               <img
                 src={BRAND.logo.src}
                 alt={BRAND.logo.alt}
-                className="h-14 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
+                className="h-10 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
               />
             </div>
           </Link>
