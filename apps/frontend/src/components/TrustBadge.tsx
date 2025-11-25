@@ -159,7 +159,7 @@ const TrustBadge = React.memo(function TrustBadge({
         ${sizing.text}
         shadow-sm
         transition-all duration-200
-        drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
+        
         ${className}
       `}
       role="status"

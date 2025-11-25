@@ -92,18 +92,18 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
             </div>
 
-            <h3 className="text-lg font-medium text-zinc-900 mb-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+            <h3 className="text-lg font-medium text-zinc-900 mb-2 ">
               Something went wrong
             </h3>
 
-            <p className="text-sm text-zinc-600 mb-6 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+            <p className="text-sm text-zinc-600 mb-6 ">
               We're sorry, but something unexpected happened. Please try again or contact support if the problem persists.
             </p>
 
             {/* Development error details */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm font-medium text-zinc-900 hover:text-advisor-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                <summary className="cursor-pointer text-sm font-medium text-zinc-900 hover:text-advisor-400 ">
                   Error Details (Development)
                 </summary>
                 <div className="mt-2 p-3 bg-white rounded text-xs font-mono text-zinc-600 overflow-auto max-h-32">
@@ -134,13 +134,13 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
               <button
                 onClick={() => window.location.href = '/'}
-                className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg "
               >
                 Go Home
               </button>
             </div>
 
-            <div className="mt-4 text-xs text-zinc-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+            <div className="mt-4 text-xs text-zinc-500 ">
               Error ID: {Date.now().toString(36)}
             </div>
           </div>
@@ -242,17 +242,17 @@ export const ErrorState = React.memo(function ErrorState({
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-zinc-900 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <h3 className="text-lg font-semibold text-zinc-900 ">
           {title || errorInfo.title}
         </h3>
-        <p className="text-zinc-600 mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <p className="text-zinc-600 mt-1 ">
           {description || errorInfo.description}
         </p>
       </div>
 
       {showDetails && errorMessage && (
         <details className="text-left max-w-md mx-auto">
-          <summary className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-900 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+          <summary className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-900 ">
             Technical Details
           </summary>
           <div className="mt-2 p-3 bg-white rounded text-xs font-mono text-zinc-600 overflow-auto max-h-24">
@@ -278,7 +278,7 @@ export const ErrorState = React.memo(function ErrorState({
         {onGoHome && (
           <button
             onClick={onGoHome}
-            className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+            className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg "
           >
             Go Home
           </button>

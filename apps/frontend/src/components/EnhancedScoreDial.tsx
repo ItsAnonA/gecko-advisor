@@ -270,7 +270,7 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
 
       {/* Label badge */}
       <div
-        className={`mt-3 px-3 py-1.5 rounded-full ${style.labelBg} ${style.labelText} ${config.labelSize} font-bold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] border border-${style.level === 'safe' ? 'score-safe' : style.level === 'caution' ? 'score-caution' : 'score-danger'}/30`}
+        className={`mt-3 px-3 py-1.5 rounded-full ${style.labelBg} ${style.labelText} ${config.labelSize} font-bold tracking-wide  border border-${style.level === 'safe' ? 'score-safe' : style.level === 'caution' ? 'score-caution' : 'score-danger'}/30`}
         aria-hidden="true"
       >
         {style.label}

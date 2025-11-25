@@ -21,19 +21,19 @@ export function FixCard({ fix }: FixCardProps) {
   return (
     <article className="h-full rounded-2xl border border-gray-200 bg-stone-50 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base font-semibold text-zinc-900 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{fix.title}</h3>
+        <h3 className="text-base font-semibold text-zinc-900 ">{fix.title}</h3>
         <span className={clsx('whitespace-nowrap rounded-full px-2 py-1 text-xs font-semibold uppercase', SEVERITY_COLORS[fix.severity])}>
           {fix.severity}
         </span>
       </div>
-      <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-500 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{fix.category}</p>
-      {fix.whyItMatters && <p className="mt-3 text-sm text-zinc-600 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{fix.whyItMatters}</p>}
-      {fix.howToFix && <p className="mt-2 text-sm font-medium text-zinc-900 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{fix.howToFix}</p>}
+      <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-500 ">{fix.category}</p>
+      {fix.whyItMatters && <p className="mt-3 text-sm text-zinc-600 ">{fix.whyItMatters}</p>}
+      {fix.howToFix && <p className="mt-2 text-sm font-medium text-zinc-900 ">{fix.howToFix}</p>}
       {fix.references.length > 0 && (
         <ul className="mt-3 space-y-1 text-sm text-advisor-400">
           {fix.references.map((ref, index) => (
             <li key={ref.url ?? index}>
-              <a className="underline hover:text-advisor-300 transition-colors drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]" href={ref.url} target="_blank" rel="noreferrer">
+              <a className="underline hover:text-advisor-300 transition-colors " href={ref.url} target="_blank" rel="noreferrer">
                 {ref.label ?? ref.url}
               </a>
             </li>

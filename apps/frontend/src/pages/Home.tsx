@@ -158,10 +158,10 @@ export default function Home() {
         max-w-3xl mx-auto
         bg-white
         rounded-2xl
-        shadow-soft-lg
+        shadow-sm-lg
         border border-advisor-200
         p-6 md:p-8
-        hover:shadow-soft-xl hover:border-advisor-300
+        hover:shadow-sm-xl hover:border-advisor-300
         transition-all duration-300
       ">
         {/* Status Indicator */}
@@ -203,7 +203,7 @@ export default function Home() {
               w-full
               pl-6 pr-32 py-5 text-lg
               bg-light-elevated
-              border-2 border-light-border
+              border-2 border-gray-200
               rounded-xl
               focus:outline-none focus:ring-4 focus:ring-advisor-500/30 focus:border-advisor-500
               transition-all duration-200
@@ -269,8 +269,8 @@ export default function Home() {
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
           {/* Step 1: Scan */}
           <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-light-border bg-white shadow-soft-md animate-fadeInUp opacity-0 [animation-delay:100ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-soft-lg hover:border-advisor-300 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-soft transition-all duration-200 hover:scale-110 hover:shadow-soft-md">
+            <div className="text-center p-8 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:100ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
                 <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -292,8 +292,8 @@ export default function Home() {
 
           {/* Step 2: Analyze */}
           <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-light-border bg-white shadow-soft-md animate-fadeInUp opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-soft-lg hover:border-advisor-300 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-soft transition-all duration-200 hover:scale-110 hover:shadow-soft-md">
+            <div className="text-center p-8 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:200ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
                 <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                 </svg>
@@ -315,8 +315,8 @@ export default function Home() {
 
           {/* Step 3: Report */}
           <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[280px]">
-            <div className="text-center p-8 rounded-xl border border-light-border bg-white shadow-soft-md animate-fadeInUp opacity-0 [animation-delay:300ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-soft-lg hover:border-advisor-300 transition-all duration-300">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-soft transition-all duration-200 hover:scale-110 hover:shadow-soft-md">
+            <div className="text-center p-8 rounded-xl border border-gray-200 bg-white shadow-sm-md animate-fadeInUp opacity-0 [animation-delay:300ms] [animation-fill-mode:forwards] w-full h-full flex flex-col hover:shadow-sm-lg hover:border-advisor-300 transition-all duration-300">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-sm-md">
                 <svg className="w-7 h-7 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>

@@ -25,7 +25,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="backdrop-blur-md bg-white/80 border-t border-light-border mt-16">
+    <footer className="backdrop-blur-md bg-white/80 border-t border-gray-200 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <nav className="flex flex-wrap items-center justify-center gap-6 text-base text-gecko-600">
           <Link to="/about" className="font-semibold hover:text-advisor-600 transition-colors">

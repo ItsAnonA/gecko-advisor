@@ -57,9 +57,9 @@ describe('grading', () => {
       expect(info.letter).toBe('A');
       expect(info.label).toBe('Excellent');
       expect(info.emoji).toBe('🎉');
-      expect(info.colors.bg).toBe('bg-score-safe/20');
-      expect(info.colors.text).toBe('text-score-safe');
-      expect(info.colors.border).toBe('border-score-safe/30');
+      expect(info.colors.bg).toBe('bg-emerald-100');
+      expect(info.colors.text).toBe('text-emerald-800');
+      expect(info.colors.border).toBe('border-emerald-300');
     });
 
     it('should return correct info for grade B', () => {
@@ -67,9 +67,9 @@ describe('grading', () => {
       expect(info.letter).toBe('B');
       expect(info.label).toBe('Good');
       expect(info.emoji).toBe('✅');
-      expect(info.colors.bg).toBe('bg-score-safe/15');
-      expect(info.colors.text).toBe('text-score-safe');
-      expect(info.colors.border).toBe('border-score-safe/30');
+      expect(info.colors.bg).toBe('bg-emerald-50');
+      expect(info.colors.text).toBe('text-emerald-700');
+      expect(info.colors.border).toBe('border-emerald-200');
     });
 
     it('should return correct info for grade C', () => {
@@ -77,9 +77,9 @@ describe('grading', () => {
       expect(info.letter).toBe('C');
       expect(info.label).toBe('Fair');
       expect(info.emoji).toBe('⚠️');
-      expect(info.colors.bg).toBe('bg-trust-600/20');
-      expect(info.colors.text).toBe('text-trust-300');
-      expect(info.colors.border).toBe('border-trust-600/30');
+      expect(info.colors.bg).toBe('bg-blue-100');
+      expect(info.colors.text).toBe('text-blue-800');
+      expect(info.colors.border).toBe('border-blue-300');
     });
 
     it('should return correct info for grade D', () => {
@@ -87,9 +87,9 @@ describe('grading', () => {
       expect(info.letter).toBe('D');
       expect(info.label).toBe('Poor');
       expect(info.emoji).toBe('⚠️');
-      expect(info.colors.bg).toBe('bg-score-caution/20');
-      expect(info.colors.text).toBe('text-score-caution');
-      expect(info.colors.border).toBe('border-score-caution/30');
+      expect(info.colors.bg).toBe('bg-amber-100');
+      expect(info.colors.text).toBe('text-amber-800');
+      expect(info.colors.border).toBe('border-amber-300');
     });
 
     it('should return correct info for grade F', () => {
@@ -97,34 +97,34 @@ describe('grading', () => {
       expect(info.letter).toBe('F');
       expect(info.label).toBe('Bad');
       expect(info.emoji).toBe('❌');
-      expect(info.colors.bg).toBe('bg-score-danger/20');
-      expect(info.colors.text).toBe('text-score-danger');
-      expect(info.colors.border).toBe('border-score-danger/30');
+      expect(info.colors.bg).toBe('bg-red-100');
+      expect(info.colors.text).toBe('text-red-800');
+      expect(info.colors.border).toBe('border-red-300');
     });
 
     it('should have consistent color schemes', () => {
-      // A & B should both use score-safe semantic color
+      // A & B should both use emerald (green family)
       const gradeA = getGradeInfo(95);
       const gradeB = getGradeInfo(85);
-      expect(gradeA.colors.bg).toContain('score-safe');
-      expect(gradeB.colors.bg).toContain('score-safe');
-      expect(gradeA.colors.text).toContain('score-safe');
-      expect(gradeB.colors.text).toContain('score-safe');
+      expect(gradeA.colors.bg).toContain('emerald');
+      expect(gradeB.colors.bg).toContain('emerald');
+      expect(gradeA.colors.text).toContain('emerald');
+      expect(gradeB.colors.text).toContain('emerald');
 
-      // C should use trust semantic color
+      // C should use blue
       const gradeC = getGradeInfo(75);
-      expect(gradeC.colors.bg).toContain('trust');
-      expect(gradeC.colors.text).toContain('trust');
+      expect(gradeC.colors.bg).toContain('blue');
+      expect(gradeC.colors.text).toContain('blue');
 
-      // D should use score-caution semantic color
+      // D should use amber
       const gradeD = getGradeInfo(65);
-      expect(gradeD.colors.bg).toContain('score-caution');
-      expect(gradeD.colors.text).toContain('score-caution');
+      expect(gradeD.colors.bg).toContain('amber');
+      expect(gradeD.colors.text).toContain('amber');
 
-      // F should use score-danger semantic color
+      // F should use red
       const gradeF = getGradeInfo(50);
-      expect(gradeF.colors.bg).toContain('score-danger');
-      expect(gradeF.colors.text).toContain('score-danger');
+      expect(gradeF.colors.bg).toContain('red');
+      expect(gradeF.colors.text).toContain('red');
     });
   });
 

@@ -144,7 +144,7 @@ export default function SeverityBadge({
           rounded-full font-medium border
           ${config.bgClass} ${config.textClass} ${config.borderClass}
           relative overflow-hidden
-          drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
+          
         `}
         role="status"
         aria-label={`Severity level ${normalizedSeverity}: ${config.label}${showDescription ? `. ${config.description}` : ''}`}

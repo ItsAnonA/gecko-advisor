@@ -187,7 +187,7 @@ export default function InfoPopover({
 
             {/* Content */}
             <div className="relative z-10">
-              <div className="font-semibold text-zinc-900 mb-2 text-xs uppercase tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <div className="font-semibold text-zinc-900 mb-2 text-xs uppercase tracking-wide ">
                 {label}
               </div>
               <div>

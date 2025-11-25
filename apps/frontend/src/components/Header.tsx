@@ -23,7 +23,7 @@ import { BRAND } from '../config/branding';
  */
 export default function Header() {
   return (
-    <header className="backdrop-blur-sm bg-white/90 sticky top-0 z-40 border-b border-light-border">
+    <header className="backdrop-blur-sm bg-white/90 sticky top-0 z-40 border-b border-gray-200">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo - Clean and professional */}
@@ -53,7 +53,7 @@ export default function Header() {
               href="https://github.com/privacygecko/gecko-advisor"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-light-border text-gecko-700 hover:text-advisor-600 hover:border-advisor-400 hover:bg-light-sage/30 transition-all shadow-soft"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-zinc-700 hover:text-advisor-600 hover:border-advisor-400 hover:bg-gray-50 transition-all shadow-sm"
               aria-label="View on GitHub"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

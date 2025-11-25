@@ -150,7 +150,7 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
           fontWeight={700}
           fill="#f9fafb"
           id="score-title"
-          className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+          className=""
         >
           {score}
         </text>
@@ -173,11 +173,11 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
         aria-hidden="true"
       >
         <div
-          className={`text-sm font-semibold px-2 py-1 rounded-full ${scoreCategory.bgColor} ${scoreCategory.textColor} drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]`}
+          className={`text-sm font-semibold px-2 py-1 rounded-full ${scoreCategory.bgColor} ${scoreCategory.textColor} `}
         >
           {scoreCategory.label}
         </div>
-        <div className="text-xs text-zinc-600 mt-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <div className="text-xs text-zinc-600 mt-1 ">
           {scoreCategory.description}
         </div>
       </div>

@@ -130,13 +130,13 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
                   <div className="flex items-start gap-3 p-3 hover:bg-white transition-colors">
                     <SeverityIndicator severity={item.severity} />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-zinc-900 text-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                      <div className="font-medium text-zinc-900 text-sm ">
                         {item.title}
                       </div>
                       <SeverityBadge severity={item.severity} />
 
                       <button
-                        className="mt-2 text-xs text-advisor-400 hover:text-advisor-300 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 rounded px-3 py-3 min-h-[44px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                        className="mt-2 text-xs text-advisor-400 hover:text-advisor-300 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 rounded px-3 py-3 min-h-[44px] "
                         onClick={() => toggleExpanded(item.id)}
                         aria-expanded={isExpanded}
                         aria-controls={`details-${item.id}`}
@@ -172,7 +172,7 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
 
       {/* Performance stats for development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-zinc-500 mt-2 p-2 bg-white rounded border border-gray-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <div className="text-xs text-zinc-500 mt-2 p-2 bg-white rounded border border-gray-200 ">
           Virtual list stats: {visibleItems.length} rendered of {filteredItems.length} total
           (items {visibleStart + 1}-{visibleEnd})
         </div>

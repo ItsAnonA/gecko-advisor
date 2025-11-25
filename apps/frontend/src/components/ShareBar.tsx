@@ -42,7 +42,7 @@ export function ShareBar({ url, message }: ShareBarProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-soft">
+    <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-sm">
       <div className="flex flex-col">
         <span className="text-sm font-semibold text-zinc-900">Share this report</span>
         <span className="break-all text-xs text-zinc-600">{url}</span>

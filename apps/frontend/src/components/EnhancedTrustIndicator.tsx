@@ -123,10 +123,10 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
 
       {/* Content */}
       <div className="flex-1 relative z-10">
-        <div className={`font-semibold text-base ${config.titleColor} leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]`}>
+        <div className={`font-semibold text-base ${config.titleColor} leading-snug `}>
           {title}
         </div>
-        <p className={`text-sm ${config.descColor} mt-1.5 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]`}>
+        <p className={`text-sm ${config.descColor} mt-1.5 leading-relaxed `}>
           {description}
         </p>
       </div>

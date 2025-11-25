@@ -125,7 +125,7 @@ export default function ProfessionalBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-lg font-medium border ${config.bgColor} ${config.textColor} ${config.borderColor} ${sizeClasses[size]} drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${className}`}
+      className={`inline-flex items-center gap-2 rounded-lg font-medium border ${config.bgColor} ${config.textColor} ${config.borderColor} ${sizeClasses[size]}  ${className}`}
       role="status"
       aria-label={config.text}
       data-testid={`professional-badge-${variant}`}

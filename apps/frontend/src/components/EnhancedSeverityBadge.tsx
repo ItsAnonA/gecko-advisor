@@ -76,7 +76,7 @@ const EnhancedSeverityBadge = React.memo(function EnhancedSeverityBadge({
         text-sm font-medium
         transition-transform duration-150
         hover:scale-105
-        drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]
+        
         ${className}
       `}
       title={`${count} ${config.label} severity issue${count !== 1 ? 's' : ''}`}

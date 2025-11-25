@@ -140,7 +140,7 @@ const ScanProgress = React.memo(function ScanProgress({
 
         {/* Time remaining or typical duration */}
         {status === 'processing' && (
-          <div className="text-sm text-zinc-600 text-center drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+          <div className="text-sm text-zinc-600 text-center ">
             {estimatedTimeRemaining && estimatedTimeRemaining > 0 ? (
               <>Estimated time remaining: {formatTimeRemaining(estimatedTimeRemaining)}</>
             ) : (
@@ -151,7 +151,7 @@ const ScanProgress = React.memo(function ScanProgress({
 
         {/* Reassurance message for long-running scans */}
         {status === 'processing' && elapsedSeconds > 20 && (
-          <div className="text-xs text-zinc-500 text-center max-w-md px-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+          <div className="text-xs text-zinc-500 text-center max-w-md px-4 ">
             This may take up to 30 seconds for complex sites. Your scan is progressing normally.
           </div>
         )}
@@ -159,7 +159,7 @@ const ScanProgress = React.memo(function ScanProgress({
 
       {/* Step progress visualization */}
       <div className="space-y-3">
-        <div className="text-sm font-medium text-zinc-900 text-center drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+        <div className="text-sm font-medium text-zinc-900 text-center ">
           Scan Progress
         </div>
 
@@ -203,7 +203,7 @@ const ScanProgress = React.memo(function ScanProgress({
                 <div className="flex-1 min-w-0">
                   <div
                     className={clsx(
-                      'text-xs sm:text-sm font-medium transition-colors truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]',
+                      'text-xs sm:text-sm font-medium transition-colors truncate ',
                       {
                         'text-score-safe': isCompleted,
                         'text-advisor-400': isActive,
@@ -252,7 +252,7 @@ const ScanProgress = React.memo(function ScanProgress({
       </div>
 
       {/* Trust indicators */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-zinc-600 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-zinc-600 ">
         <span className="inline-flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-score-safe inline-block" aria-hidden="true"/>
           Secure connection
