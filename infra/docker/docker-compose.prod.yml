@@ -86,8 +86,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
 
       # Security & Authentication (REQUIRED)
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in Coolify - Generate with openssl rand -base64 32}
-      ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in Coolify - Generate with openssl rand -hex 32}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
 
       # CORS & Public URLs (PRODUCTION DOMAINS)
       BASE_URL: ${BASE_URL:-https://geckoadvisor.com}
