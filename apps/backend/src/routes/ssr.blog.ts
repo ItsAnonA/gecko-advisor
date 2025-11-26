@@ -253,9 +253,12 @@ function generateBlogListHtml(posts: Array<{
 
 /**
  * SSR route for individual blog posts
- * GET /blog/:slug
+ * GET /api/ssr/blog/:slug
+ *
+ * Note: Cloudflare routes /api/* to backend, so we use /api/ssr/blog/*
+ * The nginx config proxies /blog/* requests to these routes.
  */
-ssrBlogRouter.get('/blog/:slug', async (req, res) => {
+ssrBlogRouter.get('/api/ssr/blog/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -295,9 +298,12 @@ ssrBlogRouter.get('/blog/:slug', async (req, res) => {
 
 /**
  * SSR route for blog listing page
- * GET /blog
+ * GET /api/ssr/blog
+ *
+ * Note: Cloudflare routes /api/* to backend, so we use /api/ssr/blog
+ * The nginx config proxies /blog requests to this route.
  */
-ssrBlogRouter.get('/blog', async (req, res) => {
+ssrBlogRouter.get('/api/ssr/blog', async (req, res) => {
   try {
     const posts = await prisma.blogPost.findMany({
       where: { status: 'PUBLISHED' },
