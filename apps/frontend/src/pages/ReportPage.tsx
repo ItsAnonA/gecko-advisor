@@ -558,35 +558,47 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
             </div>
           </div>
 
-          {evidence.details && (
-            <>
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                className={`text-sm font-medium mt-2 focus:outline-none focus:ring-2 focus:ring-advisor-500 rounded px-2 py-1 transition-colors ${
-                  status === 'bad' ? 'text-score-danger hover:bg-score-danger/10' :
-                  status === 'warning' ? 'text-score-caution hover:bg-score-caution/10' :
-                  'text-score-trust hover:bg-score-trust/10'
-                }`}
-                aria-expanded={showDetails}
-                aria-controls={`details-${evidence.id}`}
-              >
-                {showDetails ? '▼ Hide details' : '▶ Show details'}
-              </button>
+          {/* Only show details if there's meaningful content */}
+          {(() => {
+            const sanitized = sanitizeDetails(evidence.details);
+            const hasDetails = sanitized && (
+              typeof sanitized === 'string'
+                ? sanitized.trim().length > 0
+                : Object.keys(sanitized as object).length > 0
+            );
 
-              {showDetails && (
-                <div
-                  id={`details-${evidence.id}`}
-                  className="mt-3 p-3 bg-zinc-100 rounded border border-zinc-300 shadow-sm"
+            if (!hasDetails) return null;
+
+            return (
+              <>
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className={`text-sm font-medium mt-2 focus:outline-none focus:ring-2 focus:ring-advisor-500 rounded px-2 py-1 transition-colors ${
+                    status === 'bad' ? 'text-score-danger hover:bg-score-danger/10' :
+                    status === 'warning' ? 'text-score-caution hover:bg-score-caution/10' :
+                    'text-score-trust hover:bg-score-trust/10'
+                  }`}
+                  aria-expanded={showDetails}
+                  aria-controls={`details-${evidence.id}`}
                 >
-                  <pre className="text-xs text-zinc-800 whitespace-pre-wrap font-mono overflow-x-auto">
-                    {typeof evidence.details === 'string'
-                      ? evidence.details
-                      : safeStringify(sanitizeDetails(evidence.details))}
-                  </pre>
-                </div>
-              )}
-            </>
-          )}
+                  {showDetails ? '▼ Hide details' : '▶ Show details'}
+                </button>
+
+                {showDetails && (
+                  <div
+                    id={`details-${evidence.id}`}
+                    className="mt-3 p-3 bg-zinc-100 rounded border border-zinc-300 shadow-sm"
+                  >
+                    <pre className="text-xs text-zinc-800 whitespace-pre-wrap font-mono overflow-x-auto">
+                      {typeof sanitized === 'string'
+                        ? sanitized
+                        : safeStringify(sanitized)}
+                    </pre>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {/* "Why this matters" info box - Collapsible */}
           {whyItMatters && (
@@ -865,7 +877,6 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   }, [evidence]);
 
   const cookieIssues = evidence.filter((item) => item.kind === 'cookie').length;
-  const insecureCount = evidence.filter((item) => item.kind === 'insecure').length;
   const tlsGrade = getTlsGrade(evidence.find((item) => item.kind === 'tls')?.details);
 
   const dataSharingLevel = React.useMemo((): DataSharingLevel => {
@@ -967,11 +978,13 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [evidence, matchesFilter, scan.id, scan.input, scan.label, scan.score, sevFilter, slug]);
 
+  // TLS status based on certificate grade (A/B = Valid, C/D = Weak, F/none = Invalid)
+  // Note: Mixed content issues are shown separately under "Security Issues"
   const sslStatus = React.useMemo((): 'Valid' | 'Weak' | 'Invalid' => {
-    if (insecureCount > 0) return 'Invalid';
-    if (tlsGrade && (tlsGrade === 'D' || tlsGrade === 'F' || tlsGrade === 'C')) return 'Weak';
-    return 'Valid';
-  }, [insecureCount, tlsGrade]);
+    if (!tlsGrade || tlsGrade === 'F') return 'Invalid';
+    if (tlsGrade === 'D' || tlsGrade === 'C') return 'Weak';
+    return 'Valid'; // A or B grades
+  }, [tlsGrade]);
 
   const topTrackers = trackerDomains.slice(0, 2);
 

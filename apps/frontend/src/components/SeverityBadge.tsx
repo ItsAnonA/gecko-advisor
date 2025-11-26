@@ -171,17 +171,11 @@ export default function SeverityBadge({
           {config.icon}
         </span>
 
-        {/* Severity level */}
-        <span className="relative z-10 font-mono">
-          Sev {normalizedSeverity}
+        {/* Severity label (human-readable) */}
+        <span className="relative z-10 font-medium">
+          {config.label}
         </span>
 
-        {/* Optional descriptive text */}
-        {showDescription && size !== 'sm' && (
-          <span className="relative z-10 ml-1">
-            ({config.label})
-          </span>
-        )}
       </span>
 
       {/* Screen reader description */}

@@ -135,27 +135,43 @@ const VirtualizedEvidenceList = React.memo(function VirtualizedEvidenceList({
                       </div>
                       <SeverityBadge severity={item.severity} />
 
-                      <button
-                        className="mt-2 text-xs text-advisor-400 hover:text-advisor-300 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 rounded px-3 py-3 min-h-[44px] "
-                        onClick={() => toggleExpanded(item.id)}
-                        aria-expanded={isExpanded}
-                        aria-controls={`details-${item.id}`}
-                        data-testid={`toggle-details-${item.id}`}
-                      >
-                        {isExpanded ? 'Hide details' : 'Show details'}
-                      </button>
+                      {/* Only show details button if there's meaningful content */}
+                      {(() => {
+                        const sanitized = sanitizeDetails(item.details);
+                        const hasDetails = sanitized && (
+                          typeof sanitized === 'string'
+                            ? (sanitized as string).trim().length > 0
+                            : Object.keys(sanitized as object).length > 0
+                        );
 
-                      {isExpanded && (
-                        <div
-                          id={`details-${item.id}`}
-                          className="mt-2 p-2 bg-white rounded text-xs text-zinc-600 border border-gray-200 overflow-auto max-h-32"
-                          data-testid={`details-${item.id}`}
-                        >
-                          <div className="font-mono text-2xs break-all whitespace-pre-wrap">
-                            {safeStringify(sanitizeDetails(item.details))}
-                          </div>
-                        </div>
-                      )}
+                        if (!hasDetails) return null;
+
+                        return (
+                          <>
+                            <button
+                              className="mt-2 text-xs text-advisor-400 hover:text-advisor-300 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-1 rounded px-3 py-3 min-h-[44px] "
+                              onClick={() => toggleExpanded(item.id)}
+                              aria-expanded={isExpanded}
+                              aria-controls={`details-${item.id}`}
+                              data-testid={`toggle-details-${item.id}`}
+                            >
+                              {isExpanded ? 'Hide details' : 'Show details'}
+                            </button>
+
+                            {isExpanded && (
+                              <div
+                                id={`details-${item.id}`}
+                                className="mt-2 p-2 bg-white rounded text-xs text-zinc-600 border border-gray-200 overflow-auto max-h-32"
+                                data-testid={`details-${item.id}`}
+                              >
+                                <div className="font-mono text-2xs break-all whitespace-pre-wrap">
+                                  {typeof sanitized === 'string' ? sanitized : safeStringify(sanitized)}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
