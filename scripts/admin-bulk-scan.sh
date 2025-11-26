@@ -103,7 +103,7 @@ while [ $CURRENT_LINE -le $END_LINE ]; do
     JSON_BODY="{\"urls\":[$DOMAINS],\"skipExisting\":true}"
 
     # Submit batch
-    RESPONSE=$(curl -s -X POST "$API_BASE/admin/bulk-scan" \
+    RESPONSE=$(curl -s -X POST "$API_BASE/api/admin/bulk-scan" \
         -H "Content-Type: application/json" \
         -H "X-Admin-Key: $ADMIN_KEY" \
         -d "$JSON_BODY" 2>/dev/null)
@@ -165,4 +165,4 @@ printf '%s\n' "${BATCH_IDS[@]}" >> "$RESULTS_FILE"
 
 echo ""
 echo "To check batch status:"
-echo "  curl -H 'X-Admin-Key: \$ADMIN_API_KEY' '$API_BASE/admin/bulk-scan/<batchId>'"
+echo "  curl -H 'X-Admin-Key: \$ADMIN_API_KEY' '$API_BASE/api/admin/bulk-scan/<batchId>'"
