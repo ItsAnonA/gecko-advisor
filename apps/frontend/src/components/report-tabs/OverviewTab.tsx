@@ -127,6 +127,30 @@ export default function OverviewTab({
                       <p className={`font-medium ${colors.text}`}>
                         {issue.title}
                       </p>
+                      {/* Show the specific URL/resource for mixed content and insecure issues */}
+                      {(issue.kind === 'mixed-content' || issue.kind === 'insecure') && issue.details && (() => {
+                        try {
+                          const parsed = typeof issue.details === 'string' ? JSON.parse(issue.details) : issue.details;
+                          if (parsed?.url) {
+                            return (
+                              <p className="text-xs font-mono text-zinc-500 mt-1 truncate" title={parsed.url}>
+                                {parsed.url}
+                                {parsed.resourceType && <span className="ml-2 text-zinc-400">({parsed.resourceType})</span>}
+                              </p>
+                            );
+                          }
+                        } catch {
+                          // If details is not valid JSON, show it directly if it looks like a URL
+                          if (typeof issue.details === 'string' && issue.details.startsWith('http')) {
+                            return (
+                              <p className="text-xs font-mono text-zinc-500 mt-1 truncate" title={issue.details}>
+                                {issue.details}
+                              </p>
+                            );
+                          }
+                        }
+                        return null;
+                      })()}
                       <p className="text-sm text-zinc-600 mt-1">
                         {issue.kind === 'tracker' && 'This tracker follows your activity across websites.'}
                         {issue.kind === 'cookie' && 'This cookie may track your behavior.'}
