@@ -388,14 +388,60 @@ export async function scanSiteJob(
       });
     }
 
-    if (u.protocol === 'https:' && /http:\/\//i.test(sanitizedHtml)) {
-      allEvidence.push({
-        scanId,
-        kind: 'insecure',
-        severity: 3,
-        title: 'Mixed content detected',
-        details: {},
-      });
+    // Extract actual mixed content URLs for HTTPS pages
+    if (u.protocol === 'https:') {
+      // Match http:// URLs in src, href, and other resource attributes
+      const mixedContentPattern = /(?:src|href|action|data|poster|srcset)\s*=\s*["']?(http:\/\/[^\s"'<>]+)/gi;
+      const matches = sanitizedHtml.matchAll(mixedContentPattern);
+      const mixedUrls = new Set<string>();
+
+      for (const match of matches) {
+        const url = match[1];
+        // Skip localhost and internal URLs
+        if (url && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+          mixedUrls.add(url);
+        }
+      }
+
+      // Also check for inline http:// URLs in CSS url() references
+      const cssUrlPattern = /url\s*\(\s*["']?(http:\/\/[^\s"')]+)/gi;
+      const cssMatches = sanitizedHtml.matchAll(cssUrlPattern);
+      for (const match of cssMatches) {
+        const url = match[1];
+        if (url && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+          mixedUrls.add(url);
+        }
+      }
+
+      // Create one evidence entry per mixed content URL (with details)
+      for (const mixedUrl of mixedUrls) {
+        try {
+          const parsedUrl = new URL(mixedUrl);
+          allEvidence.push({
+            scanId,
+            kind: 'insecure',
+            severity: 3,
+            title: 'Mixed content detected',
+            details: {
+              url: mixedUrl,
+              host: parsedUrl.host,
+              path: parsedUrl.pathname,
+              resourceType: mixedUrl.match(/\.(js|css|img|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)(\?|$)/i)
+                ? 'resource'
+                : 'link',
+            },
+          });
+        } catch {
+          // If URL parsing fails, still record it without details
+          allEvidence.push({
+            scanId,
+            kind: 'insecure',
+            severity: 3,
+            title: 'Mixed content detected',
+            details: { url: mixedUrl },
+          });
+        }
+      }
     }
 
     $('a[href]').each((_i, anchor) => {

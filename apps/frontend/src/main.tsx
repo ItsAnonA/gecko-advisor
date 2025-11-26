@@ -22,7 +22,7 @@ if (typeof window !== 'undefined') {
 // Lazy load components for code splitting
 const Home = React.lazy(() => import('./pages/Home'));
 const Scan = React.lazy(() => import('./pages/Scan'));
-const Report = React.lazy(() => import('./pages/ReportPage'));
+const Report = React.lazy(() => import('./pages/ReportPageWrapper'));
 const Reports = React.lazy(() => import('./pages/ReportsPage'));
 const Compare = React.lazy(() => import('./pages/Compare'));
 const Docs = React.lazy(() => import('./pages/Docs'));
