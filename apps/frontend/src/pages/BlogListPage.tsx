@@ -10,6 +10,7 @@ import { getBlogPosts, type PaginatedBlogPostsResponse } from '../lib/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Card from '../components/Card';
+import BackToHome from '../components/BackToHome';
 
 /**
  * Format date to a readable string
@@ -203,6 +204,9 @@ export default function BlogListPage() {
 
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8 max-w-6xl">
+            {/* Back to Home */}
+            <BackToHome />
+
             {/* Page Header */}
             <div className="mb-8">
               <h1 className="text-3xl md:text-4xl font-bold text-zinc-900">
@@ -244,17 +248,32 @@ export default function BlogListPage() {
                   aria-label={`Read article: ${post.title}`}
                 >
                   <Card className="h-full hover:shadow-xl transition-all duration-200 group-hover:-translate-y-1">
-                    {/* Cover Image */}
-                    {post.coverImage && (
-                      <div className="aspect-video w-full overflow-hidden rounded-t-lg -mx-4 -mt-4 mb-4">
+                    {/* Cover Image or Placeholder */}
+                    <div className="aspect-video w-full overflow-hidden rounded-t-lg -mx-4 -mt-4 mb-4">
+                      {post.coverImage ? (
                         <img
                           src={post.coverImage}
                           alt=""
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-advisor-100 to-advisor-200 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                          <div className="text-center">
+                            <svg
+                              className="w-12 h-12 text-advisor-400 mx-auto mb-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={1.5}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span className="text-advisor-500 text-sm font-medium">Privacy Insights</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Content */}
                     <div className="flex flex-col flex-1">

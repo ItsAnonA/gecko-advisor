@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet-async';
 import { getBlogPost, type BlogPost } from '../lib/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BackToHome from '../components/BackToHome';
 
 /**
  * Format date to a readable string
@@ -27,6 +28,8 @@ const formatDate = (dateString: string | null): string => {
 /**
  * Simple markdown-to-HTML converter for blog content
  * Handles: headings, paragraphs, bold, italic, links, lists, code blocks, blockquotes
+ *
+ * IMPORTANT: All text uses high-contrast colors (zinc-800/900) for visibility
  */
 function renderMarkdown(content: string): string {
   let html = content;
@@ -39,47 +42,47 @@ function renderMarkdown(content: string): string {
 
   // Code blocks (```...```)
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    return `<pre class="bg-zinc-100 rounded-lg p-4 overflow-x-auto my-4"><code class="text-sm text-zinc-800">${code.trim()}</code></pre>`;
+    return `<pre class="bg-zinc-100 rounded-lg p-4 overflow-x-auto my-6 border border-zinc-200"><code class="text-sm text-zinc-800 font-mono">${code.trim()}</code></pre>`;
   });
 
   // Inline code (`...`)
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-zinc-100 px-1.5 py-0.5 rounded text-sm text-zinc-800">$1</code>');
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-zinc-100 px-1.5 py-0.5 rounded text-sm text-zinc-800 font-mono border border-zinc-200">$1</code>');
 
-  // Headings
+  // Headings - using zinc-900 for maximum contrast
   html = html.replace(/^### (.+)$/gm, '<h3 class="text-xl font-semibold text-zinc-900 mt-8 mb-4">$1</h3>');
   html = html.replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold text-zinc-900 mt-10 mb-4">$1</h2>');
   html = html.replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold text-zinc-900 mt-10 mb-4">$1</h1>');
 
-  // Blockquotes
-  html = html.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-advisor-400 pl-4 my-4 text-zinc-600 italic">$1</blockquote>');
+  // Blockquotes - using zinc-700 for better visibility
+  html = html.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-advisor-400 pl-4 my-6 py-2 text-zinc-700 italic bg-zinc-50 rounded-r">$1</blockquote>');
 
-  // Bold and italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong class="font-bold"><em>$1</em></strong>');
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>');
+  // Bold and italic - ensuring text color is inherited properly
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong class="font-bold text-zinc-900"><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-zinc-900">$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
 
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-advisor-600 hover:text-advisor-500 underline" target="_blank" rel="noopener noreferrer">$1</a>');
+  // Links - using advisor color with underline
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-advisor-600 hover:text-advisor-500 underline font-medium" target="_blank" rel="noopener noreferrer">$1</a>');
 
-  // Unordered lists
-  html = html.replace(/^[-*] (.+)$/gm, '<li class="ml-6 list-disc text-zinc-700">$1</li>');
+  // Unordered lists - using zinc-800 for better visibility
+  html = html.replace(/^[-*] (.+)$/gm, '<li class="ml-6 list-disc text-zinc-800">$1</li>');
 
-  // Ordered lists (simple)
-  html = html.replace(/^\d+\. (.+)$/gm, '<li class="ml-6 list-decimal text-zinc-700">$1</li>');
+  // Ordered lists (simple) - using zinc-800 for better visibility
+  html = html.replace(/^\d+\. (.+)$/gm, '<li class="ml-6 list-decimal text-zinc-800">$1</li>');
 
   // Wrap consecutive list items
-  html = html.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul class="my-4 space-y-2">$1</ul>');
+  html = html.replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul class="my-4 space-y-2 text-zinc-800">$1</ul>');
 
   // Horizontal rules
-  html = html.replace(/^---$/gm, '<hr class="my-8 border-t border-zinc-200" />');
+  html = html.replace(/^---$/gm, '<hr class="my-8 border-t border-zinc-300" />');
 
-  // Paragraphs (lines that aren't already wrapped)
+  // Paragraphs (lines that aren't already wrapped) - using zinc-800 for excellent readability
   const lines = html.split('\n');
   const processedLines = lines.map((line) => {
     const trimmed = line.trim();
     if (!trimmed) return '';
     if (trimmed.startsWith('<')) return line;
-    return `<p class="text-zinc-700 leading-relaxed my-4">${trimmed}</p>`;
+    return `<p class="text-zinc-800 leading-relaxed my-4">${trimmed}</p>`;
   });
   html = processedLines.join('\n');
 
@@ -279,15 +282,16 @@ export default function BlogPostPage() {
         <Header />
 
         <main className="flex-1">
-          <article className="container mx-auto px-4 py-8 max-w-3xl">
-            {/* Back to Blog Link */}
-            <nav className="mb-8">
+          <article className="container mx-auto px-4 py-8 max-w-2xl">
+            {/* Navigation Links */}
+            <nav className="mb-8 flex items-center gap-4">
+              <BackToHome />
               <Link
                 to="/blog"
-                className="inline-flex items-center text-sm text-zinc-600 hover:text-advisor-600 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-advisor-600 bg-gray-50 hover:bg-advisor-50 border border-gray-200 hover:border-advisor-300 rounded-full transition-all duration-200"
               >
                 <svg
-                  className="w-4 h-4 mr-1"
+                  className="w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -295,7 +299,7 @@ export default function BlogPostPage() {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to Blog
+                Blog
               </Link>
             </nav>
 
@@ -384,7 +388,7 @@ export default function BlogPostPage() {
           </article>
 
           {/* Related CTA */}
-          <div className="container mx-auto px-4 pb-12 max-w-3xl">
+          <div className="container mx-auto px-4 pb-12 max-w-2xl">
             <div className="bg-stone-50 rounded-2xl shadow-lg p-8 border border-gray-200 text-center">
               <h2 className="text-xl font-bold text-zinc-900 mb-2">
                 Ready to check your privacy?

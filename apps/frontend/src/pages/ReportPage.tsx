@@ -18,9 +18,9 @@ import { ErrorState } from '../components/ErrorBoundary';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
 import GradeBadge from '../components/GradeBadge';
+import BackToHome from '../components/BackToHome';
 import type { ReportResponse } from '@gecko-advisor/shared';
 import { computeDataSharingLevel, type DataSharingLevel } from '../lib/dataSharing';
-import { useAuth } from '../contexts/AuthContext';
 
 type EvidenceItem = ReportResponse['evidence'][number];
 type EvidenceType = EvidenceItem['kind'];
@@ -34,10 +34,18 @@ interface EvidenceCategory {
   icon: string;
   items: EvidenceItem[];
   description: string;
+  color: {
+    bg: string;
+    border: string;
+    iconBg: string;
+    text: string;
+    accent: string;
+  };
 }
 
 /**
  * Categorizes evidence into semantic groups for better UX
+ * Each category has distinct visual styling for clarity
  */
 function categorizeEvidence(evidence: EvidenceItem[]): Record<string, EvidenceCategory> {
   const categories: Record<string, EvidenceCategory> = {
@@ -45,19 +53,40 @@ function categorizeEvidence(evidence: EvidenceItem[]): Record<string, EvidenceCa
       title: 'Tracking & Privacy',
       icon: '🎯',
       items: [],
-      description: 'Data collection, tracking, and privacy concerns'
+      description: 'Data collection, tracking, and privacy concerns',
+      color: {
+        bg: 'bg-purple-50',
+        border: 'border-purple-200',
+        iconBg: 'bg-purple-100',
+        text: 'text-purple-800',
+        accent: 'text-purple-600'
+      }
     },
     security: {
       title: 'Security',
       icon: '🔒',
       items: [],
-      description: 'Security headers, encryption, and vulnerabilities'
+      description: 'Security headers, encryption, and vulnerabilities',
+      color: {
+        bg: 'bg-blue-50',
+        border: 'border-blue-200',
+        iconBg: 'bg-blue-100',
+        text: 'text-blue-800',
+        accent: 'text-blue-600'
+      }
     },
     other: {
       title: 'Other Findings',
       icon: '📋',
       items: [],
-      description: 'Additional issues and recommendations'
+      description: 'Additional issues and recommendations',
+      color: {
+        bg: 'bg-gray-50',
+        border: 'border-gray-200',
+        iconBg: 'bg-gray-100',
+        text: 'text-gray-800',
+        accent: 'text-gray-600'
+      }
     }
   };
 
@@ -102,6 +131,18 @@ function categorizeEvidence(evidence: EvidenceItem[]): Record<string, EvidenceCa
   });
 
   return categories;
+}
+
+/**
+ * Calculates severity distribution for a category
+ */
+function getCategorySeverityStats(items: EvidenceItem[]) {
+  const critical = items.filter(i => i.severity >= 4).length;
+  const high = items.filter(i => i.severity === 3).length;
+  const medium = items.filter(i => i.severity === 2).length;
+  const low = items.filter(i => i.severity <= 1).length;
+  const maxSeverity = Math.max(...items.map(i => i.severity), 0);
+  return { critical, high, medium, low, maxSeverity, total: items.length };
 }
 
 /**
@@ -369,6 +410,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
         ),
         color: 'text-red-400',
         bgColor: 'bg-red-500/10',
+        borderColor: 'border border-red-400/30',
         label: 'Critical'
       };
     }
@@ -381,6 +423,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
         ),
         color: 'text-orange-400',
         bgColor: 'bg-orange-500/10',
+        borderColor: 'border border-orange-400/30',
         label: 'High'
       };
     }
@@ -393,6 +436,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
         ),
         color: 'text-yellow-400',
         bgColor: 'bg-yellow-500/10',
+        borderColor: 'border border-yellow-400/30',
         label: 'Medium'
       };
     }
@@ -404,6 +448,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
       ),
       color: 'text-green-400',
       bgColor: 'bg-green-500/10',
+      borderColor: 'border border-green-400/30',
       label: 'Low'
     };
   };
@@ -499,7 +544,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
                 )}
               </button>
               <div
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${severityVisual.bgColor} border border-${severityVisual.color.replace('text-', '')}/30`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${severityVisual.bgColor} ${severityVisual.borderColor}`}
                 aria-label={`${severityVisual.label} severity`}
                 title={`Severity: ${severityVisual.label} (${evidence.severity}/5)`}
               >
@@ -531,9 +576,9 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
               {showDetails && (
                 <div
                   id={`details-${evidence.id}`}
-                  className="mt-3 p-3 bg-gray-50 rounded border border-gray-200 shadow-sm"
+                  className="mt-3 p-3 bg-zinc-100 rounded border border-zinc-300 shadow-sm"
                 >
-                  <pre className="text-xs text-zinc-600 whitespace-pre-wrap font-mono overflow-x-auto">
+                  <pre className="text-xs text-zinc-800 whitespace-pre-wrap font-mono overflow-x-auto">
                     {typeof evidence.details === 'string'
                       ? evidence.details
                       : safeStringify(sanitizeDetails(evidence.details))}
@@ -569,7 +614,7 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
               {whyMattersExpanded && (
                 <div
                   id={`why-matters-${evidence.id}`}
-                  className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-zinc-600 animate-fade-in"
+                  className="mt-2 p-3 bg-zinc-100 border border-zinc-300 rounded-lg text-sm text-zinc-800 animate-fade-in"
                 >
                   {whyItMatters}
                 </div>
@@ -585,8 +630,6 @@ function EvidenceItemDisplay({ evidence }: EvidenceItemDisplayProps) {
 export default function ReportPage() {
   const { slug = '' } = useParams();
   const { data, isLoading, isError, error, refetch } = useQuery(reportQueryOptions(slug));
-  const { user } = useAuth();
-  const isPro = user?.subscription === 'PRO' || user?.subscription === 'TEAM';
 
   if (isLoading) {
     return <ReportSkeleton />;
@@ -634,7 +677,7 @@ export default function ReportPage() {
     );
   }
 
-  return <ReportBody slug={slug} data={data} isPro={isPro} />;
+  return <ReportBody slug={slug} data={data} />;
 }
 
 /**
@@ -799,7 +842,7 @@ const calculateBreakdown = (scan: ReportResponse['scan'], evidence: EvidenceItem
   return breakdown;
 };
 
-function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportResponse; isPro: boolean }) {
+function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   const { scan, evidence, meta } = data;
   const [showBreakdown, setShowBreakdown] = React.useState(false);
 
@@ -1080,6 +1123,11 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
       </div>
 
       <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
+      {/* Back to Home button - Desktop only (mobile has back button in sticky header) */}
+      <div className="hidden md:block">
+        <BackToHome />
+      </div>
+
       {/* Refined report header - clean, spacious layout */}
       <header className="bg-gradient-to-br from-stone-50 to-white border border-gray-200 rounded-2xl p-8 md:p-10 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
@@ -1306,42 +1354,122 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
         })}
       </div>
 
-      {/* Categorized Evidence Overview - Priority 1 Task 1.2 */}
+      {/* Categorized Evidence Overview - Enhanced with color-coding and severity bars */}
       {evidence.length > 0 && (
-        <div className="space-y-6 bg-stone-50 rounded-xl p-6 border border-gray-200 shadow-sm">
+        <div className="space-y-6">
+          {/* Section Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
               <span className="text-2xl" aria-hidden="true">📊</span>
               Evidence Categories
-              <span className="text-sm font-normal text-zinc-600">
-                ({evidence.length} total findings)
-              </span>
             </h2>
+            <span className="text-sm text-zinc-600 bg-zinc-100 px-3 py-1.5 rounded-full font-medium border border-zinc-200">
+              {evidence.length} total findings
+            </span>
           </div>
 
-          <div className="space-y-4">
+          {/* Category Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {Object.entries(categorizeEvidence(evidence)).map(([key, category]) => {
               if (category.items.length === 0) return null;
 
               const filteredCategoryItems = category.items.filter((item) => matchesFilter(item.severity));
               if (filteredCategoryItems.length === 0) return null;
 
+              const stats = getCategorySeverityStats(filteredCategoryItems);
+
               return (
-                <div key={key} className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-                      <span className="text-2xl" aria-hidden="true">{category.icon}</span>
-                      {category.title}
-                    </h2>
-                    <span className="text-sm text-zinc-600 bg-gray-50 px-3 py-1 rounded-full font-medium border border-gray-200">
-                      {filteredCategoryItems.length} {filteredCategoryItems.length === 1 ? 'item' : 'items'}
-                    </span>
+                <div
+                  key={key}
+                  className={`${category.color.bg} rounded-xl p-5 shadow-sm border-2 ${category.color.border} transition-all hover:shadow-md`}
+                >
+                  {/* Category Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 ${category.color.iconBg} rounded-xl flex items-center justify-center`}>
+                        <span className="text-2xl" aria-hidden="true">{category.icon}</span>
+                      </div>
+                      <div>
+                        <h3 className={`text-lg font-bold ${category.color.text}`}>
+                          {category.title}
+                        </h3>
+                        <p className="text-sm text-zinc-600">{category.description}</p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-zinc-600 mb-4">{category.description}</p>
-                  <div className="space-y-2">
-                    {filteredCategoryItems.map((item) => (
-                      <EvidenceItemDisplay key={`cat-${key}-${item.id}`} evidence={item} />
-                    ))}
+
+                  {/* Severity Distribution Bar */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-medium text-zinc-700">Severity Distribution</span>
+                      <span className="text-xs text-zinc-500">({stats.total} items)</span>
+                    </div>
+                    <div className="flex h-3 rounded-full overflow-hidden bg-white/50 border border-white/80">
+                      {stats.critical > 0 && (
+                        <div
+                          className="bg-red-500 transition-all"
+                          style={{ width: `${(stats.critical / stats.total) * 100}%` }}
+                          title={`${stats.critical} critical`}
+                        />
+                      )}
+                      {stats.high > 0 && (
+                        <div
+                          className="bg-orange-500 transition-all"
+                          style={{ width: `${(stats.high / stats.total) * 100}%` }}
+                          title={`${stats.high} high`}
+                        />
+                      )}
+                      {stats.medium > 0 && (
+                        <div
+                          className="bg-yellow-500 transition-all"
+                          style={{ width: `${(stats.medium / stats.total) * 100}%` }}
+                          title={`${stats.medium} medium`}
+                        />
+                      )}
+                      {stats.low > 0 && (
+                        <div
+                          className="bg-green-500 transition-all"
+                          style={{ width: `${(stats.low / stats.total) * 100}%` }}
+                          title={`${stats.low} low`}
+                        />
+                      )}
+                    </div>
+                    {/* Severity Legend */}
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs">
+                      {stats.critical > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                          <span className="text-zinc-700 font-medium">{stats.critical} Critical</span>
+                        </span>
+                      )}
+                      {stats.high > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                          <span className="text-zinc-700 font-medium">{stats.high} High</span>
+                        </span>
+                      )}
+                      {stats.medium > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                          <span className="text-zinc-700 font-medium">{stats.medium} Medium</span>
+                        </span>
+                      )}
+                      {stats.low > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                          <span className="text-zinc-700 font-medium">{stats.low} Low</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Evidence Items - Scrollable container */}
+                  <div className="bg-white/60 rounded-lg p-3 max-h-[400px] overflow-y-auto border border-white/80">
+                    <div className="space-y-2">
+                      {filteredCategoryItems.map((item) => (
+                        <EvidenceItemDisplay key={`cat-${key}-${item.id}`} evidence={item} />
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
@@ -1546,13 +1674,16 @@ function ReportBody({ slug, data, isPro: _isPro }: { slug: string; data: ReportR
                     </>
                   )}
                   {TIPS[type] && hasFilteredItems && (
-                    <div className="mt-3 text-sm">
-                      <div className="font-semibold text-zinc-900">How to fix</div>
-                      <ul className="list-disc pl-5 text-zinc-600">
+                    <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                      <div className="font-semibold text-zinc-900 flex items-center gap-2 mb-2">
+                        <span className="text-lg" aria-hidden="true">🔧</span>
+                        How to fix
+                      </div>
+                      <ul className="list-disc pl-5 text-zinc-800 space-y-1">
                         {TIPS[type].map((tip, index) => (
                           <li key={index}>
                             {tip.url ? (
-                              <a className="text-emerald-600 hover:text-emerald-700 underline" href={tip.url} target="_blank" rel="noreferrer">
+                              <a className="text-emerald-700 hover:text-emerald-800 underline font-medium" href={tip.url} target="_blank" rel="noreferrer">
                                 {tip.text}
                               </a>
                             ) : (
