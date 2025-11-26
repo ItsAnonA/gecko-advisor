@@ -1257,17 +1257,17 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           </div>
           {/* QUICK WIN #3: Enhanced color coding with background colors and status icons */}
           <div className={`mt-2 px-3 py-1.5 rounded-lg inline-flex items-center gap-2 ${
-            dataSharingLevel === 'None' ? 'bg-score-trust/20 text-score-trust' :
-            dataSharingLevel === 'Low' ? 'bg-score-trust/10 text-score-trust' :
-            dataSharingLevel === 'Medium' ? 'bg-score-caution/20 text-score-caution' :
-            'bg-score-danger/20 text-score-danger'
+            dataSharingLevel === 'None' ? 'bg-emerald-100 text-emerald-700' :
+            dataSharingLevel === 'Low' ? 'bg-emerald-50 text-emerald-600' :
+            dataSharingLevel === 'Medium' ? 'bg-amber-100 text-amber-700' :
+            'bg-red-100 text-red-700'
           }`}>
             {/* Add status icons for visual clarity and accessibility */}
-            {dataSharingLevel === 'None' && <span className="text-xl" aria-hidden="true">✅</span>}
-            {dataSharingLevel === 'Low' && <span className="text-xl" aria-hidden="true">✓</span>}
-            {dataSharingLevel === 'Medium' && <span className="text-xl" aria-hidden="true">⚠️</span>}
-            {dataSharingLevel === 'High' && <span className="text-xl" aria-hidden="true">⛔</span>}
-            <span className="text-2xl font-bold">{dataSharingLevel}</span>
+            {dataSharingLevel === 'None' && <span className="text-lg" aria-hidden="true">✅</span>}
+            {dataSharingLevel === 'Low' && <span className="text-lg" aria-hidden="true">✓</span>}
+            {dataSharingLevel === 'Medium' && <span className="text-lg" aria-hidden="true">⚠️</span>}
+            {dataSharingLevel === 'High' && <span className="text-lg" aria-hidden="true">⛔</span>}
+            <span className="text-xl font-semibold">{dataSharingLevel}</span>
           </div>
           {/* Helpful description for each level */}
           <p className="text-xs text-zinc-600 mt-1.5">
