@@ -9,7 +9,6 @@ import { Helmet } from 'react-helmet-async';
 import { getBlogPost, type BlogPost } from '../lib/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import BackToHome from '../components/BackToHome';
 
 /**
  * Format date to a readable string
@@ -284,8 +283,7 @@ export default function BlogPostPage() {
         <main className="flex-1">
           <article className="container mx-auto px-4 py-8 max-w-2xl">
             {/* Navigation Links */}
-            <nav className="mb-8 flex items-center gap-4">
-              <BackToHome />
+            <nav className="mb-8">
               <Link
                 to="/blog"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-advisor-600 bg-gray-50 hover:bg-advisor-50 border border-gray-200 hover:border-advisor-300 rounded-full transition-all duration-200"
