@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
@@ -239,12 +239,16 @@ export default function Home() {
             GitHub
           </a>
           {stats && stats.totalScans > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-semibold text-advisor-700">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <Link
+              to="/reports"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-advisor-50 border border-advisor-200 text-sm font-semibold text-advisor-700 hover:bg-advisor-100 hover:border-advisor-300 transition-colors cursor-pointer"
+              aria-label={`View all ${formatCount(stats.totalScans)} scan reports`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {formatCount(stats.totalScans)}+ Scans
-            </span>
+            </Link>
           )}
         </div>
 
