@@ -317,14 +317,13 @@ export default function Home() {
           />
         </div>
 
-        {/* Scan Button - Separate from input for better UX */}
-        <div className="mb-4">
+        {/* Scan Button - Centered with appropriate width */}
+        <div className="mb-4 flex justify-center">
           <button
             onClick={onScan}
             disabled={loading || (turnstileEnabled && !turnstileToken)}
             className="
-              w-full
-              px-6 py-4
+              px-8 py-3.5
               rounded-xl
               bg-advisor-500
               hover:bg-advisor-600
@@ -334,12 +333,12 @@ export default function Home() {
               active:scale-[0.98]
               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
               transition-all duration-300
-              text-white font-semibold text-lg
+              text-white font-semibold text-base
               whitespace-nowrap
             "
             aria-label="Start privacy scan"
           >
-            <span className="inline-flex items-center justify-center gap-3">
+            <span className="inline-flex items-center justify-center gap-2">
               {loading ? (
                 <>
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -353,7 +352,7 @@ export default function Home() {
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span>Scan for Privacy Issues</span>
+                  <span>Scan Website</span>
                 </>
               )}
             </span>

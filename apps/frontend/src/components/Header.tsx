@@ -36,7 +36,7 @@ export default function Header() {
               <img
                 src={BRAND.logo.src}
                 alt={BRAND.logo.alt}
-                className="h-12 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
+                className="h-16 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
               />
             </div>
           </Link>
@@ -44,10 +44,10 @@ export default function Header() {
           {/* Navigation Links */}
           <div className="flex items-center gap-4">
             <Link
-              to="/reports"
+              to="/about"
               className="flex items-center gap-2 px-3 py-2 text-gecko-600 hover:text-advisor-600 transition-colors text-sm font-medium"
             >
-              Recent Scans
+              About
             </Link>
             <Link
               to="/blog"
@@ -56,10 +56,10 @@ export default function Header() {
               Blog
             </Link>
             <Link
-              to="/about"
+              to="/reports"
               className="flex items-center gap-2 px-3 py-2 text-gecko-600 hover:text-advisor-600 transition-colors text-sm font-medium"
             >
-              About
+              Reports
             </Link>
             <a
               href="https://github.com/privacygecko/gecko-advisor"
