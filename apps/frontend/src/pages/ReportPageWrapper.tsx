@@ -10,20 +10,23 @@ const ReportPageOriginal = React.lazy(() => import('./ReportPage'));
 const ReportPageRedesigned = React.lazy(() => import('./ReportPageRedesigned'));
 
 /**
- * ReportPageWrapper enables A/B testing between original and redesigned report pages.
+ * ReportPageWrapper enables switching between original and redesigned report pages.
  *
  * Usage:
- * - Original design: /r/[slug] (default)
- * - New design: /r/[slug]?design=new
+ * - New design: /r/[slug] (default - compact, tab-based)
+ * - Classic design: /r/[slug]?design=classic (original vertical scroll)
  *
- * This allows side-by-side comparison before committing to the new design.
+ * The new design provides:
+ * - 5-10 second comprehension at a glance
+ * - Tab-based navigation (no excessive scrolling)
+ * - Progressive disclosure (summary first, details on demand)
  */
 export default function ReportPageWrapper() {
   const [searchParams] = useSearchParams();
   const designVersion = searchParams.get('design');
 
-  // Use new design if ?design=new is present
-  const useNewDesign = designVersion === 'new';
+  // Use classic/original design only if explicitly requested
+  const useClassicDesign = designVersion === 'classic' || designVersion === 'original';
 
-  return useNewDesign ? <ReportPageRedesigned /> : <ReportPageOriginal />;
+  return useClassicDesign ? <ReportPageOriginal /> : <ReportPageRedesigned />;
 }
