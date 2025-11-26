@@ -281,7 +281,7 @@ export interface PaginatedBlogPostsResponse {
  * Fetch paginated blog posts (public)
  */
 export async function getBlogPosts(page: number = 1, limit: number = 10): Promise<PaginatedBlogPostsResponse> {
-  const res = await fetch(`/api/blog/posts?page=${page}&limit=${limit}`);
+  const res = await fetch(`/api/v2/blog/posts?page=${page}&limit=${limit}`);
   if (!res.ok) throw new Error('Failed to load blog posts');
   return res.json();
 }
@@ -290,7 +290,7 @@ export async function getBlogPosts(page: number = 1, limit: number = 10): Promis
  * Fetch a single blog post by slug (public)
  */
 export async function getBlogPost(slug: string): Promise<BlogPost> {
-  const res = await fetch(`/api/blog/posts/${slug}`);
+  const res = await fetch(`/api/v2/blog/posts/${slug}`);
   if (!res.ok) {
     if (res.status === 404) throw new Error('Blog post not found');
     throw new Error('Failed to load blog post');
