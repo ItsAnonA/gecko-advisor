@@ -14,11 +14,6 @@ import { Layout } from './components/Layout';
 import './lib/performance'; // Initialize performance monitoring
 import './styles.css';
 
-// Force dark mode globally
-if (typeof window !== 'undefined') {
-  document.documentElement.classList.add('dark');
-}
-
 // Lazy load components for code splitting
 const Home = React.lazy(() => import('./pages/Home'));
 const Scan = React.lazy(() => import('./pages/Scan'));
