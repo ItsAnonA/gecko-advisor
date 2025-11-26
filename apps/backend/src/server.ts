@@ -19,6 +19,7 @@ import { docsRouter } from "./routes/docs.js";
 import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./health.js";
 import { sitemapRouter } from "./routes/sitemap.js";
+import { ssrBlogRouter } from "./routes/ssr.blog.js";
 import { initSentry, Sentry } from "./sentry.js";
 import { problem } from "./problem.js";
 
@@ -122,6 +123,11 @@ export function createServer() {
 
   // SEO: Dynamic sitemap routes (must be served at root level for search engines)
   app.use('/', sitemapRouter);
+
+  // SEO: SSR blog pages for search engine indexing
+  // Serves pre-rendered HTML with full content, meta tags, and structured data
+  // This ensures Googlebot can index blog content without JavaScript rendering
+  app.use('/', ssrBlogRouter);
 
   if (sentryEnabled) {
     Sentry.setupExpressErrorHandler(app);
