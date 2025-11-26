@@ -512,7 +512,7 @@ function RecentReports() {
                   <div className="font-semibold text-zinc-900 truncate">{domain}</div>
                   <div className="text-xs text-zinc-600 flex items-center gap-2 mt-0.5">
                     <span>{getRelativeTime(report.createdAt)}</span>
-                    <span className="text-dark-border">•</span>
+                    <span className="text-zinc-400">•</span>
                     <span>{report.evidenceCount} checks</span>
                   </div>
                 </div>

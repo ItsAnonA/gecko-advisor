@@ -48,7 +48,7 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
 }: EnhancedTrustIndicatorProps) {
   const variantConfig = {
     gecko: {
-      gradient: 'bg-gradient-to-br from-dark-elevated via-dark-surface to-dark-bg',
+      gradient: 'bg-gradient-to-br from-white via-stone-50 to-advisor-50/50',
       border: 'border-advisor-500/30 hover:border-advisor-500/50',
       iconGradient: 'from-advisor-500 to-advisor-600',
       iconShadow: 'shadow-lg shadow-advisor-500/40',
@@ -57,7 +57,7 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
       decorationBg: 'bg-advisor-500/10'
     },
     blue: {
-      gradient: 'bg-gradient-to-br from-dark-elevated via-dark-surface to-dark-bg',
+      gradient: 'bg-gradient-to-br from-white via-stone-50 to-trust-50/50',
       border: 'border-trust-600/30 hover:border-trust-600/50',
       iconGradient: 'from-trust-500 to-trust-600',
       iconShadow: 'shadow-lg shadow-trust-500/40',
@@ -66,7 +66,7 @@ const EnhancedTrustIndicator = React.memo(function EnhancedTrustIndicator({
       decorationBg: 'bg-trust-500/10'
     },
     amber: {
-      gradient: 'bg-gradient-to-br from-dark-elevated via-dark-surface to-dark-bg',
+      gradient: 'bg-gradient-to-br from-white via-stone-50 to-amber-50/50',
       border: 'border-score-caution/30 hover:border-score-caution/50',
       iconGradient: 'from-score-caution to-amber-600',
       iconShadow: 'shadow-lg shadow-score-caution/40',

@@ -122,7 +122,7 @@ export default function ComingSoonNotice({
         {/* Dismiss button - Touch-friendly 44x44px */}
         <button
           onClick={handleDismiss}
-          className={`flex-shrink-0 w-10 h-10 min-w-[44px] min-h-[44px] inline-flex items-center justify-center ${styles.dismissBtn} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg rounded-full transition-colors duration-150`}
+          className={`flex-shrink-0 w-10 h-10 min-w-[44px] min-h-[44px] inline-flex items-center justify-center ${styles.dismissBtn} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white rounded-full transition-colors duration-150`}
           aria-label={`Dismiss ${feature} coming soon notice`}
         >
           <svg

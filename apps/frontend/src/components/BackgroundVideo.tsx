@@ -60,7 +60,7 @@ export function BackgroundVideo({
     // Fallback: Show static gradient background
     return (
       <div
-        className={`fixed inset-0 -z-10 bg-gradient-to-br from-dark-bg via-dark-surface to-dark-elevated ${className}`}
+        className={`fixed inset-0 -z-10 bg-gradient-to-br from-stone-50 via-white to-stone-100 ${className}`}
         aria-hidden="true"
       />
     );
@@ -85,14 +85,14 @@ export function BackgroundVideo({
         <source src={src} type="video/mp4" />
       </video>
 
-      {/* Dark overlay gradient for text readability */}
+      {/* Light overlay gradient for text readability */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-dark-bg/20 via-dark-bg/40 to-dark-bg/70"
+        className="absolute inset-0 bg-gradient-to-b from-white/20 via-white/40 to-white/70"
       />
 
-      {/* Loading state: Show dark background while video loads */}
+      {/* Loading state: Show light background while video loads */}
       {!isLoaded && (
-        <div className="absolute inset-0 bg-dark-bg" />
+        <div className="absolute inset-0 bg-stone-50" />
       )}
     </div>
   );

@@ -127,7 +127,7 @@ export default function InfoPopover({
         aria-describedby={`${id}-desc`}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-200 text-xs text-zinc-900 bg-white hover:bg-gray-100 hover:border-advisor-500/50 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg transition-colors duration-200"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-200 text-xs text-zinc-900 bg-white hover:bg-gray-100 hover:border-advisor-500/50 focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-white transition-colors duration-200"
         data-testid="info-popover-trigger"
       >
         <svg

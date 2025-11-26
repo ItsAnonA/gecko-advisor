@@ -71,7 +71,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-dark-bg">
+        <div className="min-h-screen flex items-center justify-center bg-stone-50">
           <div className="max-w-md w-full bg-stone-50 rounded-lg shadow-lg border border-gray-200 p-6 text-center">
             <div className="mb-4">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-score-danger/20">
@@ -128,13 +128,13 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleRetry}
-                className="px-4 py-2 bg-advisor-500 text-dark-bg rounded-lg hover:bg-advisor-400 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg"
+                className="px-4 py-2 bg-advisor-600 text-white rounded-lg hover:bg-advisor-500 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-white"
               >
                 Try Again
               </button>
               <button
                 onClick={() => window.location.href = '/'}
-                className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg "
+                className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-white"
               >
                 Go Home
               </button>
@@ -270,7 +270,7 @@ export const ErrorState = React.memo(function ErrorState({
         {onRetry && (
           <button
             onClick={onRetry}
-            className="px-4 py-2 bg-advisor-500 text-dark-bg rounded-lg hover:bg-advisor-400 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg"
+            className="px-4 py-2 bg-advisor-600 text-white rounded-lg hover:bg-advisor-500 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-white"
           >
             Try Again
           </button>
@@ -278,7 +278,7 @@ export const ErrorState = React.memo(function ErrorState({
         {onGoHome && (
           <button
             onClick={onGoHome}
-            className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-dark-bg "
+            className="px-4 py-2 border border-gray-200 text-zinc-900 bg-white rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-advisor-500 focus:ring-offset-2 focus:ring-offset-white"
           >
             Go Home
           </button>

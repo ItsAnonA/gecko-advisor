@@ -189,8 +189,8 @@ const ScanProgress = React.memo(function ScanProgress({
                   className={clsx(
                     'w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm transition-colors flex-shrink-0',
                     {
-                      'bg-score-safe text-dark-bg': isCompleted,
-                      'bg-advisor-500 text-dark-bg animate-pulse': isActive,
+                      'bg-score-safe text-white': isCompleted,
+                      'bg-advisor-500 text-white animate-pulse': isActive,
                       'bg-stone-50 text-zinc-500': isPending
                     }
                   )}

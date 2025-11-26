@@ -41,7 +41,7 @@ export default function Compare() {
           ) : (
             <div className="flex gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} className="border border-gray-200 bg-white rounded px-2 py-1 text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-advisor-500" placeholder="enter report slug" />
-              <button className="px-3 py-1 rounded bg-advisor-500 text-dark-bg hover:bg-advisor-400 transition-colors" onClick={addRight}>Add</button>
+              <button className="px-3 py-1 rounded bg-advisor-600 text-white hover:bg-advisor-500 transition-colors" onClick={addRight}>Add</button>
             </div>
           )}
         </Card>

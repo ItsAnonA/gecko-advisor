@@ -104,7 +104,7 @@ export default function ReportsPage() {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-dark-bg bg-advisor-500 hover:bg-advisor-400 transition-colors"
+              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-advisor-600 hover:bg-advisor-500 transition-colors"
             >
               Try Again
             </button>
@@ -153,7 +153,7 @@ export default function ReportsPage() {
               <div className="mt-6">
                 <button
                   onClick={() => navigate('/')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-dark-bg bg-advisor-500 hover:bg-advisor-400 transition-colors"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-advisor-600 hover:bg-advisor-500 transition-colors"
                 >
                   Start a Scan
                 </button>
@@ -431,7 +431,7 @@ export default function ReportsPage() {
             </p>
             <button
               onClick={() => navigate('/')}
-              className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-dark-bg bg-advisor-500 hover:bg-advisor-400 active:bg-advisor-600 transition-all duration-200"
+              className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-advisor-600 hover:bg-advisor-500 active:bg-advisor-700 transition-all duration-200"
             >
               <svg
                 className="w-5 h-5 mr-2"

@@ -202,7 +202,7 @@ export default function BlogPostPage() {
                 {!isNotFound && (
                   <button
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-dark-bg bg-advisor-500 hover:bg-advisor-400 transition-colors"
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-advisor-600 hover:bg-advisor-500 transition-colors"
                   >
                     Try Again
                   </button>
@@ -395,7 +395,7 @@ export default function BlogPostPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
                   to="/"
-                  className="inline-flex items-center px-5 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-dark-bg bg-advisor-500 hover:bg-advisor-400 transition-colors"
+                  className="inline-flex items-center px-5 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-advisor-600 hover:bg-advisor-500 transition-colors"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
