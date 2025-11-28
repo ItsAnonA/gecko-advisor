@@ -223,6 +223,13 @@ export default function BlogPostPage() {
   const seoDescription = post.metaDescription || post.excerpt;
   const canonicalUrl = `https://geckoadvisor.com/blog/${post.slug}`;
 
+  // Convert relative image paths to absolute URLs for OG/Twitter
+  const absoluteCoverImage = post.coverImage
+    ? post.coverImage.startsWith('http')
+      ? post.coverImage
+      : `https://geckoadvisor.com${post.coverImage}`
+    : null;
+
   // Structured data for article
   const structuredData = {
     '@context': 'https://schema.org',
@@ -245,7 +252,7 @@ export default function BlogPostPage() {
       '@type': 'WebPage',
       '@id': canonicalUrl,
     },
-    ...(post.coverImage && { image: post.coverImage }),
+    ...(absoluteCoverImage && { image: absoluteCoverImage }),
   };
 
   // Success State - Display Blog Post
@@ -261,15 +268,17 @@ export default function BlogPostPage() {
         <meta property="og:description" content={seoDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
-        {post.coverImage && <meta property="og:image" content={post.coverImage} />}
+        {absoluteCoverImage && <meta property="og:image" content={absoluteCoverImage} />}
+        {absoluteCoverImage && <meta property="og:image:width" content="1200" />}
+        {absoluteCoverImage && <meta property="og:image:height" content="630" />}
         {post.publishedAt && <meta property="article:published_time" content={post.publishedAt} />}
         <meta property="article:modified_time" content={post.updatedAt} />
 
         {/* Twitter Card */}
-        <meta name="twitter:card" content={post.coverImage ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:card" content={absoluteCoverImage ? 'summary_large_image' : 'summary'} />
         <meta name="twitter:title" content={seoTitle} />
         <meta name="twitter:description" content={seoDescription} />
-        {post.coverImage && <meta name="twitter:image" content={post.coverImage} />}
+        {absoluteCoverImage && <meta name="twitter:image" content={absoluteCoverImage} />}
 
         {/* Structured Data */}
         <script type="application/ld+json">

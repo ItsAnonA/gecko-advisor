@@ -100,6 +100,9 @@ function validateUrl(input: string): { valid: true; normalizedUrl: string; domai
     if (message.includes('empty or too long')) {
       return { valid: false, error: 'URL is too long (max 2048 characters)' };
     }
+    if (message.includes('domain extension') || message.includes('must include')) {
+      return { valid: false, error: 'Please include a domain extension (e.g., .com, .org, .net)' };
+    }
     return { valid: false, error: 'Please enter a valid website URL' };
   }
 }
