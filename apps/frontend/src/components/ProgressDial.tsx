@@ -24,7 +24,7 @@ export default function ProgressDial({ percent, 'data-testid': dataTestId }: { p
         strokeLinecap="round"
         transform="rotate(-90 50 50)"
       />
-      <text x="50" y="54" textAnchor="middle" fontSize="20" fontWeight={700} fill="#f9fafb" className="">{pct}%</text>
+      <text x="50" y="54" textAnchor="middle" fontSize="20" fontWeight={700} fill="#1f2937" className="">{pct}%</text>
     </svg>
   );
 }

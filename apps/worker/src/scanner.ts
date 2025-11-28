@@ -291,6 +291,9 @@ export async function scanSiteJob(
   const seenThirdParties = new Set<string>();
   const seenTrackers = new Set<string>();
 
+  // Track successful page fetches to detect unreachable sites
+  let successfulFetches = 0;
+
   // Crawling phase: 30% - 70% progress
   let crawlProgress = 0;
 
@@ -305,6 +308,8 @@ export async function scanSiteJob(
 
     const response = await fetchPage(curr, hostname);
     if (!response) continue;
+
+    successfulFetches++;
 
     const { headers } = response;
     if (!isHeaders(headers)) continue;
@@ -458,6 +463,28 @@ export async function scanSiteJob(
         // ignore invalid URLs
       }
     });
+  }
+
+  // Check if site was reachable - if no pages fetched, mark as error
+  if (successfulFetches === 0) {
+    logger.warn({ scanId, url: urlInput }, 'Site unreachable - no pages could be fetched');
+    await prisma.scan.update({
+      where: { id: scanId },
+      data: {
+        status: 'error',
+        score: null,
+        label: null,
+        summary: 'Unable to scan this website. The site may be unavailable, not registered, or blocking our scanner.',
+        meta: {
+          error: 'SITE_UNREACHABLE',
+          errorMessage: 'Could not connect to website',
+          suggestion: 'Please verify the URL is correct and the website is accessible.',
+        } as Prisma.InputJsonValue,
+        finishedAt: new Date(),
+        progress: 100,
+      },
+    });
+    return;
   }
 
   // Batch insert all evidence - 70% progress
