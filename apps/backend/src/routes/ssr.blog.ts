@@ -55,7 +55,12 @@ function generateBlogHtml(post: {
   const title = escapeHtml(post.metaTitle || post.title);
   const description = escapeHtml(post.metaDescription || post.excerpt);
   const url = `https://geckoadvisor.com/blog/${post.slug}`;
-  const coverImage = post.coverImage || 'https://geckoadvisor.com/og-image.png';
+  // Convert relative image paths to absolute URLs for social media crawlers
+  const coverImage = post.coverImage
+    ? post.coverImage.startsWith('http')
+      ? post.coverImage
+      : `https://geckoadvisor.com${post.coverImage}`
+    : 'https://geckoadvisor.com/og-image.png';
   const publishedDate = post.publishedAt?.toISOString() || new Date().toISOString();
 
   // Convert content to HTML
@@ -80,6 +85,8 @@ function generateBlogHtml(post: {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${coverImage}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Gecko Advisor">
   <meta property="article:published_time" content="${publishedDate}">
   <meta property="article:author" content="Privacy Gecko Team">
