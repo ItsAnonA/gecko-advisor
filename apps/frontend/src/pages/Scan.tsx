@@ -45,9 +45,9 @@ export default function Scan() {
     return () => clearInterval(interval);
   }, [scanStartTime, data?.status, isError]);
 
-  // Redirect to report page when scan is complete using slug from API response
+  // Redirect to report page when scan is complete (done or error) using slug from API response
   React.useEffect(() => {
-    if (data?.status === 'done' && data?.slug) {
+    if ((data?.status === 'done' || data?.status === 'error') && data?.slug) {
       nav(`/r/${data.slug}`);
     }
   }, [data, nav]);

@@ -858,6 +858,99 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   const { scan, evidence, meta } = data;
   const [showBreakdown, setShowBreakdown] = React.useState(false);
 
+  // Handle scans that completed with error status (e.g., unreachable sites)
+  if (scan.status === 'error') {
+    const errorMeta = scan.meta as { error?: string; errorMessage?: string; suggestion?: string } | null;
+
+    return (
+      <>
+        <Header />
+        <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+          <BackToHome />
+
+          {/* Error State Card */}
+          <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-2xl p-8 md:p-10 shadow-sm">
+            <div className="flex flex-col items-center text-center gap-6">
+              {/* Error Icon */}
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+
+              {/* Error Title */}
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 mb-2">
+                  Unable to Scan Website
+                </h1>
+                <p className="text-zinc-600 text-base break-all">
+                  {scan.input}
+                </p>
+              </div>
+
+              {/* Error Message */}
+              <div className="bg-white border border-amber-200 rounded-xl p-6 max-w-xl w-full">
+                <p className="text-zinc-700 leading-relaxed">
+                  {scan.summary || 'This website could not be scanned. It may be unavailable, not registered, or blocking our scanner.'}
+                </p>
+                {errorMeta?.suggestion && (
+                  <p className="text-sm text-zinc-600 mt-3 pt-3 border-t border-gray-100">
+                    <strong className="text-zinc-700">Suggestion:</strong> {errorMeta.suggestion}
+                  </p>
+                )}
+              </div>
+
+              {/* Possible Reasons */}
+              <div className="text-left w-full max-w-xl">
+                <h2 className="text-sm font-semibold text-zinc-700 mb-3">This can happen when:</h2>
+                <ul className="space-y-2 text-sm text-zinc-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">•</span>
+                    The website is down or temporarily unavailable
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">•</span>
+                    The domain is not registered or has expired
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">•</span>
+                    The website is blocking automated requests
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">•</span>
+                    The URL was mistyped or contains errors
+                  </li>
+                </ul>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-4 pt-4">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Try Another URL
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Scan Info Footer */}
+          <div className="text-center text-xs text-zinc-500">
+            <p>Scan ID: {scan.id}</p>
+            {scan.finishedAt && (
+              <p>Attempted: {new Date(scan.finishedAt).toLocaleString()}</p>
+            )}
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   const trackerDomains = React.useMemo(() => {
     const domains = new Set<string>();
     evidence.filter((item) => item.kind === 'tracker').forEach((item) => {
