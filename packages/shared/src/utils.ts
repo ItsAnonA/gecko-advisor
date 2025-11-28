@@ -83,9 +83,14 @@ export function normalizeUrl(input: string): URL {
     throw new Error('Invalid hostname format');
   }
 
-  // Require at least one dot for valid TLD (e.g., example.com, not just "example")
-  // This prevents scanning invalid hostnames like "test" or "example" without TLD
-  if (!hostname.includes('.')) {
+  // Validate proper domain format with TLD
+  // Must have: at least one dot, something before and after the dot, TLD at least 2 chars
+  // Rejects: "example", "example.", ".com", "test.", "google."
+  const parts = hostname.split('.');
+  const tld = parts[parts.length - 1];
+  const firstPart = parts[0];
+
+  if (parts.length < 2 || !tld || tld.length < 2 || !firstPart || firstPart.length === 0) {
     throw new Error('Invalid hostname: must include a valid domain extension (e.g., .com, .org)');
   }
 
