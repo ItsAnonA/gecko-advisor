@@ -122,8 +122,10 @@ export function createServer() {
   app.use('/api/auth', authRouter);
   app.use('/docs', docsRouter);
 
-  // SEO: Dynamic sitemap routes (must be served at root level for search engines)
+  // SEO: Dynamic sitemap routes
+  // Mount at both root (for direct access) and /api (for Coolify proxy routing)
   app.use('/', sitemapRouter);
+  app.use('/api', sitemapRouter);
 
   // SEO: SSR blog pages for search engine indexing
   // Serves pre-rendered HTML with full content, meta tags, and structured data
