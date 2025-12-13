@@ -478,14 +478,22 @@ function generate404Html(domain: string): string {
 
 /**
  * SSR route for privacy-policy domain pages
- * GET /api/ssr/privacy-policy/:domain
+ * GET /privacy-policy/:domain (primary - for redirects and direct access)
+ * GET /api/ssr/privacy-policy/:domain (legacy/explicit SSR endpoint)
  *
  * This serves pre-rendered HTML for SEO crawlers.
- * The nginx config should proxy /privacy-policy/* to this route.
  */
-ssrDomainRouter.get('/api/ssr/privacy-policy/:domain', async (req, res) => {
+ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain'], async (req, res) => {
   try {
     const rawDomain = req.params.domain;
+
+    // Check for undefined/empty domain parameter
+    if (!rawDomain) {
+      res.status(400).setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(generate404Html('unknown'));
+      return;
+    }
+
     const domain = normalizeDomain(rawDomain);
 
     if (!domain || domain.length < 3) {
@@ -525,5 +533,45 @@ ssrDomainRouter.get('/api/ssr/privacy-policy/:domain', async (req, res) => {
   } catch (error) {
     logger.error({ error, domain: req.params.domain }, 'SSR domain report error');
     res.status(500).send('Internal server error');
+  }
+});
+
+/**
+ * SEO Redirect: /r/:slug → /privacy-policy/:domain
+ *
+ * Redirects old report URLs to canonical domain-based URLs for SEO.
+ * This ensures search engines always index the canonical URL.
+ */
+ssrDomainRouter.get('/r/:slug', async (req, res) => {
+  try {
+    const slug = req.params.slug;
+
+    // Look up scan by slug to get the domain
+    const scan = await prisma.scan.findUnique({
+      where: { slug },
+      select: { input: true },
+    });
+
+    if (!scan) {
+      // If scan not found, let the frontend handle 404
+      return res.redirect(302, `https://geckoadvisor.com/r/${slug}`);
+    }
+
+    // Extract domain from scan input
+    let domain: string;
+    try {
+      const url = new URL(scan.input);
+      domain = normalizeDomain(url.hostname) || url.hostname;
+    } catch {
+      domain = scan.input;
+    }
+
+    // 301 permanent redirect to canonical URL (via API for SSR)
+    logger.info({ slug, domain }, 'SEO redirect /r/:slug -> /privacy-policy/:domain');
+    res.redirect(301, `https://api.geckoadvisor.com/privacy-policy/${encodeURIComponent(domain)}`);
+  } catch (error) {
+    logger.error({ error, slug: req.params.slug }, 'Error in /r/:slug redirect');
+    // On error, let frontend handle it
+    res.redirect(302, `https://geckoadvisor.com/r/${req.params.slug}`);
   }
 });
