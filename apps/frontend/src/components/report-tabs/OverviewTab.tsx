@@ -267,7 +267,7 @@ function MetricCard({ title, value, status }: MetricCardProps) {
   };
 
   return (
-    <div className={`p-4 rounded-xl border ${statusStyles[status]}`}>
+    <div className={`p-4 rounded-xl border metric-interactive ${statusStyles[status]}`}>
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium opacity-80">{title}</span>
         {iconStyles[status]}

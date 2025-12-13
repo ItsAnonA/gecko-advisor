@@ -48,12 +48,49 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
   disableAnimation = false
 }: EnhancedScoreDialProps) {
   const [mounted, setMounted] = React.useState(false);
+  const [displayScore, setDisplayScore] = React.useState(0);
 
   React.useEffect(() => {
     // Trigger animation after mount
     const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Count-up animation for score number
+  React.useEffect(() => {
+    if (!mounted || disableAnimation) {
+      setDisplayScore(score);
+      return;
+    }
+
+    // Animate from 0 to final score
+    const duration = 800; // ms
+    const startTime = Date.now();
+    const startValue = 0;
+    const endValue = Math.max(0, Math.min(100, score));
+
+    const animateScore = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-out cubic for smooth deceleration
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentValue = Math.round(startValue + (endValue - startValue) * easeOut);
+
+      setDisplayScore(currentValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScore);
+      }
+    };
+
+    // Start count-up after ring animation begins (500ms delay)
+    const delayTimer = setTimeout(() => {
+      requestAnimationFrame(animateScore);
+    }, 500);
+
+    return () => clearTimeout(delayTimer);
+  }, [mounted, score, disableAnimation]);
 
   // Circle math
   const radius = 40;
@@ -244,16 +281,22 @@ const EnhancedScoreDial = React.memo(function EnhancedScoreDial({
             />
           )}
 
-          {/* Score text with tabular numbers */}
+          {/* Score text with tabular numbers and count-up animation */}
           <text
             x="50"
             y="58"
             textAnchor="middle"
-            className={`${config.scoreSize} font-extrabold tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}
+            className={`${config.scoreSize} font-extrabold tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] ${
+              mounted && !disableAnimation ? 'animate-score-number' : ''
+            }`}
             fill="#f9fafb"
             id={`score-title-${uniqueGradientId}`}
+            style={{
+              fontFamily: '"Space Grotesk", "DM Sans", system-ui, sans-serif',
+              opacity: disableAnimation ? 1 : undefined,
+            }}
           >
-            {normalizedScore}
+            {displayScore}
           </text>
 
           {/* Hidden description for screen readers */}

@@ -188,6 +188,7 @@ export default {
 
       fontFamily: {
         sans: [
+          'DM Sans',
           'Inter',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -202,7 +203,23 @@ export default {
           'Segoe UI Symbol',
           'Noto Color Emoji'
         ],
+        // Display font for scores, headings, labels
+        display: [
+          'Space Grotesk',
+          'DM Sans',
+          'system-ui',
+          'sans-serif'
+        ],
+        // Body font (alias for sans)
+        body: [
+          'DM Sans',
+          'Inter',
+          'system-ui',
+          'sans-serif'
+        ],
+        // Monospace for domains, URLs, technical values
         mono: [
+          'JetBrains Mono',
           'SF Mono',
           'Monaco',
           'Inconsolata',

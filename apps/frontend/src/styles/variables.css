@@ -68,6 +68,23 @@ SPDX-License-Identifier: MIT
   --color-error-border: #f5c6cb;
   --color-error-text: #721c24;
 
+  /* ============================================
+   * Risk Level Colors (Semantic Tokens)
+   * Used for score dials, hero glow, badges
+   * ============================================ */
+
+  /* Risk Level Ring/Text Colors */
+  --risk-low: #16A34A;           /* Green - Safe (70-100) */
+  --risk-moderate: #F59E0B;      /* Amber - Caution (40-69) */
+  --risk-high: #EF4444;          /* Red - Danger (0-39) */
+  --risk-critical: #991B1B;      /* Dark Red - Critical */
+
+  /* Risk Level Backgrounds */
+  --risk-bg-low: #F0FDF4;        /* Green tint */
+  --risk-bg-moderate: #FFFBEB;   /* Amber tint */
+  --risk-bg-high: #FEF2F2;       /* Red tint */
+  --risk-bg-critical: #FEF2F2;   /* Red tint */
+
   /* Info - Blue palette */
   --color-info: #3498db;
   --color-info-bg: #d1ecf1;

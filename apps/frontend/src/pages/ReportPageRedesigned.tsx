@@ -39,6 +39,34 @@ import { computeDataSharingLevel, type DataSharingLevel } from '../lib/dataShari
 
 type EvidenceItem = ReportResponse['evidence'][number];
 
+/**
+ * Risk level type for semantic styling
+ */
+type RiskLevel = 'low' | 'moderate' | 'high' | 'critical';
+
+/**
+ * Get risk level from score for styling
+ */
+const getRiskLevel = (score: number): RiskLevel => {
+  if (score >= 70) return 'low';
+  if (score >= 40) return 'moderate';
+  if (score >= 20) return 'high';
+  return 'critical';
+};
+
+/**
+ * Get glow class based on risk level
+ */
+const getGlowClass = (riskLevel: RiskLevel): string => {
+  const glowClasses: Record<RiskLevel, string> = {
+    low: 'shadow-glow-low',
+    moderate: 'shadow-glow-moderate',
+    high: 'shadow-glow-high',
+    critical: 'shadow-glow-critical',
+  };
+  return glowClasses[riskLevel];
+};
+
 // Tips for each category
 const CATEGORY_TIPS = {
   tracking: [
@@ -211,6 +239,8 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   // Computed values
   const domain = getDomainFromUrl(scan.input);
   const score = scan.score ?? 0;
+  const riskLevel = getRiskLevel(score);
+  const heroGlowClass = getGlowClass(riskLevel);
 
   // Extract domains from evidence
   const trackerDomains = React.useMemo(() => {
@@ -364,8 +394,11 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           </Link>
         </div>
 
-        {/* Report Header - Compact */}
-        <header className="bg-gradient-to-br from-stone-50 to-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-soft mb-6">
+        {/* Report Header - Compact with risk-level glow */}
+        <header
+          className={`bg-gradient-to-br from-stone-50 to-white border border-gray-200 rounded-2xl p-6 md:p-8 mb-6 bg-textured animate-stagger-in ${heroGlowClass}`}
+          style={{ '--stagger-index': 0 } as React.CSSProperties}
+        >
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Score Dial */}
             <div className="flex-shrink-0">
@@ -375,11 +408,11 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
             {/* Report Info */}
             <div className="flex-1 text-center md:text-left space-y-3">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">
-                  {domain} Privacy & Security Analysis
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-zinc-900">
+                  <span className="font-mono">{domain}</span> Privacy & Security Analysis
                 </h1>
                 <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
-                  <p className="text-zinc-600 break-all">{scan.input}</p>
+                  <p className="text-zinc-600 break-all font-mono text-sm">{scan.input}</p>
                   <CopyButton text={window.location.href} />
                 </div>
               </div>
@@ -429,7 +462,10 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
         </header>
 
         {/* SEO Summary - Crawlable text for search engines */}
-        <section className="mt-4 mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700">
+        <section
+          className="mt-4 mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700 animate-stagger-in"
+          style={{ '--stagger-index': 1 } as React.CSSProperties}
+        >
           <p className="leading-relaxed">
             We analyzed <strong>{domain}</strong> and found it scores <strong>{score}/100</strong> for privacy.
             {tlsGrade && <> The site has Grade <strong>{tlsGrade}</strong> TLS security.</>}
@@ -444,7 +480,10 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
         </section>
 
         {/* Tab Navigation */}
-        <div className="sticky top-0 md:top-0 z-10 bg-white -mx-4 px-4 md:mx-0 md:px-0">
+        <div
+          className="sticky top-0 md:top-0 z-10 bg-white -mx-4 px-4 md:mx-0 md:px-0 animate-stagger-in"
+          style={{ '--stagger-index': 2 } as React.CSSProperties}
+        >
           <ReportTabs
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -453,7 +492,10 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
         </div>
 
         {/* Tab Content */}
-        <div className="mt-6">
+        <div
+          className="mt-6 animate-stagger-in"
+          style={{ '--stagger-index': 3 } as React.CSSProperties}
+        >
           {activeTab === 'overview' && (
             <OverviewTab
               score={score}
