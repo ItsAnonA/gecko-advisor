@@ -66,5 +66,5 @@ User-agent: PerplexityBot
 Disallow: /
 
 # Dynamic Sitemap Index (includes all report pages)
-# Served via /api/ to route through Coolify proxy to backend
-Sitemap: https://geckoadvisor.com/api/sitemap.xml
+# Cloudflare Transform Rule rewrites /sitemap* to /api/sitemap*
+Sitemap: https://geckoadvisor.com/sitemap.xml

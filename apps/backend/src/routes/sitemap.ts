@@ -88,10 +88,10 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
     let xml = xmlIndexHeader();
 
     // Static pages sitemap
-    // Use /api/ prefix so Cloudflare routes to backend
+    // Cloudflare Transform Rule rewrites /sitemap* to /api/sitemap*
     xml += `
   <sitemap>
-    <loc>${BASE_URL}/api/sitemap-static.xml</loc>
+    <loc>${BASE_URL}/sitemap-static.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
 
@@ -99,7 +99,7 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
     for (let i = 0; i < sitemapCount; i++) {
       xml += `
   <sitemap>
-    <loc>${BASE_URL}/api/sitemap-domains-${i + 1}.xml</loc>
+    <loc>${BASE_URL}/sitemap-domains-${i + 1}.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
     }
@@ -108,7 +108,7 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
     if (totalBlogPosts > 0) {
       xml += `
   <sitemap>
-    <loc>${BASE_URL}/api/sitemap-blog.xml</loc>
+    <loc>${BASE_URL}/sitemap-blog.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
     }
