@@ -11,7 +11,13 @@ Allow: /r/
 Allow: /blog/
 Allow: /reports
 
-# Disallow internal pages
+# Allow sitemaps (must come before /api/ disallow)
+Allow: /api/sitemap.xml
+Allow: /api/sitemap-*.xml
+Allow: /api/ssr/privacy-policy/
+Allow: /api/ssr/blog
+
+# Disallow internal API endpoints
 Disallow: /api/
 Disallow: /scan/
 Disallow: /dashboard
