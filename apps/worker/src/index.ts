@@ -26,6 +26,7 @@ interface ScanJobData {
   url: string;
   requestId?: string;
   normalizedInput?: string;
+  queueItemId?: string; // For ScanQueue tracking in bulk scans
 }
 
 export const worker = new Worker<ScanJobData>(
@@ -50,6 +51,24 @@ export const worker = new Worker<ScanJobData>(
 
       // Report 100% progress (scan status is updated atomically in scanner.ts)
       await job.updateProgress(100);
+
+      // Update ScanQueue if this was a queued scan
+      if (job.data.queueItemId) {
+        const scan = await prisma.scan.findUnique({
+          where: { id: scanId },
+          select: { score: true },
+        });
+
+        await prisma.scanQueue.update({
+          where: { id: job.data.queueItemId },
+          data: {
+            status: 'SUCCESS',
+            score: scan?.score,
+          },
+        }).catch((err) => {
+          logger.warn({ err, queueItemId: job.data.queueItemId }, 'Failed to update ScanQueue status');
+        });
+      }
 
       logger.info({ jobId: job.id, scanId }, 'Scan completed');
     } catch (error) {
@@ -136,6 +155,22 @@ worker.on('failed', async (job, err) => {
           summary,
         },
       });
+
+      // Update ScanQueue if this was a queued scan
+      if (job.data.queueItemId) {
+        const isBlocked = errorMessage.includes('403') || errorMessage.includes('blocked') || errorMessage.includes('robots');
+        const queueStatus = isTimeout ? 'TIMEOUT' : isBlocked ? 'BLOCKED' : 'FAILED';
+
+        await prisma.scanQueue.update({
+          where: { id: job.data.queueItemId },
+          data: {
+            status: queueStatus,
+            lastError: errorMessage.substring(0, 500), // Truncate error
+          },
+        }).catch((qErr) => {
+          logger.warn({ qErr, queueItemId: job.data.queueItemId }, 'Failed to update ScanQueue on failure');
+        });
+      }
     } catch (updateError) {
       logger.error({ updateError, scanId: job.data.scanId }, 'Failed to update scan status on final failure');
     }

@@ -268,3 +268,44 @@ model Domain {
   @@index([domain], map: "Domain_lookup_idx")
   @@index([isIndexed, lastScanned(sort: Desc)], map: "Domain_sitemap_idx")
 }
+
+// Scan queue status for bulk scanning operations
+enum ScanQueueStatus {
+  PENDING   // Not yet attempted
+  QUEUED    // Added to BullMQ queue
+  SUCCESS   // Scan completed successfully
+  FAILED    // Scan failed (server error, parsing error)
+  BLOCKED   // Site blocked our scanner (403, robots.txt)
+  TIMEOUT   // Request timed out
+  INVALID   // Invalid URL or unreachable
+}
+
+// Queue for bulk scanning operations (100k website scanning)
+model ScanQueue {
+  id            String          @id @default(cuid())
+  domain        String          @unique // Normalized domain: "example.com"
+  status        ScanQueueStatus @default(PENDING)
+  priority      Int             @default(0) // Higher = scan first (top 10k = 100-90)
+  source        String?         // Source list: "tranco", "alexa", "manual"
+  sourceRank    Int?            // Rank in source list (1 = most popular)
+
+  // Attempt tracking
+  attemptCount  Int             @default(0)
+  lastAttempt   DateTime?
+  lastError     String?         // Error message from last attempt
+
+  // Success tracking
+  scanId        String?         // ID of successful scan
+  score         Int?            // Privacy score from scan
+
+  // Metadata
+  batchId       String?         // Group scans by batch
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Optimized indexes for queue processing
+  @@index([status, priority(sort: Desc)], map: "ScanQueue_process_idx")
+  @@index([status, lastAttempt], map: "ScanQueue_retry_idx")
+  @@index([batchId, status], map: "ScanQueue_batch_idx")
+  @@index([source, sourceRank], map: "ScanQueue_source_idx")
+}
