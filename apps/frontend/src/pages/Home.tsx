@@ -496,7 +496,7 @@ function RecentReports() {
                 ${/* ✅ Improvement #5: Subtle divider between rows */ ''}
                 ${index !== items.length - 1 ? 'border-b-2 !border-b-white/5 hover:!border-b-transparent' : ''}
               `}
-              onClick={() => window.location.href = `/r/${report.slug}`}
+              onClick={() => window.location.href = `/privacy-policy/${report.domain}`}
             >
               {/* Left side: Favicon + Domain + Meta */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -536,7 +536,7 @@ function RecentReports() {
 
                 {/* ✅ Improvement #4: Better link color with green-400 */}
                 <a
-                  href={`/r/${report.slug}`}
+                  href={`/privacy-policy/${report.domain}`}
                   className="text-green-400 hover:text-green-300 hover:underline text-sm font-semibold transition-colors whitespace-nowrap"
                   onClick={(e) => e.stopPropagation()}
                   aria-label={`View privacy report for ${domain}`}

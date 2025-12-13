@@ -212,7 +212,7 @@ export default function ReportsPage() {
       itemListElement: items.slice(0, 10).map((report, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: `https://geckoadvisor.com/r/${report.slug}`,
+        url: `https://geckoadvisor.com/privacy-policy/${report.domain}`,
         name: `${report.domain} Privacy Report`,
       })),
     },
@@ -297,14 +297,14 @@ export default function ReportsPage() {
               return (
                 <div
                   key={report.slug}
-                  onClick={() => navigate(`/r/${report.slug}`)}
+                  onClick={() => navigate(`/privacy-policy/${report.domain}`)}
                   className="cursor-pointer"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      navigate(`/r/${report.slug}`);
+                      navigate(`/privacy-policy/${report.domain}`);
                     }
                   }}
                   aria-label={`View privacy report for ${domain}`}
@@ -346,7 +346,7 @@ export default function ReportsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/r/${report.slug}`);
+                        navigate(`/privacy-policy/${report.domain}`);
                       }}
                       className="mt-4 w-full text-center px-4 py-2 bg-white hover:bg-gray-100 rounded-lg text-sm font-medium text-zinc-900 transition-colors"
                       aria-label={`View privacy report for ${domain}`}

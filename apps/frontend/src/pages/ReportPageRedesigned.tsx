@@ -761,3 +761,8 @@ function AllDetailsTab({
     </div>
   );
 }
+
+/**
+ * Export ReportBody and ReportSkeleton for use with domain-based routes
+ */
+export { ReportBody, ReportSkeleton };

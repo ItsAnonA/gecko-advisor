@@ -17,7 +17,7 @@ import './styles.css';
 // Lazy load components for code splitting
 const Home = React.lazy(() => import('./pages/Home'));
 const Scan = React.lazy(() => import('./pages/Scan'));
-const Report = React.lazy(() => import('./pages/ReportPageWrapper'));
+const SlugRedirect = React.lazy(() => import('./pages/SlugRedirectPage'));
 const Reports = React.lazy(() => import('./pages/ReportsPage'));
 const Compare = React.lazy(() => import('./pages/Compare'));
 const Docs = React.lazy(() => import('./pages/Docs'));
@@ -61,7 +61,7 @@ const router = createBrowserRouter([
     path: '/r/:slug',
     element: (
       <React.Suspense fallback={<PageLoader />}>
-        <Report />
+        <SlugRedirect />
       </React.Suspense>
     )
   },

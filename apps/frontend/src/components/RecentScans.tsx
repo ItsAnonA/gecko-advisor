@@ -22,7 +22,7 @@ export function RecentScans({ entries }: RecentScansProps) {
       {entries.map((entry) => (
         <a
           key={entry.slug}
-          href={`/r/${encodeURIComponent(entry.slug)}`}
+          href={`/privacy-policy/${encodeURIComponent(entry.domain)}`}
           className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-stone-50 px-4 py-3 shadow-sm transition hover:border-advisor-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-white"
         >
           <div>
