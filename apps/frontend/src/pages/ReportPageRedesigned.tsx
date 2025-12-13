@@ -255,10 +255,10 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
     [evidence]
   );
 
-  // SEO metadata
-  const seoTitle = `${domain} Privacy Report - Score ${score}/100 | Gecko Advisor`;
-  const seoDescription = `Privacy analysis of ${domain}: ${scan.label || 'Unknown'} rating with score ${score}/100. ${trackerDomains.length} trackers detected. Free privacy scan.`;
-  const canonicalUrl = `https://geckoadvisor.com/r/${slug}`;
+  // SEO metadata - noindex for /r/:slug, canonical to /privacy-policy/:domain
+  const seoTitle = `${domain} Privacy Report: Score ${score}/100 | Gecko Advisor`;
+  const seoDescription = `Privacy analysis of ${domain} - ${trackerDomains.length} trackers, Grade ${tlsGrade || 'N/A'} TLS, ${thirdPartyDomains.length} third parties. Full privacy breakdown.`;
+  const canonicalUrl = `https://geckoadvisor.com/privacy-policy/${domain}`;
 
   // Structured data for SEO
   const structuredData = {
@@ -315,6 +315,7 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDescription} />
+        <meta name="robots" content="noindex, follow" />
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:title" content={seoTitle} />
         <meta property="og:description" content={seoDescription} />
@@ -375,7 +376,7 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
             <div className="flex-1 text-center md:text-left space-y-3">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">
-                  Privacy Report
+                  {domain} Privacy & Security Analysis
                 </h1>
                 <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
                   <p className="text-zinc-600 break-all">{scan.input}</p>
@@ -427,6 +428,21 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           </div>
         </header>
 
+        {/* SEO Summary - Crawlable text for search engines */}
+        <section className="mt-4 mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700">
+          <p className="leading-relaxed">
+            We analyzed <strong>{domain}</strong> and found it scores <strong>{score}/100</strong> for privacy.
+            {tlsGrade && <> The site has Grade <strong>{tlsGrade}</strong> TLS security.</>}
+            {' '}{trackerDomains.length > 0
+              ? <>{trackerDomains.length} tracker{trackerDomains.length !== 1 ? 's' : ''} detected</>
+              : <>No trackers detected</>}
+            {' '}and {thirdPartyDomains.length > 0
+              ? <>{thirdPartyDomains.length} third-party connection{thirdPartyDomains.length !== 1 ? 's' : ''}</>
+              : <>no third-party connections</>}.
+            {' '}Data sharing level: <strong>{dataSharingLevel}</strong>.
+          </p>
+        </section>
+
         {/* Tab Navigation */}
         <div className="sticky top-0 md:top-0 z-10 bg-white -mx-4 px-4 md:mx-0 md:px-0">
           <ReportTabs
@@ -456,8 +472,8 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           {activeTab === 'tracking' && (
             <CategoryTab
               tabId="tracking"
-              title="Tracking & Third Parties"
-              description="Trackers, fingerprinting scripts, and third-party connections that may collect your data."
+              title={`${domain} trackers: what's watching you`}
+              description={`Who ${domain} shares your data with - trackers, fingerprinting scripts, and third-party connections.`}
               icon={
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -473,8 +489,8 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           {activeTab === 'security' && (
             <CategoryTab
               tabId="security"
-              title="Security"
-              description="TLS/HTTPS configuration, security headers, and potential vulnerabilities."
+              title={`${domain} security analysis`}
+              description={`${domain} connection security - TLS/HTTPS configuration, security headers, and potential vulnerabilities.`}
               icon={
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -489,8 +505,8 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           {activeTab === 'cookies' && (
             <CategoryTab
               tabId="cookies"
-              title="Cookies"
-              description="Cookie usage, storage patterns, and potential tracking cookies."
+              title={`${domain} cookie practices`}
+              description={`How ${domain} uses cookies - storage patterns, tracking cookies, and data retention.`}
               icon={
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

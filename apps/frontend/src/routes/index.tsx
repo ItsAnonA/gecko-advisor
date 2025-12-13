@@ -218,8 +218,8 @@ function formatDate(value: string | Date): string {
 }
 
 function badgeClass(label: string | undefined): string {
-  if (label === 'Safe') return 'rounded-full bg-gecko-100 px-2 py-1 text-xs font-semibold text-gecko-700';
-  if (label === 'High Risk') return 'rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700';
+  if (label === 'Low Privacy Risk') return 'rounded-full bg-gecko-100 px-2 py-1 text-xs font-semibold text-gecko-700';
+  if (label === 'High Privacy Risk') return 'rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700';
   return 'rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700';
 }
 

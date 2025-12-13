@@ -104,7 +104,7 @@ reportV1Router.get("/reports/recent", async (_req, res) => {
       return {
         reportSlug: scan.slug,
         score: scan.score ?? 0,
-        label: scan.label ?? "Caution",
+        label: scan.label ?? "Moderate Privacy Risk",
         domain,
         createdAt: scan.createdAt,
       };

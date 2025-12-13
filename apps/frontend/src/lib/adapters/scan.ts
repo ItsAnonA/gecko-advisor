@@ -8,9 +8,9 @@ import { computeDataSharingLevel, type DataSharingLevel } from '../dataSharing';
 export type ScoreBand = 'safe' | 'risky' | 'dangerous' | 'unknown';
 
 const SCORE_LABELS: Record<ScoreBand, string> = {
-  safe: 'Safe',
-  risky: 'Risky',
-  dangerous: 'Dangerous',
+  safe: 'Low Privacy Risk',
+  risky: 'Moderate Privacy Risk',
+  dangerous: 'High Privacy Risk',
   unknown: 'Pending',
 };
 

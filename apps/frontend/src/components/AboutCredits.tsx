@@ -178,9 +178,16 @@ export default function AboutCredits() {
 
         <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
           <h3 className="text-xl font-bold text-emerald-700 mb-4">Scanning Policy</h3>
+          <p className="text-zinc-600 text-sm leading-relaxed mb-3">
+            We analyze privacy practices through three methods:
+          </p>
+          <ul className="text-zinc-600 text-sm leading-relaxed space-y-1 mb-3">
+            <li>• <strong>User-submitted URLs</strong> — scanned on request</li>
+            <li>• <strong>Curated targets</strong> — popular apps and services we proactively analyze</li>
+            <li>• <strong>Freshness updates</strong> — periodic re-scans of previously analyzed sites</li>
+          </ul>
           <p className="text-zinc-600 text-sm leading-relaxed">
-            We only scan URLs explicitly submitted by users. Crawls are shallow (≤10 pages or ≤10s) and rate-limited.
-            For concerns, contact us via the link in the footer.
+            All scans are shallow (policy pages only), rate-limited, and respect opt-out requests.
           </p>
         </section>
       </div>

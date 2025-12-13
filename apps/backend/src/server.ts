@@ -20,6 +20,7 @@ import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./health.js";
 import { sitemapRouter } from "./routes/sitemap.js";
 import { ssrBlogRouter } from "./routes/ssr.blog.js";
+import { ssrDomainRouter } from "./routes/ssr.domain.js";
 import { initSentry, Sentry } from "./sentry.js";
 import { problem } from "./problem.js";
 
@@ -128,6 +129,11 @@ export function createServer() {
   // Serves pre-rendered HTML with full content, meta tags, and structured data
   // This ensures Googlebot can index blog content without JavaScript rendering
   app.use('/', ssrBlogRouter);
+
+  // SEO: SSR privacy-policy domain pages for search engine indexing
+  // Serves pre-rendered HTML for /privacy-policy/:domain canonical URLs
+  // Includes full meta tags, JSON-LD structured data, and crawlable summary text
+  app.use('/', ssrDomainRouter);
 
   if (sentryEnabled) {
     Sentry.setupExpressErrorHandler(app);

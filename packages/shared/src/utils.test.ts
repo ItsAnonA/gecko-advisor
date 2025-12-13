@@ -22,8 +22,8 @@ describe('normalizeUrl', () => {
 
 describe('labelForScore', () => {
   it('labels correctly', () => {
-    expect(labelForScore(85)).toBe('Safe');
-    expect(labelForScore(60)).toBe('Caution');
-    expect(labelForScore(10)).toBe('High Risk');
+    expect(labelForScore(85)).toBe('Low Privacy Risk');
+    expect(labelForScore(60)).toBe('Moderate Privacy Risk');
+    expect(labelForScore(10)).toBe('High Privacy Risk');
   });
 });

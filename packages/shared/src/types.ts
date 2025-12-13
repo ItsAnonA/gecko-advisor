@@ -1,4 +1,4 @@
-export type ScoreLabel = 'Safe' | 'Caution' | 'High Risk';
+export type ScoreLabel = 'Low Privacy Risk' | 'Moderate Privacy Risk' | 'High Privacy Risk';
 
 export interface ScoreExplanation {
   evidenceId: string;

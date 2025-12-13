@@ -42,7 +42,7 @@ describe('computeScore', () => {
     // With no evidence and bonuses for no trackers (+5) and missing policy penalty (-5),
     // base score should be 100 + 5 (no trackers) - 5 (no policy) = 100
     expect(result.score).toBe(100);
-    expect(result.label).toBe('Safe');
+    expect(result.label).toBe('Low Privacy Risk');
     expect(result.issues.find((issue) => issue.key === 'compliance.policy')).toBeTruthy();
   });
 

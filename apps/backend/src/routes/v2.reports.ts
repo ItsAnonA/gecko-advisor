@@ -137,7 +137,7 @@ reportV2Router.get('/reports/recent', async (_req, res) => {
           return {
             slug: scan.slug,
             score: scan.score ?? 0,
-            label: scan.label ?? 'Caution',
+            label: scan.label ?? 'Moderate Privacy Risk',
             domain,
             createdAt: scan.createdAt,
             evidenceCount: scan._count.evidence,
@@ -218,7 +218,7 @@ reportV2Router.get('/reports/all', async (req, res) => {
       return {
         slug: scan.slug,
         score: scan.score ?? 0,
-        label: scan.label ?? 'Caution',
+        label: scan.label ?? 'Moderate Privacy Risk',
         domain,
         createdAt: scan.createdAt,
         evidenceCount: scan._count.evidence,

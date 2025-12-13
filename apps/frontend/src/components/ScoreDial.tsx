@@ -48,8 +48,8 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
       color: '#22c55e', // score-safe
       bgColor: 'bg-score-safe/20',
       textColor: 'text-score-safe',
-      label: 'Safe',
-      description: 'Low privacy risk',
+      label: 'Low Privacy Risk',
+      description: 'Minimal data collection detected',
       pattern: 'none'
     };
     if (score >= 40) return {
@@ -57,8 +57,8 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
       color: '#fbbf24', // score-caution
       bgColor: 'bg-score-caution/20',
       textColor: 'text-score-caution',
-      label: 'Caution',
-      description: 'Medium privacy risk',
+      label: 'Moderate Privacy Risk',
+      description: 'Some privacy concerns found',
       pattern: 'diagonal-lines'
     };
     return {
@@ -66,8 +66,8 @@ const ScoreDial = React.memo(function ScoreDial({ score, className = '', size = 
       color: '#f87171', // score-danger
       bgColor: 'bg-score-danger/20',
       textColor: 'text-score-danger',
-      label: 'High Risk',
-      description: 'High privacy risk',
+      label: 'High Privacy Risk',
+      description: 'Significant privacy issues detected',
       pattern: 'dots'
     };
   };

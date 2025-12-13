@@ -42,7 +42,7 @@ export const ScanStatusSchema = z.object({
   status: z.enum(['queued', 'running', 'done', 'error']),
   progress: z.number().min(0).max(100).optional(),
   score: z.number().min(0).max(100).optional(),
-  label: z.enum(['Safe', 'Caution', 'High Risk']).optional(),
+  label: z.enum(['Low Privacy Risk', 'Moderate Privacy Risk', 'High Privacy Risk']).optional(),
   slug: z.string().optional(),
   updatedAt: z.string().or(z.date()).optional(),
 });
@@ -145,7 +145,7 @@ export const LegacyReportResponseSchema = z.object({
 export const RecentReportItemSchema = z.object({
   slug: z.string(),
   score: z.number(),
-  label: z.enum(['Safe', 'Caution', 'High Risk']).or(z.string()),
+  label: z.enum(['Low Privacy Risk', 'Moderate Privacy Risk', 'High Privacy Risk']).or(z.string()),
   domain: z.string(),
   createdAt: z.string().or(z.date()),
   evidenceCount: z.number().default(0),

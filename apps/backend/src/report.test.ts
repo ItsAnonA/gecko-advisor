@@ -23,7 +23,7 @@ describe('GET /api/report/:slug includes dataSharing meta', () => {
         status: 'done',
         slug,
         score: 65,
-        label: 'Caution',
+        label: 'Moderate Privacy Risk',
       },
     });
     scanId = scan.id;

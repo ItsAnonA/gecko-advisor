@@ -30,6 +30,7 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const BlogList = React.lazy(() => import('./pages/BlogListPage'));
 const BlogPost = React.lazy(() => import('./pages/BlogPostPage'));
+const DomainReport = React.lazy(() => import('./pages/DomainReportPage'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Loading component for Suspense fallback
@@ -141,6 +142,14 @@ const router = createBrowserRouter([
     element: (
       <React.Suspense fallback={<PageLoader />}>
         <BlogPost />
+      </React.Suspense>
+    )
+  },
+  {
+    path: '/privacy-policy/:domain',
+    element: (
+      <React.Suspense fallback={<PageLoader />}>
+        <DomainReport />
       </React.Suspense>
     )
   },

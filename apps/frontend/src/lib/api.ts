@@ -322,3 +322,101 @@ export const blogPostQueryOptions = (slug: string) => ({
     return failureCount < 2;
   },
 });
+
+// ============================================================================
+// Domain API (SEO canonical URLs - /privacy-policy/:domain)
+// ============================================================================
+
+export interface DomainReportResponse {
+  scan: {
+    id: string;
+    input: string;
+    normalizedInput?: string | null;
+    slug: string;
+    status: string;
+    score?: number | null;
+    label?: string | null;
+    summary?: string | null;
+    createdAt: string;
+    finishedAt?: string | null;
+  };
+  evidence: Array<{
+    id: string;
+    kind: string;
+    severity: number;
+    title: string;
+    details: unknown;
+  }>;
+  issues: Array<{
+    id: string;
+    key: string;
+    category: string;
+    severity: string;
+    title: string;
+    summary: string | null;
+    howToFix: string | null;
+    whyItMatters: string | null;
+  }>;
+  topFixes: Array<{
+    id: string;
+    key: string;
+    title: string;
+    category: string;
+    severity: string;
+    howToFix: string | null;
+    whyItMatters: string | null;
+  }>;
+  meta: {
+    dataSharing: 'None' | 'Low' | 'Medium' | 'High';
+    domain: string;
+  };
+  canonical: {
+    domain: string;
+    url: string;
+    slug: string;
+    slugUrl: string;
+  };
+}
+
+/**
+ * Fetch report by domain name (for /privacy-policy/:domain canonical URL)
+ */
+export async function getReportByDomain(domain: string): Promise<DomainReportResponse> {
+  const res = await fetch(`/api/domain/${encodeURIComponent(domain)}`);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Domain not scanned');
+    throw new Error('Failed to load domain report');
+  }
+  return res.json();
+}
+
+/**
+ * React Query configuration for domain report
+ */
+export const domainReportQueryOptions = (domain: string) => ({
+  queryKey: ['domain-report', domain.toLowerCase()],
+  queryFn: () => getReportByDomain(domain),
+  staleTime: 10 * 60 * 1000, // 10 minutes
+  gcTime: 30 * 60 * 1000, // 30 minutes
+  retry: (failureCount: number, error: Error) => {
+    // Don't retry 404 errors (domain not scanned)
+    if (error.message?.includes('not scanned')) return false;
+    return failureCount < 2;
+  },
+  refetchOnWindowFocus: false, // Reports are static
+});
+
+/**
+ * Check if a domain has been scanned (quick existence check)
+ */
+export async function checkDomainExists(domain: string): Promise<{
+  exists: boolean;
+  domain: string;
+  slug?: string;
+  score?: number;
+  label?: string;
+  lastScanned?: string;
+}> {
+  const res = await fetch(`/api/domain/${encodeURIComponent(domain)}/exists`);
+  return res.json();
+}

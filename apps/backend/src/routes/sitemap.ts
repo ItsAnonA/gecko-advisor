@@ -5,11 +5,12 @@ SPDX-License-Identifier: MIT
 import { Router } from "express";
 import { prisma } from "../prisma.js";
 import { logger } from "../logger.js";
+import { getIndexedDomains, countIndexedDomains } from "../services/domainService.js";
 
 export const sitemapRouter = Router();
 
 const BASE_URL = 'https://geckoadvisor.com';
-const REPORTS_PER_SITEMAP = 5000; // Google's recommended limit is 50,000 URLs per sitemap
+const DOMAINS_PER_SITEMAP = 5000; // Google's recommended limit is 50,000 URLs per sitemap
 
 /**
  * Static pages for the sitemap
@@ -71,13 +72,8 @@ function formatDate(date: Date): string {
  */
 sitemapRouter.get('/sitemap.xml', async (_req, res) => {
   try {
-    // Count total completed public scans
-    const totalReports = await prisma.scan.count({
-      where: {
-        status: 'done',
-        isPublic: true,
-      },
-    });
+    // Count total indexed domains for /privacy-policy/:domain pages
+    const totalDomains = await countIndexedDomains(prisma);
 
     // Count total blog posts (using status enum instead of isPublished)
     const totalBlogPosts = await prisma.blogPost.count({
@@ -86,7 +82,7 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
       },
     }).catch(() => 0); // If blog model doesn't exist, return 0
 
-    const sitemapCount = Math.ceil(totalReports / REPORTS_PER_SITEMAP);
+    const sitemapCount = Math.ceil(totalDomains / DOMAINS_PER_SITEMAP) || 1;
     const now = formatDate(new Date());
 
     let xml = xmlIndexHeader();
@@ -98,11 +94,11 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
     <lastmod>${now}</lastmod>
   </sitemap>`;
 
-    // Report sitemaps (paginated)
+    // Domain sitemaps (paginated) - canonical /privacy-policy/:domain URLs
     for (let i = 0; i < sitemapCount; i++) {
       xml += `
   <sitemap>
-    <loc>${BASE_URL}/sitemap-reports-${i + 1}.xml</loc>
+    <loc>${BASE_URL}/sitemap-domains-${i + 1}.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>`;
     }
@@ -159,45 +155,36 @@ sitemapRouter.get('/sitemap-static.xml', async (_req, res) => {
 });
 
 /**
- * Reports sitemap (paginated)
- * GET /sitemap-reports-:page.xml
+ * Domains sitemap (paginated) - canonical /privacy-policy/:domain URLs
+ * GET /sitemap-domains-:page.xml
  */
-sitemapRouter.get('/sitemap-reports-:page.xml', async (req, res) => {
+sitemapRouter.get('/sitemap-domains-:page.xml', async (req, res) => {
   try {
     const page = parseInt(req.params.page, 10) || 1;
-    const skip = (page - 1) * REPORTS_PER_SITEMAP;
+    const offset = (page - 1) * DOMAINS_PER_SITEMAP;
 
-    const scans = await prisma.scan.findMany({
-      where: {
-        status: 'done',
-        isPublic: true,
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-        score: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: REPORTS_PER_SITEMAP,
+    const domains = await getIndexedDomains(prisma, {
+      limit: DOMAINS_PER_SITEMAP,
+      offset,
     });
 
-    if (scans.length === 0) {
+    if (domains.length === 0) {
       return res.status(404).send('Sitemap page not found');
     }
 
     let xml = xmlHeader();
 
-    for (const scan of scans) {
-      // Higher priority for high-scoring sites (more interesting for users)
-      const priority = scan.score && scan.score >= 70 ? '0.7' : '0.6';
+    for (const domain of domains) {
+      const lastmod = domain.lastScanned
+        ? formatDate(domain.lastScanned)
+        : formatDate(new Date());
 
       xml += `
   <url>
-    <loc>${BASE_URL}/r/${scan.slug}</loc>
-    <lastmod>${formatDate(scan.updatedAt)}</lastmod>
+    <loc>${BASE_URL}/privacy-policy/${encodeURIComponent(domain.domain)}</loc>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${priority}</priority>
+    <priority>0.7</priority>
   </url>`;
     }
 
@@ -207,9 +194,18 @@ sitemapRouter.get('/sitemap-reports-:page.xml', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
     res.send(xml);
   } catch (error) {
-    logger.error({ error, page: req.params.page }, 'Error generating reports sitemap');
+    logger.error({ error, page: req.params.page }, 'Error generating domains sitemap');
     res.status(500).send('Error generating sitemap');
   }
+});
+
+/**
+ * Legacy reports sitemap redirect (for backwards compatibility)
+ * GET /sitemap-reports-:page.xml -> redirects to domains sitemap
+ */
+sitemapRouter.get('/sitemap-reports-:page.xml', async (req, res) => {
+  const page = req.params.page;
+  res.redirect(301, `/sitemap-domains-${page}.xml`);
 });
 
 /**
@@ -274,19 +270,19 @@ sitemapRouter.get('/sitemap-blog.xml', async (_req, res) => {
  */
 sitemapRouter.get('/api/seo/stats', async (_req, res) => {
   try {
-    const [totalScans, publicScans, blogPosts] = await Promise.all([
+    const [totalScans, indexedDomains, blogPosts] = await Promise.all([
       prisma.scan.count({ where: { status: 'done' } }),
-      prisma.scan.count({ where: { status: 'done', isPublic: true } }),
+      countIndexedDomains(prisma),
       prisma.blogPost.count({ where: { status: 'PUBLISHED' } }).catch(() => 0),
     ]);
 
     res.json({
-      indexablePages: STATIC_PAGES.length + publicScans + blogPosts,
+      indexablePages: STATIC_PAGES.length + indexedDomains + blogPosts,
       staticPages: STATIC_PAGES.length,
-      reportPages: publicScans,
+      domainPages: indexedDomains,
       blogPages: blogPosts,
       totalScans,
-      sitemapSegments: Math.ceil(publicScans / REPORTS_PER_SITEMAP),
+      sitemapSegments: Math.ceil(indexedDomains / DOMAINS_PER_SITEMAP) || 1,
     });
   } catch (error) {
     logger.error({ error }, 'Error generating SEO stats');

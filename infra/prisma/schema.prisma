@@ -111,6 +111,9 @@ model Scan {
   dedupeOf     Scan?  @relation("ScanDedupe", fields: [dedupeOfId], references: [id])
   dedupedScans Scan[] @relation("ScanDedupe")
 
+  // Back-reference for Domain.latestScan relation
+  domainLatest Domain? @relation("DomainLatestScan")
+
   // Optimized indexes for critical performance paths
   @@index([normalizedInput, status, finishedAt(sort: Desc)], map: "Scan_dedupe_lookup_idx")
   @@index([status, createdAt(sort: Desc)], map: "Scan_recent_reports_idx")
@@ -245,4 +248,23 @@ model BlogPost {
   // Optimized indexes for blog queries
   @@index([status, publishedAt(sort: Desc)], map: "BlogPost_published_idx")
   @@index([slug], map: "BlogPost_slug_idx")
+}
+
+// Domain model for SEO canonical URLs (/privacy-policy/:domain)
+model Domain {
+  id           String    @id @default(cuid())
+  domain       String    @unique // Normalized domain: "example.com"
+  displayName  String? // Optional friendly name: "Example Inc"
+  latestScanId String?   @unique // Most recent completed scan
+  latestScan   Scan?     @relation("DomainLatestScan", fields: [latestScanId], references: [id], onDelete: SetNull)
+  firstScanned DateTime? // When this domain was first scanned
+  lastScanned  DateTime? // When the latest scan completed
+  isIndexed    Boolean   @default(true) // Include in sitemap
+  scanCount    Int       @default(0) // Total number of scans
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Optimized indexes for domain lookups and sitemap generation
+  @@index([domain], map: "Domain_lookup_idx")
+  @@index([isIndexed, lastScanned(sort: Desc)], map: "Domain_sitemap_idx")
 }

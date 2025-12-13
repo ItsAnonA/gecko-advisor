@@ -148,9 +148,26 @@ function getCategorySeverityStats(items: EvidenceItem[]) {
 /**
  * Maps evidence type to human-readable category label
  */
-const getCategoryLabel = (type: string | undefined): string => {
+const getCategoryLabel = (type: string | undefined, domain?: string): string => {
   if (!type || type === 'undefined' || type === 'unknown') return 'Security & Privacy';
 
+  // SEO-optimized labels with domain name when available
+  if (domain) {
+    const seoLabels: Record<string, string> = {
+      'tracker': `${domain} trackers: what's watching you`,
+      'thirdparty': `Who ${domain} shares your data with`,
+      'cookie': `${domain} cookie practices`,
+      'header': `${domain} security headers`,
+      'insecure': `${domain} security issues`,
+      'fingerprint': `${domain} fingerprinting detection`,
+      'policy': `${domain} privacy policy`,
+      'tls': `${domain} connection security`,
+      'mixed-content': `${domain} mixed content issues`,
+    };
+    return seoLabels[type] || `${domain} ${type}`;
+  }
+
+  // Fallback labels without domain
   const labels: Record<string, string> = {
     'tracker': 'Tracking & Analytics',
     'thirdparty': 'Third-Party Connections',
@@ -1097,9 +1114,10 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   const label = scan.label ?? 'Unknown';
 
   // SEO: Generate dynamic meta title and description
-  const seoTitle = `${domain} Privacy Report - Score ${score}/100 | Gecko Advisor`;
-  const seoDescription = `Privacy analysis of ${domain}: ${label} rating with score ${score}/100. ${trackerCount} tracker${trackerCount !== 1 ? 's' : ''} detected, ${thirdpartyDomains.length} third-party connection${thirdpartyDomains.length !== 1 ? 's' : ''}. Free privacy scan from Gecko Advisor.`;
-  const canonicalUrl = `https://geckoadvisor.com/r/${slug}`;
+  // Note: /r/:slug pages have noindex + canonical pointing to /privacy-policy/:domain
+  const seoTitle = `${domain} Privacy Report: Score ${score}/100 | Gecko Advisor`;
+  const seoDescription = `Privacy analysis of ${domain} - ${trackerCount} tracker${trackerCount !== 1 ? 's' : ''}, Grade ${tlsGrade || 'N/A'} TLS, ${thirdpartyDomains.length} third-party connection${thirdpartyDomains.length !== 1 ? 's' : ''}. Full privacy breakdown.`;
+  const canonicalUrl = `https://geckoadvisor.com/privacy-policy/${domain}`;
 
   // SEO: Structured data for search engines (Review schema)
   const structuredData = {
@@ -1160,9 +1178,11 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
   return (
     <>
       {/* SEO: Dynamic meta tags and structured data */}
+      {/* noindex + canonical: Share links work, but canonical points to /privacy-policy/:domain */}
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDescription} />
+        <meta name="robots" content="noindex, follow" />
         <meta name="keywords" content={`${domain} privacy, ${domain} trackers, ${domain} cookies, website privacy score, privacy analysis, tracker detection`} />
         <link rel="canonical" href={canonicalUrl} />
 
@@ -1249,7 +1269,7 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
             {/* Heading - Clean, no status label */}
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-3">
-                Privacy Report
+                {domain} Privacy & Security Analysis
               </h1>
 
               {/* URL with inline copy button */}
@@ -1325,6 +1345,21 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
           </div>
         </div>
       </header>
+
+      {/* SEO Summary - Crawlable text for search engines */}
+      <section className="mt-4 mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700">
+        <p className="leading-relaxed">
+          We analyzed <strong>{domain}</strong> and found it scores <strong>{score}/100</strong> for privacy.
+          {tlsGrade && <> The site has Grade <strong>{tlsGrade}</strong> TLS security.</>}
+          {' '}{trackerCount > 0
+            ? <>{trackerCount} tracker{trackerCount !== 1 ? 's' : ''} detected</>
+            : <>No trackers detected</>}
+          {' '}and {thirdpartyDomains.length > 0
+            ? <>{thirdpartyDomains.length} third-party connection{thirdpartyDomains.length !== 1 ? 's' : ''}</>
+            : <>no third-party connections</>}.
+          {' '}Data sharing level: <strong>{dataSharingLevel}</strong>.
+        </p>
+      </section>
 
       {/* Summary Box */}
       <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-6 shadow-sm">
@@ -1425,9 +1460,9 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
               key={type}
               href={`#${sectionId(type)}`}
               className="px-2 py-1 rounded-full bg-white text-zinc-900 border border-gray-200 hover:bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors shadow-sm"
-              aria-label={`${getCategoryLabel(type)} ${list.length} items: ${high} high, ${medium} medium, ${low} low`}
+              aria-label={`${getCategoryLabel(type, domain)} ${list.length} items: ${high} high, ${medium} medium, ${low} low`}
             >
-              <span>{getCategoryLabel(type)}</span>
+              <span>{getCategoryLabel(type, domain)}</span>
               <span className="ml-1 font-semibold">{list.length}</span>
               <span className="ml-2 inline-flex items-center gap-1">
                 <span
@@ -1671,7 +1706,7 @@ function ReportBody({ slug, data }: { slug: string; data: ReportResponse }) {
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <h2 className="font-semibold text-lg text-zinc-900">
-                    {getCategoryLabel(type)}
+                    {getCategoryLabel(type, domain)}
                   </h2>
 
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${sectionSeverity.bgColor} border ${sectionSeverity.borderColor} text-xs font-semibold ${sectionSeverity.color}`}>

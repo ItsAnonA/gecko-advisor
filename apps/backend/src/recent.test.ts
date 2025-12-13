@@ -30,7 +30,7 @@ describe('GET /api/reports/recent', () => {
         status: 'done',
         slug,
         score: 95,
-        label: 'Safe',
+        label: 'Low Privacy Risk',
       },
     });
     scanId = scan.id;
@@ -58,6 +58,6 @@ describe('GET /api/reports/recent', () => {
     expect(item?.domain).toBe('example.com');
     expect((item?.evidenceCount ?? 0)).toBeGreaterThanOrEqual(2);
     expect(item?.score).toBe(95);
-    expect(item?.label).toBe('Safe');
+    expect(item?.label).toBe('Low Privacy Risk');
   }, 15000);
 });

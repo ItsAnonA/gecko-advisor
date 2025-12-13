@@ -131,7 +131,7 @@ scanV1Router.post('/app', async (req, res) => {
     progress: 100,
     source: 'stub',
     score: 75,
-    label: 'Caution',
+    label: 'Moderate Privacy Risk',
     summary: 'App scan stubbed. Detailed analysis coming soon.',
   });
   res.json(mapToLegacyQueued(ScanQueuedResponseSchema.parse({ scanId: scan.id, slug: scan.slug })));
@@ -147,7 +147,7 @@ scanV1Router.post('/address', async (req, res) => {
     progress: 100,
     source: 'stub',
     score: 80,
-    label: 'Safe',
+    label: 'Low Privacy Risk',
     summary: 'Address reputation stubbed. Detailed analysis coming soon.',
     meta: { chain: parsed.data.chain },
   });
