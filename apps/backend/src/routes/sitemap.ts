@@ -179,9 +179,12 @@ sitemapRouter.get('/sitemap-domains-:page.xml', async (req, res) => {
         ? formatDate(domain.lastScanned)
         : formatDate(new Date());
 
+      // Use /api/ssr/privacy-policy/:domain for SSR rendering
+      // This routes through Coolify to backend, serving pre-rendered HTML
+      // The canonical URL in the HTML still points to /privacy-policy/:domain
       xml += `
   <url>
-    <loc>${BASE_URL}/privacy-policy/${encodeURIComponent(domain.domain)}</loc>
+    <loc>${BASE_URL}/api/ssr/privacy-policy/${encodeURIComponent(domain.domain)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
