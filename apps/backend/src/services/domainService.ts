@@ -186,3 +186,153 @@ export async function setDomainIndexed(
     return null;
   }
 }
+
+/**
+ * Backfill Domain table from existing completed scans.
+ * This function:
+ * 1. Finds all unique domains from completed scans
+ * 2. Creates Domain records for any that don't exist
+ * 3. Updates existing Domain records with correct latestScanId if needed
+ *
+ * @param onProgress - Optional callback for progress updates
+ * @returns Statistics about the backfill operation
+ */
+export async function backfillDomainsFromScans(
+  prisma: PrismaClient,
+  onProgress?: (stats: { processed: number; created: number; updated: number; errors: number }) => void
+): Promise<{
+  totalScans: number;
+  uniqueDomains: number;
+  created: number;
+  updated: number;
+  errors: number;
+  skipped: number;
+}> {
+  const stats = {
+    totalScans: 0,
+    uniqueDomains: 0,
+    created: 0,
+    updated: 0,
+    errors: 0,
+    skipped: 0,
+  };
+
+  // Get all completed scans grouped by normalizedInput (unique domains)
+  // Use raw query for efficient aggregation
+  const uniqueInputs = await prisma.scan.groupBy({
+    by: ['normalizedInput'],
+    where: {
+      status: 'done',
+      normalizedInput: { not: null },
+    },
+    _count: true,
+  });
+
+  stats.totalScans = await prisma.scan.count({ where: { status: 'done' } });
+  stats.uniqueDomains = uniqueInputs.length;
+
+  let processed = 0;
+
+  for (const input of uniqueInputs) {
+    if (!input.normalizedInput) {
+      stats.skipped++;
+      continue;
+    }
+
+    try {
+      // Normalize to eTLD+1 domain
+      const domain = normalizeDomain(input.normalizedInput);
+      if (!domain || domain === 'invalid') {
+        stats.skipped++;
+        continue;
+      }
+
+      // Find the latest completed scan for this domain
+      const latestScan = await prisma.scan.findFirst({
+        where: {
+          normalizedInput: input.normalizedInput,
+          status: 'done',
+        },
+        orderBy: {
+          finishedAt: 'desc',
+        },
+        select: {
+          id: true,
+          finishedAt: true,
+          createdAt: true,
+        },
+      });
+
+      if (!latestScan) {
+        stats.skipped++;
+        continue;
+      }
+
+      // Find the earliest scan for firstScanned date
+      const firstScan = await prisma.scan.findFirst({
+        where: {
+          normalizedInput: input.normalizedInput,
+          status: 'done',
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+        select: {
+          createdAt: true,
+        },
+      });
+
+      // Check if domain record exists
+      const existingDomain = await prisma.domain.findUnique({
+        where: { domain },
+        select: { id: true, latestScanId: true },
+      });
+
+      if (existingDomain) {
+        // Update if latestScanId is different or missing
+        if (existingDomain.latestScanId !== latestScan.id) {
+          await prisma.domain.update({
+            where: { domain },
+            data: {
+              latestScanId: latestScan.id,
+              lastScanned: latestScan.finishedAt ?? new Date(),
+              scanCount: input._count,
+            },
+          });
+          stats.updated++;
+        } else {
+          stats.skipped++;
+        }
+      } else {
+        // Create new domain record
+        await prisma.domain.create({
+          data: {
+            domain,
+            latestScanId: latestScan.id,
+            firstScanned: firstScan?.createdAt ?? latestScan.createdAt,
+            lastScanned: latestScan.finishedAt ?? new Date(),
+            scanCount: input._count,
+            isIndexed: true,
+          },
+        });
+        stats.created++;
+      }
+
+      processed++;
+      if (onProgress && processed % 100 === 0) {
+        onProgress({
+          processed,
+          created: stats.created,
+          updated: stats.updated,
+          errors: stats.errors,
+        });
+      }
+    } catch (error) {
+      stats.errors++;
+      // Log but continue processing
+      console.error(`Error processing domain from ${input.normalizedInput}:`, error);
+    }
+  }
+
+  return stats;
+}

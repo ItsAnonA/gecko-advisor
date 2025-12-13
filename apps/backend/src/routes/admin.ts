@@ -13,6 +13,7 @@ import { problem } from "../problem.js";
 import { logger } from "../logger.js";
 import { addScanJob, SCAN_PRIORITY } from "../queue.js";
 import { createScanWithSlug } from "../services/slug.js";
+import { backfillDomainsFromScans, countIndexedDomains } from "../services/domainService.js";
 
 export const adminRouter = Router();
 
@@ -212,4 +213,103 @@ adminRouter.get('/admin/bulk-scan/:batchId', adminGuard, async (req, res) => {
       label: s.label,
     })),
   });
+});
+
+/**
+ * Backfill Domain table from existing scans
+ * This populates the Domain table for all unique domains from completed scans,
+ * enabling sitemap generation for SEO.
+ *
+ * POST /admin/backfill-domains
+ * Headers: X-Admin-Key: <ADMIN_API_KEY>
+ */
+adminRouter.post('/admin/backfill-domains', adminGuard, async (_req, res) => {
+  try {
+    // Get initial stats
+    const initialDomainCount = await countIndexedDomains(prisma);
+    const totalScans = await prisma.scan.count({ where: { status: 'done' } });
+
+    logger.info({
+      initialDomainCount,
+      totalScans,
+    }, 'Starting domain backfill');
+
+    // Run the backfill
+    const result = await backfillDomainsFromScans(prisma, (progress) => {
+      logger.info(progress, 'Domain backfill progress');
+    });
+
+    // Get final stats
+    const finalDomainCount = await countIndexedDomains(prisma);
+
+    logger.info({
+      ...result,
+      initialDomainCount,
+      finalDomainCount,
+      netIncrease: finalDomainCount - initialDomainCount,
+    }, 'Domain backfill completed');
+
+    res.json({
+      success: true,
+      before: {
+        domainCount: initialDomainCount,
+        totalScans,
+      },
+      after: {
+        domainCount: finalDomainCount,
+      },
+      stats: {
+        uniqueDomains: result.uniqueDomains,
+        created: result.created,
+        updated: result.updated,
+        skipped: result.skipped,
+        errors: result.errors,
+      },
+      netIncrease: finalDomainCount - initialDomainCount,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Domain backfill failed');
+    return problem(res, 500, 'Backfill failed', error instanceof Error ? error.message : undefined);
+  }
+});
+
+/**
+ * Get domain backfill status/preview
+ * Shows the gap between scans and domains before running backfill.
+ *
+ * GET /admin/backfill-domains/status
+ * Headers: X-Admin-Key: <ADMIN_API_KEY>
+ */
+adminRouter.get('/admin/backfill-domains/status', adminGuard, async (_req, res) => {
+  try {
+    const [totalScans, domainCount, uniqueInputs] = await Promise.all([
+      prisma.scan.count({ where: { status: 'done' } }),
+      countIndexedDomains(prisma),
+      prisma.scan.groupBy({
+        by: ['normalizedInput'],
+        where: {
+          status: 'done',
+          normalizedInput: { not: null },
+        },
+        _count: true,
+      }),
+    ]);
+
+    const uniqueDomains = uniqueInputs.length;
+    const missingDomains = uniqueDomains - domainCount;
+
+    res.json({
+      totalScans,
+      currentDomainRecords: domainCount,
+      uniqueDomainsInScans: uniqueDomains,
+      estimatedMissing: missingDomains > 0 ? missingDomains : 0,
+      sitemapCoverage: domainCount > 0 ? `${((domainCount / uniqueDomains) * 100).toFixed(1)}%` : '0%',
+      recommendation: missingDomains > 0
+        ? `Run POST /api/admin/backfill-domains to add ~${missingDomains} domains to sitemap`
+        : 'Domain table is up to date',
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get backfill status');
+    return problem(res, 500, 'Failed to get status', error instanceof Error ? error.message : undefined);
+  }
 });
