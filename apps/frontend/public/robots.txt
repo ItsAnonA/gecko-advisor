@@ -6,6 +6,7 @@
 
 User-agent: *
 Allow: /
+Allow: /privacy-policy/
 Allow: /r/
 Allow: /blog/
 Allow: /reports
