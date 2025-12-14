@@ -1,0 +1,33 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles for SEO pages */
+:root {
+  --font-sans: 'DM Sans', 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #FAFAF9;
+  color: #1e293b;
+}
+
+/* Score ring animation (server-safe) */
+.score-ring-progress {
+  stroke-dasharray: 251.2;
+  stroke-dashoffset: 251.2;
+  transition: stroke-dashoffset 1.5s ease-out;
+}
+
+/* Structured data visibility helper */
+.structured-data-hidden {
+  display: none;
+}
