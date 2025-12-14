@@ -34,8 +34,9 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT=3000
+# Force port 3000 regardless of inherited PORT env var
 ENV HOSTNAME="0.0.0.0"
 
 # Server.js is at apps/web/server.js in monorepo standalone output
-CMD ["node", "apps/web/server.js"]
+# Explicitly set PORT=3000 to override any inherited value
+CMD ["sh", "-c", "PORT=3000 node apps/web/server.js"]
