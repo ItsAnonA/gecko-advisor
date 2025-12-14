@@ -90,8 +90,8 @@ services:
     depends_on:
       backend:
         condition: service_started
-      web:
-        condition: service_healthy
+      # web: # Optional - uncomment when web service is deployed in Coolify
+      #   condition: service_healthy
     expose:
       - "80"
     restart: unless-stopped
