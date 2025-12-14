@@ -37,6 +37,9 @@ jobs:
           - service: worker
             dockerfile: infra/docker/Dockerfile.worker
             context: .
+          - service: web
+            dockerfile: infra/docker/Dockerfile.web
+            context: .
 
     steps:
       - name: Checkout repository
