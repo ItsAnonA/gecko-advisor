@@ -10,34 +10,30 @@ SPDX-License-Identifier: MIT
  * Used by Next.js SSR routes for canonical URL generation.
  */
 
-// Note: Using Node's built-in punycode module (deprecated but stable)
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const punycode = require('punycode');
-
 /**
  * Converts unicode domain labels to punycode (ASCII-compatible encoding).
  * Handles IDN domains like münchen.de → xn--mnchen-3ya.de
+ *
+ * Uses the URL API which handles punycode conversion automatically.
  *
  * @param domain - Domain that may contain unicode characters
  * @returns ASCII-encoded domain using punycode
  */
 function toPunycode(domain: string): string {
-  return domain
-    .split('.')
-    .map((label) => {
-      // Only convert labels with non-ASCII characters
-      // eslint-disable-next-line no-control-regex
-      if (/[^\x00-\x7F]/.test(label)) {
-        try {
-          return punycode.toASCII(label);
-        } catch {
-          // If punycode conversion fails, return original
-          return label;
-        }
-      }
-      return label;
-    })
-    .join('.');
+  // eslint-disable-next-line no-control-regex
+  if (!/[^\x00-\x7F]/.test(domain)) {
+    // No non-ASCII characters, return as-is
+    return domain;
+  }
+
+  try {
+    // Use URL API which handles punycode conversion automatically
+    const url = new URL(`http://${domain}`);
+    return url.hostname;
+  } catch {
+    // If URL parsing fails, return original
+    return domain;
+  }
 }
 
 /**
