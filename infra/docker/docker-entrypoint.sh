@@ -1,14 +1,15 @@
 #!/bin/sh
 set -e
 
-# Render nginx config from template with env vars (CSP and BACKEND_PROXY_URL)
+# Render nginx config from template with env vars
 # Debug: print variables to verify they're being passed correctly
 echo "Environment variables received:"
 env | grep -E '^CSP=' || echo "CSP not set, will use default"
 env | grep -E '^BACKEND_PROXY_URL=' || echo "BACKEND_PROXY_URL not set"
+env | grep -E '^NEXTJS_PROXY_URL=' || echo "NEXTJS_PROXY_URL not set"
 
-# Use envsubst to substitute CSP and BACKEND_PROXY_URL variables in nginx template
-envsubst '${CSP} ${BACKEND_PROXY_URL}' < /nginx.tmpl.conf > /etc/nginx/nginx.conf
+# Use envsubst to substitute variables in nginx template
+envsubst '${CSP} ${BACKEND_PROXY_URL} ${NEXTJS_PROXY_URL}' < /nginx.tmpl.conf > /etc/nginx/nginx.conf
 
 # Debug: verify variables were applied correctly
 echo "Generated nginx config:"

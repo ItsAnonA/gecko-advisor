@@ -1,0 +1,33 @@
+{
+  "name": "@gecko-advisor/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "build:check": "next build 2>&1 | tee build-output.log && npx tsx scripts/check-seo-bundle-size.ts",
+    "start": "next start --port 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "seo:bundle-check": "npx tsx scripts/check-seo-bundle-size.ts"
+  },
+  "dependencies": {
+    "@gecko-advisor/shared": "workspace:*",
+    "next": "^15.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.0.3",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4"
+  }
+}

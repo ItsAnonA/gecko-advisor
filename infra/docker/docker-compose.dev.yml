@@ -16,15 +16,25 @@ services:
       NODE_ENV: development
       APP_ENV: development
   frontend:
+    environment:
+      # Local dev URLs
+      BACKEND_PROXY_URL: http://backend:5000
+      NEXTJS_PROXY_URL: http://web:3000
     ports:
       - "8080:80"
-  nginx:
-    image: nginx:1.27-alpine
-    volumes:
-      - ../..//apps/frontend/dist:/usr/share/nginx/html:ro
-      - ../..//infra/docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    ports:
-      - "80:80"
-    depends_on:
-      backend:
-        condition: service_started
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.web
+    environment:
+      NODE_ENV: development
+      API_INTERNAL_URL: http://backend:5000
+      NEXT_PUBLIC_BASE_URL: http://localhost:8080
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/robots.txt',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

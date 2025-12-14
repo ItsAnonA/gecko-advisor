@@ -258,6 +258,10 @@ services:
       # This avoids Cloudflare SSL handshake issues when using external domains
       BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
 
+      # Next.js SSR Proxy URL for SEO routes
+      # Routes /privacy-policy/*, /reports, /r/*, /sitemap*, /robots.txt to Next.js
+      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
+
       # Cloudflare Turnstile (Frontend Site Key - optional)
       VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
 
@@ -266,6 +270,8 @@ services:
 
     depends_on:
       backend:
+        condition: service_healthy
+      web:
         condition: service_healthy
 
     expose:
@@ -278,6 +284,42 @@ services:
         delay: 5s
         max_attempts: 5
         window: 120s
+
+  # ==========================================================================
+  # NEXT.JS SSR SERVICE - SEO-critical pages
+  # ==========================================================================
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-web:main
+    pull_policy: always
+
+    environment:
+      NODE_ENV: production
+      # Internal URL to backend API (Docker network)
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://backend:5000}
+      # Public base URL for canonical URLs and OG tags
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://geckoadvisor.com}
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    expose:
+      - "3000"
+
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+        window: 120s
+
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/robots.txt',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 # ============================================================================
 # VOLUMES - PRODUCTION DATA PERSISTENCE
