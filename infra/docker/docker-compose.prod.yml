@@ -271,8 +271,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-      web:
-        condition: service_healthy
+      # web: # Optional - uncomment when web service is deployed
+      #   condition: service_healthy
 
     expose:
       - "80"
