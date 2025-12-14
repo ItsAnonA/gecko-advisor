@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
+    "build:check": "next build 2>&1 | tee build-output.log && npx tsx scripts/check-seo-bundle-size.ts",
     "start": "next start --port 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seo:bundle-check": "npx tsx scripts/check-seo-bundle-size.ts"
   },
   "dependencies": {
     "@gecko-advisor/shared": "workspace:*",

@@ -15,6 +15,38 @@ import type { IndexTier } from './index-gating.js';
 import { SEO_CONSTANTS, getPageTitle, buildMetaDescription } from './metadata.js';
 
 /**
+ * Maximum words allowed in FAQ answers per SEO contract.
+ * Google may truncate or ignore answers longer than this.
+ */
+export const FAQ_MAX_WORDS = 55;
+
+/**
+ * Enforces word limit on FAQ answers.
+ * Truncates at sentence boundary when possible.
+ *
+ * @param text - Original answer text
+ * @param maxWords - Maximum words (default: 55)
+ * @returns Truncated text within word limit
+ */
+export function enforceWordLimit(text: string, maxWords = FAQ_MAX_WORDS): string {
+  const words = text.split(/\s+/);
+  if (words.length <= maxWords) {
+    return text;
+  }
+
+  const truncated = words.slice(0, maxWords).join(' ');
+
+  // Try to end at a sentence boundary (period) if one exists past 60% of text
+  const lastPeriod = truncated.lastIndexOf('.');
+  if (lastPeriod > truncated.length * 0.6) {
+    return truncated.slice(0, lastPeriod + 1);
+  }
+
+  // Otherwise just add ellipsis
+  return truncated + '...';
+}
+
+/**
  * JSON-LD Schema types
  */
 export interface WebPageSchema {
@@ -162,6 +194,7 @@ export function buildBreadcrumbSchema(
 /**
  * Builds FAQ schema for a domain report.
  * Only generated for 'full' tier pages with complete data.
+ * All answers are limited to 55 words per SEO contract.
  *
  * @param scanData - Scan data
  * @param domain - Normalized domain
@@ -192,7 +225,7 @@ export function buildFAQSchema(
       name: `Does ${domain} track visitors?`,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: trackerAnswer,
+        text: enforceWordLimit(trackerAnswer),
       },
     });
   }
@@ -209,7 +242,7 @@ export function buildFAQSchema(
       name: `Does ${domain} share data with third parties?`,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: thirdPartyAnswer,
+        text: enforceWordLimit(thirdPartyAnswer),
       },
     });
   }
@@ -226,7 +259,7 @@ export function buildFAQSchema(
       name: `Is ${domain} secure?`,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: tlsAnswer,
+        text: enforceWordLimit(tlsAnswer),
       },
     });
   }
@@ -240,7 +273,7 @@ export function buildFAQSchema(
       name: `What is ${domain}'s privacy score?`,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: scoreAnswer,
+        text: enforceWordLimit(scoreAnswer),
       },
     });
   }

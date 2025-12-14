@@ -10,19 +10,50 @@ SPDX-License-Identifier: MIT
  * Used by Next.js SSR routes for canonical URL generation.
  */
 
+// Note: Using Node's built-in punycode module (deprecated but stable)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const punycode = require('punycode');
+
+/**
+ * Converts unicode domain labels to punycode (ASCII-compatible encoding).
+ * Handles IDN domains like münchen.de → xn--mnchen-3ya.de
+ *
+ * @param domain - Domain that may contain unicode characters
+ * @returns ASCII-encoded domain using punycode
+ */
+function toPunycode(domain: string): string {
+  return domain
+    .split('.')
+    .map((label) => {
+      // Only convert labels with non-ASCII characters
+      // eslint-disable-next-line no-control-regex
+      if (/[^\x00-\x7F]/.test(label)) {
+        try {
+          return punycode.toASCII(label);
+        } catch {
+          // If punycode conversion fails, return original
+          return label;
+        }
+      }
+      return label;
+    })
+    .join('.');
+}
+
 /**
  * Normalizes a domain for consistent URL usage.
  * - Converts to lowercase
  * - Removes www. prefix
  * - Removes trailing dots
  * - Trims whitespace
+ * - Converts unicode/IDN domains to punycode
  *
  * @param input - Raw domain input
- * @returns Normalized domain or null if invalid
+ * @returns Normalized domain or empty string if invalid
  */
-export function normalizeDomain(input: string | null | undefined): string | null {
+export function normalizeDomain(input: string | null | undefined): string {
   if (!input || typeof input !== 'string') {
-    return null;
+    return '';
   }
 
   let domain = input.trim().toLowerCase();
@@ -48,9 +79,12 @@ export function normalizeDomain(input: string | null | undefined): string | null
   // Remove trailing dots
   domain = domain.replace(/\.+$/, '');
 
+  // Convert unicode to punycode
+  domain = toPunycode(domain);
+
   // Validate result
   if (!domain || domain.length === 0 || domain.length > 253) {
-    return null;
+    return '';
   }
 
   return domain;
@@ -102,14 +136,19 @@ export function isValidDomain(domain: string | null | undefined): domain is stri
   }
 
   // Check for private/local domains that shouldn't be indexed
+  const tldCheck = parts.slice(-2).join('.');
+  const singleTld = parts[parts.length - 1];
   const firstPart = parts[0];
+
+  // Reserved TLDs that should never be indexed
+  const reservedTLDs = ['local', 'test', 'example', 'invalid', 'localhost'];
+  const reservedCompoundTLDs = ['local', 'localhost.localdomain'];
+
   if (
     domain === 'localhost' ||
     firstPart === 'localhost' ||
-    domain.includes('.local') ||
-    domain.includes('.test') ||
-    domain.includes('.example') ||
-    domain.includes('.invalid')
+    reservedTLDs.includes(singleTld ?? '') ||
+    reservedCompoundTLDs.includes(tldCheck)
   ) {
     return false;
   }

@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
+import { SEO_CONSTANTS } from '@gecko-advisor/shared/seo';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -28,20 +29,19 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://geckoadvisor.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || SEO_CONSTANTS.BASE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Gecko Advisor - Free Privacy Scanner',
-    template: '%s | Gecko Advisor',
+    default: `${SEO_CONSTANTS.SITE_NAME} - Free Privacy Scanner`,
+    template: `%s | ${SEO_CONSTANTS.SITE_NAME}`,
   },
-  description:
-    'Analyze any website for trackers, cookies, and security issues. Free privacy scoring with detailed reports.',
+  description: SEO_CONSTANTS.DEFAULT_DESCRIPTION,
   keywords: ['privacy', 'security', 'tracker', 'cookie', 'scanner', 'GDPR', 'website analysis'],
-  authors: [{ name: 'Gecko Advisor' }],
-  creator: 'Gecko Advisor',
-  publisher: 'Gecko Advisor',
+  authors: [{ name: SEO_CONSTANTS.SITE_NAME }],
+  creator: SEO_CONSTANTS.SITE_NAME,
+  publisher: SEO_CONSTANTS.SITE_NAME,
   robots: {
     index: true,
     follow: true,
@@ -56,9 +56,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    siteName: 'Gecko Advisor',
-    title: 'Gecko Advisor - Free Privacy Scanner',
-    description: 'Analyze any website for trackers, cookies, and security issues.',
+    siteName: SEO_CONSTANTS.SITE_NAME,
+    title: `${SEO_CONSTANTS.SITE_NAME} - Free Privacy Scanner`,
+    description: SEO_CONSTANTS.DEFAULT_DESCRIPTION,
     images: [
       {
         url: '/og-image.png',
@@ -70,8 +70,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gecko Advisor - Free Privacy Scanner',
-    description: 'Analyze any website for trackers, cookies, and security issues.',
+    title: `${SEO_CONSTANTS.SITE_NAME} - Free Privacy Scanner`,
+    description: SEO_CONSTANTS.DEFAULT_DESCRIPTION,
     images: ['/og-image.png'],
   },
   icons: {

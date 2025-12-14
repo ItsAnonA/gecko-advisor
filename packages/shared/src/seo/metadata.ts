@@ -11,13 +11,18 @@ SPDX-License-Identifier: MIT
 
 import type { ScanDataForGating } from './index-gating.js';
 
-export const SEO_CONSTANTS = {
+export const SEO_CONSTANTS: {
+  readonly SITE_NAME: string;
+  readonly BASE_URL: string;
+  readonly DEFAULT_DESCRIPTION: string;
+  readonly TITLE_SUFFIX: string;
+} = {
   SITE_NAME: 'Gecko Advisor',
   BASE_URL: 'https://geckoadvisor.com',
   DEFAULT_DESCRIPTION:
     'Analyze any website for trackers, cookies, and security issues. Free privacy scoring with detailed reports.',
   TITLE_SUFFIX: 'Gecko Advisor',
-} as const;
+};
 
 /**
  * Extended scan data with additional fields needed for metadata.

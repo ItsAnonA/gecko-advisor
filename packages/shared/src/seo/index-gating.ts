@@ -39,9 +39,9 @@ export interface ScanDataForGating {
  *
  * Full tier requirements (all must be met):
  * - status === 'done'
- * - score is present and 0-100
+ * - score is present, numeric, and 0-100
  * - progress === 100
- * - finishedAt is set
+ * - finishedAt is set and valid date
  * - Has tracker/third-party/cookie analysis data
  *
  * Limited tier (any of these):
@@ -51,7 +51,8 @@ export interface ScanDataForGating {
  * NoIndex tier:
  * - null/undefined scan
  * - status !== 'done'
- * - No score
+ * - No score or NaN score
+ * - Invalid finishedAt date
  * - Errors or missing data
  *
  * @param scanData - Scan data object (can be null/undefined)
@@ -73,14 +74,27 @@ export function getIndexTier(scanData: ScanDataForGating | null | undefined): In
     return 'noindex';
   }
 
+  // NaN score = noindex
+  if (Number.isNaN(scanData.score)) {
+    return 'noindex';
+  }
+
   // Score out of range = noindex
   if (scanData.score < 0 || scanData.score > 100) {
     return 'noindex';
   }
 
+  // Invalid finishedAt date = noindex (for full tier consideration)
+  if (scanData.finishedAt) {
+    const finishedDate = new Date(scanData.finishedAt);
+    if (Number.isNaN(finishedDate.getTime())) {
+      return 'noindex';
+    }
+  }
+
   // Check for full analysis data
-  const hasTrackerData = typeof scanData.trackerCount === 'number';
-  const hasThirdPartyData = typeof scanData.thirdPartyCount === 'number';
+  const hasTrackerData = typeof scanData.trackerCount === 'number' && !Number.isNaN(scanData.trackerCount);
+  const hasThirdPartyData = typeof scanData.thirdPartyCount === 'number' && !Number.isNaN(scanData.thirdPartyCount);
   const hasTlsGrade = typeof scanData.tlsGrade === 'string' && scanData.tlsGrade.length > 0;
 
   // Full tier requires complete analysis

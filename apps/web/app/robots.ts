@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { MetadataRoute } from 'next';
+import { SEO_CONSTANTS } from '@gecko-advisor/shared/seo';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -18,6 +19,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/_next/'],
     },
-    sitemap: 'https://geckoadvisor.com/sitemap.xml',
+    sitemap: `${SEO_CONSTANTS.BASE_URL}/sitemap.xml`,
   };
 }

@@ -1,0 +1,185 @@
+# SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+# SPDX-License-Identifier: MIT
+
+name: SEO Contract
+
+on:
+  push:
+    branches: [main, stage, preprod]
+    paths:
+      - 'packages/shared/src/seo/**'
+      - 'apps/web/app/(seo)/**'
+      - 'apps/web/components/seo/**'
+      - '.github/workflows/seo-contract.yml'
+  pull_request:
+    branches: [main, stage, preprod]
+    paths:
+      - 'packages/shared/src/seo/**'
+      - 'apps/web/app/(seo)/**'
+      - 'apps/web/components/seo/**'
+      - '.github/workflows/seo-contract.yml'
+
+jobs:
+  seo-tests:
+    name: SEO Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run SEO unit tests
+        run: pnpm --filter @gecko-advisor/shared test
+
+  seo-lint:
+    name: SEO Contract Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for banned phrases in SEO components
+        run: |
+          BANNED_PHRASES=(
+            "strong commitment"
+            "respects your privacy"
+            "privacy-friendly"
+            "trustworthy"
+            "responsible"
+            "reasonable"
+            "rare"
+            "uncommon"
+            "best practices"
+            "GDPR compliant"
+            "CCPA compliant"
+          )
+
+          FOUND=false
+          for phrase in "${BANNED_PHRASES[@]}"; do
+            if grep -ri "$phrase" packages/shared/src/seo/ apps/web/components/seo/ apps/web/app/\(seo\)/ 2>/dev/null | grep -v "\.test\.ts" | grep -v "node_modules"; then
+              echo "::error::Found banned phrase: '$phrase'"
+              FOUND=true
+            fi
+          done
+
+          if [ "$FOUND" = true ]; then
+            echo "::error::SEO content contains banned phrases. Please use neutral, factual language."
+            exit 1
+          fi
+
+          echo "✓ No banned phrases found"
+
+      - name: Check server-only import in SEO components
+        run: |
+          MISSING=false
+
+          # Check apps/web/components/seo/*.tsx files
+          for f in apps/web/components/seo/*.tsx; do
+            if [ -f "$f" ]; then
+              if ! grep -q "import 'server-only'" "$f" && ! grep -q "'use client'" "$f"; then
+                # Components without 'use client' should have server-only
+                if ! grep -q "import 'server-only'" "$f"; then
+                  echo "::warning::$f might need 'import \"server-only\"' if it's a server component"
+                fi
+              fi
+            fi
+          done
+
+          # Check page components
+          for f in apps/web/app/\(seo\)/**/page.tsx; do
+            if [ -f "$f" ]; then
+              # Next.js pages don't need server-only import (they're server by default)
+              echo "✓ $f is a page component (server by default)"
+            fi
+          done
+
+          echo "✓ Server-only check complete"
+
+      - name: Check for problematic link patterns
+        run: |
+          FOUND=false
+
+          # Check for <a href="#"> which should be <button> for JS-only actions
+          if grep -rn 'href="#"' apps/web/components/seo/ apps/web/app/\(seo\)/ 2>/dev/null | grep -v "node_modules"; then
+            echo "::warning::Found <a href=\"#\"> pattern. Use <button> for JavaScript-only actions."
+            FOUND=true
+          fi
+
+          # Check for inline metadata construction (should use utility functions)
+          if grep -rn "title:" apps/web/app/\(seo\)/**/page.tsx 2>/dev/null | grep -v "getPageTitle\|buildMetaDescription\|SEO_CONSTANTS" | grep -v "node_modules"; then
+            echo "::warning::Found potential inline metadata. Use SEO utility functions."
+          fi
+
+          echo "✓ Link pattern check complete"
+
+  seo-typecheck:
+    name: SEO TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check shared package
+        run: pnpm --filter @gecko-advisor/shared typecheck
+
+      - name: TypeScript check web app
+        run: pnpm --filter @gecko-advisor/web typecheck
+
+  seo-bundle-size:
+    name: SEO Bundle Size Guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @gecko-advisor/shared build
+
+      - name: Build web app and check bundle size
+        run: |
+          cd apps/web
+          pnpm build 2>&1 | tee build-output.log
+          npx tsx scripts/check-seo-bundle-size.ts
+        env:
+          BUILD_LOG_PATH: build-output.log
