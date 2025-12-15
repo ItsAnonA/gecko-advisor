@@ -199,7 +199,7 @@ export async function fetchReports(
 } | null> {
   try {
     const res = await fetch(
-      `${API_INTERNAL}/api/v2/reports?page=${page}&limit=${limit}`,
+      `${API_INTERNAL}/api/v2/reports/all?page=${page}&limit=${limit}`,
       { next: { revalidate: 3600 } }
     );
 
