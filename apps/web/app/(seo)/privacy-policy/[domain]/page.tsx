@@ -8,10 +8,6 @@ SPDX-License-Identifier: MIT
  *
  * The most important SEO page - generates unique content for each domain.
  * Uses ISR with 1-hour revalidation.
- *
- * Combines:
- * - SSR content for SEO (crawlable text, JSON-LD schemas)
- * - Client-side interactive components (score dial, tabs, evidence list)
  */
 
 import { notFound, redirect } from 'next/navigation';
@@ -26,9 +22,9 @@ import {
   SEO_CONSTANTS,
 } from '@gecko-advisor/shared';
 import { getReportForDomain } from '@/lib/api';
-import { ReportContent } from '@/components/seo/ReportContent';
 import { JsonLd } from '@/components/seo/JsonLd';
-import ReportPageClient from '@/components/report/ReportPageClient';
+import { SEOSummary } from '@/components/seo/SEOSummary';
+import { InteractiveReport } from '@/components/report';
 
 interface Props {
   params: Promise<{ domain: string }>;
@@ -129,41 +125,50 @@ export default async function ReportPage({ params }: Props) {
   const faqSchema = buildFAQSchema(scanData, domain, tier);
   if (faqSchema) schemas.push(faqSchema as unknown as Record<string, unknown>);
 
-  // Build share URL for the report
-  const shareUrl = `${SEO_CONSTANTS.BASE_URL}/privacy-policy/${domain}`;
+  // Build SEO content component to embed in Overview tab
+  const seoContent = (
+    <SEOSummary
+      scanData={scanData}
+      domain={domain}
+      tier={tier}
+      heading={heading}
+    />
+  );
 
   return (
     <>
-      {/* JSON-LD Schemas */}
+      {/* JSON-LD Schemas - Structured data for SEO */}
       {schemas.map((schema, i) => (
         <JsonLd key={i} data={schema as Record<string, unknown>} />
       ))}
 
-      {/* Main Report Container */}
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Back to Home */}
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-sm font-medium text-advisor-600 hover:text-advisor-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 rounded"
-          >
-            <span aria-hidden="true">←</span>
-            Back to Home
-          </Link>
-        </div>
+      {/* Main Content Container */}
+      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
+        {/* Breadcrumbs - At top for SEO and navigation */}
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+            <li>
+              <Link href="/" className="hover:text-advisor-600 transition-colors">
+                Home
+              </Link>
+            </li>
+            <li>/</li>
+            <li>
+              <Link href="/reports" className="hover:text-advisor-600 transition-colors">
+                Privacy Reports
+              </Link>
+            </li>
+            <li>/</li>
+            <li className="text-zinc-700 font-medium">{domain}</li>
+          </ol>
+        </nav>
 
-        {/* SSR Content (crawlable - guaranteed 300+ words for full tier) */}
-        {/* Hidden visually but available to search engines */}
-        <div className="sr-only">
-          <ReportContent scanData={scanData} domain={domain} tier={tier} heading={heading} />
-        </div>
-
-        {/* Interactive Client Component */}
-        <ReportPageClient
-          scan={data.scan}
-          evidence={data.evidence || []}
+        {/* Interactive Report with SEO content embedded in Overview tab */}
+        <InteractiveReport
+          data={data}
           domain={domain}
-          shareUrl={shareUrl}
+          heading={heading}
+          seoContent={seoContent}
         />
       </div>
     </>
