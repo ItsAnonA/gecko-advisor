@@ -12,35 +12,101 @@ on:
       - main
       - preprod
   workflow_dispatch:
+    inputs:
+      force_all:
+        description: 'Force build all services'
+        required: false
+        default: 'false'
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}/gecko-advisor
 
 jobs:
-  build-and-push:
+  # Detect which services have changes
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      nginx: ${{ steps.filter.outputs.nginx }}
+      worker: ${{ steps.filter.outputs.worker }}
+      web: ${{ steps.filter.outputs.web }}
+      any_changed: ${{ steps.filter.outputs.backend == 'true' || steps.filter.outputs.nginx == 'true' || steps.filter.outputs.worker == 'true' || steps.filter.outputs.web == 'true' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            # Common dependencies trigger all services
+            common: &common
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - 'tsconfig.base.json'
+              - '.github/workflows/docker-publish.yml'
+
+            # Shared package triggers all services
+            shared: &shared
+              - 'packages/shared/**'
+
+            # Prisma triggers backend and worker
+            prisma: &prisma
+              - 'infra/prisma/**'
+
+            # Service-specific paths
+            backend:
+              - *common
+              - *shared
+              - *prisma
+              - 'apps/backend/**'
+              - 'infra/docker/Dockerfile.backend'
+              - 'infra/docker/backend-entrypoint.sh'
+
+            # Nginx reverse proxy (previously named 'frontend')
+            nginx:
+              - *common
+              - 'infra/docker/Dockerfile.nginx'
+              - 'infra/docker/nginx.tmpl.conf'
+              - 'infra/docker/docker-entrypoint.sh'
+
+            worker:
+              - *common
+              - *shared
+              - *prisma
+              - 'apps/worker/**'
+              - 'infra/docker/Dockerfile.worker'
+
+            web:
+              - *common
+              - *shared
+              - 'apps/web/**'
+              - 'infra/docker/Dockerfile.web'
+
+      - name: Log detected changes
+        run: |
+          echo "### Change Detection Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Changed |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ steps.filter.outputs.backend }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nginx | ${{ steps.filter.outputs.nginx }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | ${{ steps.filter.outputs.worker }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web | ${{ steps.filter.outputs.web }} |" >> $GITHUB_STEP_SUMMARY
+
+  # Build Backend
+  build-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
-
-    strategy:
-      matrix:
-        include:
-          - service: backend
-            dockerfile: infra/docker/Dockerfile.backend
-            context: .
-          - service: frontend
-            dockerfile: infra/docker/Dockerfile.frontend
-            context: .
-          - service: worker
-            dockerfile: infra/docker/Dockerfile.worker
-            context: .
-          - service: web
-            dockerfile: infra/docker/Dockerfile.web
-            context: .
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,27 +126,26 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend
           tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker image
+      - name: Build and push
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: .
+          file: infra/docker/Dockerfile.backend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
           platforms: linux/amd64,linux/arm64
 
       - name: Generate artifact attestation
@@ -88,6 +153,201 @@ jobs:
         continue-on-error: true
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
+
+  # Build Nginx reverse proxy (routes /api to backend, everything else to Next.js)
+  # Image name kept as 'frontend' for backward compatibility with Coolify deployments
+  build-nginx:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.nginx == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/Dockerfile.nginx
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate artifact attestation
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  # Build Worker
+  build-worker:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.worker == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-worker
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/Dockerfile.worker
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate artifact attestation
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-worker
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  # Build Web (Next.js SSR) - Main frontend after Vite-to-Next.js migration
+  build-web:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.web == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/Dockerfile.web
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate artifact attestation
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  # Summary job
+  publish-summary:
+    needs: [detect-changes, build-backend, build-nginx, build-worker, build-web]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "### Docker Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Built | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.detect-changes.outputs.backend == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-backend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nginx | ${{ needs.detect-changes.outputs.nginx == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-nginx.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | ${{ needs.detect-changes.outputs.worker == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-worker.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web | ${{ needs.detect-changes.outputs.web == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-web.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY

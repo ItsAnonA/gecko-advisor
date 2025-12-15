@@ -1,4 +1,8 @@
+# Pre-production Docker Compose - Next.js Frontend with Nginx Reverse Proxy
+# After Vite-to-Next.js migration, all frontend routes go through Next.js
+
 name: gecko-advisor-preprod
+
 services:
   db:
     image: postgres:16
@@ -69,34 +73,7 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-frontend:preprod
-    pull_policy: always
-    environment:
-      APP_ENV: preprod
-      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-https://preprod.geckoadvisor.com}
-      BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-https://preprodapi.geckoadvisor.com}
-
-      # Backend Proxy URL for internal Docker networking
-      # Use http://backend:5000 for Coolify deployments where frontend and backend are on same network
-      # This avoids Cloudflare SSL handshake issues when using external domains
-      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
-
-      # Next.js SSR Proxy URL for SEO routes
-      # Routes /privacy-policy/*, /reports, /r/*, /sitemap*, /robots.txt to Next.js
-      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
-
-      CSP: ${CSP:-}
-    depends_on:
-      backend:
-        condition: service_started
-      # web: # Optional - uncomment when web service is deployed in Coolify
-      #   condition: service_healthy
-    expose:
-      - "80"
-    restart: unless-stopped
-
-  # Next.js SSR app for SEO-critical pages
+  # Next.js app serves ALL frontend routes after Vite-to-Next.js migration
   web:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-web:preprod
     pull_policy: always
@@ -117,6 +94,31 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Nginx reverse proxy - routes /api/* to backend, everything else to Next.js
+  nginx:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-nginx:preprod
+    pull_policy: always
+    environment:
+      APP_ENV: preprod
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-https://preprod.geckoadvisor.com}
+      BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-https://preprodapi.geckoadvisor.com}
+
+      # Backend Proxy URL for internal Docker networking
+      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
+
+      # Next.js Proxy URL - ALL frontend routes go here after migration
+      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
+
+      CSP: ${CSP:-}
+    depends_on:
+      backend:
+        condition: service_started
+      web:
+        condition: service_healthy
+    expose:
+      - "80"
+    restart: unless-stopped
 
 volumes:
   privacy-postgres:

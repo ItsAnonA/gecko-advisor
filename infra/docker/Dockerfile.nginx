@@ -1,0 +1,13 @@
+# Nginx reverse proxy for Gecko Advisor
+# Routes /api/* to backend, everything else to Next.js web app
+
+FROM nginx:1.27-alpine
+
+# Copy nginx configuration template
+COPY infra/docker/nginx.tmpl.conf /nginx.tmpl.conf
+COPY infra/docker/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

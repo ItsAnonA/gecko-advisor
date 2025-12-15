@@ -1,6 +1,5 @@
-# Production Docker Compose - Minimal Configuration for Quick Testing
-# This file has optional monitoring/security features for rapid deployment testing
-# For full production, use docker-compose.prod.yml instead
+# Production Docker Compose - Next.js Frontend with Nginx Reverse Proxy
+# After Vite-to-Next.js migration, all frontend routes go through Next.js
 
 name: privacy-advisor-prod
 
@@ -239,55 +238,9 @@ services:
       start_period: 20s
 
   # ==========================================================================
-  # FRONTEND SERVICE
+  # NEXT.JS WEB SERVICE - Main Frontend (SSR)
   # ==========================================================================
-  frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-frontend:main
-    pull_policy: always
-
-    environment:
-      # Core Settings
-      APP_ENV: production
-
-      # Public URLs
-      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-https://geckoadvisor.com}
-      BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-https://api.geckoadvisor.com}
-
-      # Backend Proxy URL for internal Docker networking
-      # Use http://backend:5000 for Coolify deployments where frontend and backend are on same network
-      # This avoids Cloudflare SSL handshake issues when using external domains
-      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
-
-      # Next.js SSR Proxy URL for SEO routes
-      # Routes /privacy-policy/*, /reports, /r/*, /sitemap*, /robots.txt to Next.js
-      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
-
-      # Cloudflare Turnstile (Frontend Site Key - optional)
-      VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
-
-      # Security
-      CSP: ${CSP:-}
-
-    depends_on:
-      backend:
-        condition: service_healthy
-      # web: # Optional - uncomment when web service is deployed
-      #   condition: service_healthy
-
-    expose:
-      - "80"
-
-    restart: unless-stopped
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 5
-        window: 120s
-
-  # ==========================================================================
-  # NEXT.JS SSR SERVICE - SEO-critical pages
-  # ==========================================================================
+  # After Vite-to-Next.js migration, this serves ALL frontend routes
   web:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-web:main
     pull_policy: always
@@ -322,6 +275,44 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+  # ==========================================================================
+  # NGINX REVERSE PROXY SERVICE
+  # ==========================================================================
+  # Routes /api/* to backend, all other routes to Next.js web service
+  nginx:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-nginx:main
+    pull_policy: always
+
+    environment:
+      # Core Settings
+      APP_ENV: production
+
+      # Backend Proxy URL for internal Docker networking
+      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
+
+      # Next.js Proxy URL - ALL frontend routes go here after migration
+      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
+
+      # Security
+      CSP: ${CSP:-}
+
+    depends_on:
+      backend:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+
+    expose:
+      - "80"
+
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+        window: 120s
 
 # ============================================================================
 # VOLUMES - PRODUCTION DATA PERSISTENCE

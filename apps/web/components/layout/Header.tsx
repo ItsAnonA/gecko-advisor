@@ -7,16 +7,38 @@ SPDX-License-Identifier: MIT
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { memo } from 'react';
+import { memo, useState, useCallback } from 'react';
 
 /**
- * Header Component - Minimal Navigation
+ * Header Component - Responsive Navigation
  *
- * Simplified header with logo and navigation links.
+ * Full-featured header with logo, navigation links, and mobile menu.
  * Transparent background with subtle border.
+ *
+ * Features:
+ * - Gecko Advisor logo (left)
+ * - Desktop navigation links
+ * - Mobile hamburger menu
+ * - Active path highlighting
+ * - GitHub repository link
  */
 const Header = memo(function Header() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
+
+  const navLinks = [
+    { href: '/about', label: 'About' },
+    { href: '/blog', label: 'Blog' },
+    { href: '/reports', label: 'Reports' },
+  ];
 
   return (
     <header className="backdrop-blur-sm bg-white/90 sticky top-0 z-40 border-b border-gray-200">
@@ -27,6 +49,7 @@ const Header = memo(function Header() {
             href="/"
             className="flex items-center group"
             aria-label="Gecko Advisor Home"
+            onClick={closeMobileMenu}
           >
             <div className="relative">
               <Image
@@ -40,38 +63,21 @@ const Header = memo(function Header() {
             </div>
           </Link>
 
-          {/* Navigation Links */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/about"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                pathname === '/about'
-                  ? 'text-advisor-600'
-                  : 'text-gecko-600 hover:text-advisor-600'
-              }`}
-            >
-              About
-            </Link>
-            <Link
-              href="/blog"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                pathname === '/blog'
-                  ? 'text-advisor-600'
-                  : 'text-gecko-600 hover:text-advisor-600'
-              }`}
-            >
-              Blog
-            </Link>
-            <Link
-              href="/reports"
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                pathname === '/reports'
-                  ? 'text-advisor-600'
-                  : 'text-gecko-600 hover:text-advisor-600'
-              }`}
-            >
-              Reports
-            </Link>
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center gap-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                  pathname === link.href
+                    ? 'text-advisor-600'
+                    : 'text-gecko-600 hover:text-advisor-600'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
             <a
               href="https://github.com/privacygecko/gecko-advisor"
               target="_blank"
@@ -80,10 +86,63 @@ const Header = memo(function Header() {
               aria-label="View on GitHub"
             >
               <GitHubIcon className="w-5 h-5" />
-              <span className="hidden sm:inline font-medium">GitHub</span>
+              <span className="font-medium">GitHub</span>
             </a>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center justify-center p-2 rounded-lg text-gecko-600 hover:text-advisor-600 hover:bg-gray-100 transition-colors"
+            onClick={toggleMobileMenu}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div
+            id="mobile-menu"
+            className="md:hidden border-t border-gray-200 py-4 space-y-2 animate-fade-in"
+          >
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={closeMobileMenu}
+                className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                  pathname === link.href
+                    ? 'bg-advisor-50 text-advisor-600'
+                    : 'text-gecko-600 hover:bg-gray-50 hover:text-advisor-600'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <a
+              href="https://github.com/privacygecko/gecko-advisor"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeMobileMenu}
+              className="flex items-center gap-2 px-4 py-3 rounded-lg text-base font-medium text-gecko-600 hover:bg-gray-50 hover:text-advisor-600 transition-colors"
+            >
+              <GitHubIcon className="w-5 h-5" />
+              <span>GitHub</span>
+            </a>
+          </div>
+        )}
       </nav>
     </header>
   );
