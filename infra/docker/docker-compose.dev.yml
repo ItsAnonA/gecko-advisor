@@ -39,7 +39,7 @@ services:
       start_period: 30s
 
   # Nginx reverse proxy - routes /api to backend, everything else to Next.js
-  frontend:
+  nginx:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.nginx

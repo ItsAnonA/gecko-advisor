@@ -280,8 +280,7 @@ services:
   # NGINX REVERSE PROXY SERVICE
   # ==========================================================================
   # Routes /api/* to backend, all other routes to Next.js web service
-  # Previously named 'frontend' - kept for backward compatibility with Coolify
-  frontend:
+  nginx:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-nginx:main
     pull_policy: always
 

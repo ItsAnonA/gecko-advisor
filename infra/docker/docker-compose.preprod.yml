@@ -96,7 +96,7 @@ services:
       retries: 5
 
   # Nginx reverse proxy - routes /api/* to backend, everything else to Next.js
-  frontend:
+  nginx:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-nginx:preprod
     pull_policy: always
     environment:
