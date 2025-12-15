@@ -14,18 +14,14 @@ const DOMAINS_PER_SITEMAP = 5000; // Google's recommended limit is 50,000 URLs p
 
 /**
  * Static pages for the sitemap
+ * Only include pages that actually exist and should be indexed
  */
 const STATIC_PAGES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
-  { path: '/about', changefreq: 'monthly', priority: '0.8' },
-  { path: '/faq', changefreq: 'monthly', priority: '0.8' },
-  { path: '/docs', changefreq: 'weekly', priority: '0.7' },
   { path: '/reports', changefreq: 'hourly', priority: '0.9' },
   { path: '/blog', changefreq: 'daily', priority: '0.8' },
-  { path: '/roadmap', changefreq: 'monthly', priority: '0.6' },
-  { path: '/security', changefreq: 'monthly', priority: '0.6' },
-  { path: '/legal', changefreq: 'monthly', priority: '0.5' },
-  { path: '/compare', changefreq: 'weekly', priority: '0.6' },
+  // Note: /about, /faq, /roadmap, /security, /legal pages need to be created
+  // before adding them back to the sitemap
 ];
 
 /**
@@ -180,12 +176,11 @@ sitemapRouter.get('/sitemap-domains-:page.xml', async (req, res) => {
         ? formatDate(domain.lastScanned)
         : formatDate(new Date());
 
-      // Use /api/ssr/privacy-policy/:domain for SSR rendering
-      // This routes through Coolify to backend, serving pre-rendered HTML
-      // The canonical URL in the HTML still points to /privacy-policy/:domain
+      // Use canonical /privacy-policy/:domain URLs for SEO
+      // These are the user-facing URLs that should be indexed
       xml += `
   <url>
-    <loc>${BASE_URL}/api/ssr/privacy-policy/${encodeURIComponent(domain.domain)}</loc>
+    <loc>${BASE_URL}/privacy-policy/${encodeURIComponent(domain.domain)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
