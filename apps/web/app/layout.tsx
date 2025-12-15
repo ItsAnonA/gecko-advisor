@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared/seo';
-import { Header, Footer } from '@/components/layout';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -102,10 +101,8 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-screen bg-light-bg antialiased font-sans flex flex-col">
-        <Header />
-        <div className="flex-1">{children}</div>
-        <Footer />
+      <body className="min-h-screen bg-light-bg antialiased font-sans">
+        {children}
       </body>
     </html>
   );
