@@ -24,6 +24,7 @@ import {
 import { getReportForDomain } from '@/lib/api';
 import { ReportContent } from '@/components/seo/ReportContent';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { InteractiveReport } from '@/components/report';
 
 interface Props {
   params: Promise<{ domain: string }>;
@@ -131,74 +132,22 @@ export default async function ReportPage({ params }: Props) {
         <JsonLd key={i} data={schema as Record<string, unknown>} />
       ))}
 
-      {/* SSR Content (crawlable - guaranteed 300+ words for full tier) */}
       <div className="container mx-auto px-4 py-8">
-        <ReportContent scanData={scanData} domain={domain} tier={tier} heading={heading} />
+        {/* Back to Home link */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 mb-6"
+        >
+          <span>←</span> Back to Home
+        </Link>
 
-        {/* Score visualization */}
-        <div className="bg-white rounded-xl shadow-soft p-6 mb-8">
-          <div className="flex items-center gap-6">
-            <div className="relative w-24 h-24">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="#e2e8f0"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke={
-                    (scanData.score ?? 0) >= 70
-                      ? '#34d399'
-                      : (scanData.score ?? 0) >= 40
-                        ? '#fcd34d'
-                        : '#fca5a5'
-                  }
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${((scanData.score ?? 0) / 100) * 251.2} 251.2`}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-display font-bold text-gecko-800">
-                  {scanData.score ?? '?'}
-                </span>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gecko-800">Privacy Score</h3>
-              <p className="text-gecko-600">
-                {(scanData.score ?? 0) >= 70
-                  ? 'Low Risk'
-                  : (scanData.score ?? 0) >= 40
-                    ? 'Moderate Risk'
-                    : 'High Risk'}
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* SSR Content (crawlable - guaranteed 300+ words for full tier) */}
+        <article className="mb-8">
+          <ReportContent scanData={scanData} domain={domain} tier={tier} heading={heading} />
+        </article>
 
-        {/* Call to action */}
-        <div className="bg-advisor-50 border border-advisor-200 rounded-xl p-6 text-center">
-          <h3 className="text-lg font-semibold text-gecko-800 mb-2">
-            Want to check another website?
-          </h3>
-          <p className="text-gecko-600 mb-4">
-            Analyze any website&apos;s privacy practices with our free scanner.
-          </p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-3 bg-advisor-600 text-white font-medium rounded-lg hover:bg-advisor-700 transition-colors"
-          >
-            Scan a Website
-          </Link>
-        </div>
+        {/* Interactive Report UI (client-side) */}
+        <InteractiveReport data={data} domain={domain} />
       </div>
     </>
   );
