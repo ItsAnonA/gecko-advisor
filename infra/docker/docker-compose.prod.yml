@@ -298,6 +298,8 @@ services:
       API_INTERNAL_URL: ${API_INTERNAL_URL:-http://backend:5000}
       # Public base URL for canonical URLs and OG tags
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://geckoadvisor.com}
+      # Cloudflare Turnstile (Frontend Site Key - optional)
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
 
     depends_on:
       backend:
