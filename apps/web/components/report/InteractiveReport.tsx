@@ -13,6 +13,10 @@ import type { ReportData } from '@/lib/api';
 interface InteractiveReportProps {
   data: ReportData;
   domain: string;
+  /** SEO content to embed in the Overview tab (server-rendered) */
+  seoContent?: React.ReactNode;
+  /** Heading to display (from SEO metadata) */
+  heading?: string;
 }
 
 type TabId = 'overview' | 'tracking' | 'security' | 'cookies' | 'details';
@@ -27,7 +31,7 @@ type TabId = 'overview' | 'tracking' | 'security' | 'cookies' | 'details';
  * - Share functionality
  * - Print/Export options
  */
-export default function InteractiveReport({ data, domain }: InteractiveReportProps) {
+export default function InteractiveReport({ data, domain, seoContent, heading }: InteractiveReportProps) {
   const { scan, evidence, meta } = data;
   const [activeTab, setActiveTab] = React.useState<TabId>('overview');
   const score = scan.score ?? 0;
@@ -249,6 +253,7 @@ export default function InteractiveReport({ data, domain }: InteractiveReportPro
             thirdPartyCount={thirdPartyCount}
             tlsGrade={tlsGrade}
             evidence={evidence}
+            seoContent={seoContent}
           />
         )}
         {activeTab === 'tracking' && <EvidencePanel evidence={trackingEvidence} title="Tracking & Analytics" emptyMessage="No trackers detected. This is great for privacy!" />}
@@ -362,7 +367,8 @@ function OverviewPanel({
   trackerCount,
   thirdPartyCount,
   tlsGrade,
-  evidence
+  evidence,
+  seoContent
 }: {
   score: number;
   domain: string;
@@ -370,9 +376,17 @@ function OverviewPanel({
   thirdPartyCount: number;
   tlsGrade?: string;
   evidence: ReportData['evidence'];
+  seoContent?: React.ReactNode;
 }) {
   return (
     <div role="tabpanel" id="tabpanel-overview" aria-labelledby="tab-overview" className="space-y-6">
+      {/* SEO Content - Crawlable by search engines */}
+      {seoContent && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          {seoContent}
+        </div>
+      )}
+
       {/* Key Findings */}
       <div>
         <h3 className="text-lg font-semibold text-zinc-900 mb-4">Key Findings</h3>

@@ -22,8 +22,8 @@ import {
   SEO_CONSTANTS,
 } from '@gecko-advisor/shared';
 import { getReportForDomain } from '@/lib/api';
-import { ReportContent } from '@/components/seo/ReportContent';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { SEOSummary } from '@/components/seo/SEOSummary';
 import { InteractiveReport } from '@/components/report';
 
 interface Props {
@@ -125,29 +125,51 @@ export default async function ReportPage({ params }: Props) {
   const faqSchema = buildFAQSchema(scanData, domain, tier);
   if (faqSchema) schemas.push(faqSchema as unknown as Record<string, unknown>);
 
+  // Build SEO content component to embed in Overview tab
+  const seoContent = (
+    <SEOSummary
+      scanData={scanData}
+      domain={domain}
+      tier={tier}
+      heading={heading}
+    />
+  );
+
   return (
     <>
-      {/* JSON-LD Schemas */}
+      {/* JSON-LD Schemas - Structured data for SEO */}
       {schemas.map((schema, i) => (
         <JsonLd key={i} data={schema as Record<string, unknown>} />
       ))}
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Back to Home link */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 mb-6"
-        >
-          <span>←</span> Back to Home
-        </Link>
+      {/* Main Content Container */}
+      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
+        {/* Breadcrumbs - At top for SEO and navigation */}
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+            <li>
+              <Link href="/" className="hover:text-advisor-600 transition-colors">
+                Home
+              </Link>
+            </li>
+            <li>/</li>
+            <li>
+              <Link href="/reports" className="hover:text-advisor-600 transition-colors">
+                Privacy Reports
+              </Link>
+            </li>
+            <li>/</li>
+            <li className="text-zinc-700 font-medium">{domain}</li>
+          </ol>
+        </nav>
 
-        {/* SSR Content (crawlable - guaranteed 300+ words for full tier) */}
-        <article className="mb-8">
-          <ReportContent scanData={scanData} domain={domain} tier={tier} heading={heading} />
-        </article>
-
-        {/* Interactive Report UI (client-side) */}
-        <InteractiveReport data={data} domain={domain} />
+        {/* Interactive Report with SEO content embedded in Overview tab */}
+        <InteractiveReport
+          data={data}
+          domain={domain}
+          heading={heading}
+          seoContent={seoContent}
+        />
       </div>
     </>
   );
