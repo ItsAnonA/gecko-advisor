@@ -1,3 +1,7 @@
+# Development Docker Compose overlay
+# Extends docker-compose.yml with dev-specific settings
+# After Vite-to-Next.js migration, frontend uses Next.js web service
+
 services:
   db:
     ports:
@@ -15,13 +19,8 @@ services:
     environment:
       NODE_ENV: development
       APP_ENV: development
-  frontend:
-    environment:
-      # Local dev URLs
-      BACKEND_PROXY_URL: http://backend:5000
-      NEXTJS_PROXY_URL: http://web:3000
-    ports:
-      - "8080:80"
+
+  # Next.js web service - main frontend after migration
   web:
     build:
       context: ../..
@@ -38,3 +37,20 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  # Nginx reverse proxy - routes /api to backend, everything else to Next.js
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.nginx
+    environment:
+      # Local dev URLs
+      BACKEND_PROXY_URL: http://backend:5000
+      NEXTJS_PROXY_URL: http://web:3000
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      web:
+        condition: service_healthy

@@ -29,10 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
+      nginx: ${{ steps.filter.outputs.nginx }}
       worker: ${{ steps.filter.outputs.worker }}
       web: ${{ steps.filter.outputs.web }}
-      any_changed: ${{ steps.filter.outputs.backend == 'true' || steps.filter.outputs.frontend == 'true' || steps.filter.outputs.worker == 'true' || steps.filter.outputs.web == 'true' }}
+      any_changed: ${{ steps.filter.outputs.backend == 'true' || steps.filter.outputs.nginx == 'true' || steps.filter.outputs.worker == 'true' || steps.filter.outputs.web == 'true' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,11 +68,10 @@ jobs:
               - 'infra/docker/Dockerfile.backend'
               - 'infra/docker/backend-entrypoint.sh'
 
-            frontend:
+            # Nginx reverse proxy (previously named 'frontend')
+            nginx:
               - *common
-              - *shared
-              - 'apps/frontend/**'
-              - 'infra/docker/Dockerfile.frontend'
+              - 'infra/docker/Dockerfile.nginx'
               - 'infra/docker/nginx.tmpl.conf'
               - 'infra/docker/docker-entrypoint.sh'
 
@@ -95,7 +94,7 @@ jobs:
           echo "| Service | Changed |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend | ${{ steps.filter.outputs.backend }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend | ${{ steps.filter.outputs.frontend }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nginx | ${{ steps.filter.outputs.nginx }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Worker | ${{ steps.filter.outputs.worker }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Web | ${{ steps.filter.outputs.web }} |" >> $GITHUB_STEP_SUMMARY
 
@@ -158,10 +157,11 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-  # Build Frontend
-  build-frontend:
+  # Build Nginx reverse proxy (routes /api to backend, everything else to Next.js)
+  # Image name kept as 'frontend' for backward compatibility with Coolify deployments
+  build-nginx:
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
+    if: needs.detect-changes.outputs.nginx == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -186,7 +186,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -200,12 +200,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: infra/docker/Dockerfile.frontend
+          file: infra/docker/Dockerfile.nginx
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
           platforms: linux/amd64,linux/arm64
 
       - name: Generate artifact attestation
@@ -213,7 +213,7 @@ jobs:
         continue-on-error: true
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
@@ -276,7 +276,7 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-  # Build Web (Next.js SSR)
+  # Build Web (Next.js SSR) - Main frontend after Vite-to-Next.js migration
   build-web:
     needs: detect-changes
     if: needs.detect-changes.outputs.web == 'true' || github.event.inputs.force_all == 'true' || github.ref_type == 'tag'
@@ -337,7 +337,7 @@ jobs:
 
   # Summary job
   publish-summary:
-    needs: [detect-changes, build-backend, build-frontend, build-worker, build-web]
+    needs: [detect-changes, build-backend, build-nginx, build-worker, build-web]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -348,6 +348,6 @@ jobs:
           echo "| Service | Built | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend | ${{ needs.detect-changes.outputs.backend == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-backend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend | ${{ needs.detect-changes.outputs.frontend == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-frontend.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nginx | ${{ needs.detect-changes.outputs.nginx == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-nginx.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Worker | ${{ needs.detect-changes.outputs.worker == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-worker.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Web | ${{ needs.detect-changes.outputs.web == 'true' && '✅' || '⏭️ Skipped' }} | ${{ needs.build-web.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY

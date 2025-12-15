@@ -1,5 +1,5 @@
 # Docker Compose configuration for E2E testing
-# This setup uses Nginx to proxy both frontend (Vite dev server) and backend through port 8080
+# Uses Nginx to proxy both Next.js web and backend through port 8080
 
 services:
   db:
@@ -79,25 +79,24 @@ services:
       retries: 10
     restart: unless-stopped
 
-  frontend:
+  # Next.js web service - main frontend after Vite-to-Next.js migration
+  web:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.frontend.dev
+      dockerfile: infra/docker/Dockerfile.web.dev
     environment:
       NODE_ENV: development
-      FRONTEND_PORT: 5173
-      # Configure Vite to proxy API calls to backend container
-      VITE_API_PROXY_TARGET: http://backend:5000
-      # HMR host for WebSocket connections
-      VITE_HMR_HOST: localhost
+      API_INTERNAL_URL: http://backend:5000
+      NEXT_PUBLIC_BASE_URL: http://localhost:8080
     volumes:
       # Mount source code for hot reload
-      - ../../apps/frontend:/app/apps/frontend
+      - ../../apps/web:/app/apps/web
       - ../../packages:/app/packages
       - /app/node_modules
-      - /app/apps/frontend/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
     expose:
-      - "5173"
+      - "3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -113,7 +112,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-      frontend:
+      web:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]

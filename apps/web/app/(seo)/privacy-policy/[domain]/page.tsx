@@ -8,6 +8,10 @@ SPDX-License-Identifier: MIT
  *
  * The most important SEO page - generates unique content for each domain.
  * Uses ISR with 1-hour revalidation.
+ *
+ * Combines:
+ * - SSR content for SEO (crawlable text, JSON-LD schemas)
+ * - Client-side interactive components (score dial, tabs, evidence list)
  */
 
 import { notFound, redirect } from 'next/navigation';
@@ -24,6 +28,7 @@ import {
 import { getReportForDomain } from '@/lib/api';
 import { ReportContent } from '@/components/seo/ReportContent';
 import { JsonLd } from '@/components/seo/JsonLd';
+import ReportPageClient from '@/components/report/ReportPageClient';
 
 interface Props {
   params: Promise<{ domain: string }>;
@@ -124,6 +129,9 @@ export default async function ReportPage({ params }: Props) {
   const faqSchema = buildFAQSchema(scanData, domain, tier);
   if (faqSchema) schemas.push(faqSchema as unknown as Record<string, unknown>);
 
+  // Build share URL for the report
+  const shareUrl = `${SEO_CONSTANTS.BASE_URL}/privacy-policy/${domain}`;
+
   return (
     <>
       {/* JSON-LD Schemas */}
@@ -131,74 +139,32 @@ export default async function ReportPage({ params }: Props) {
         <JsonLd key={i} data={schema as Record<string, unknown>} />
       ))}
 
-      {/* SSR Content (crawlable - guaranteed 300+ words for full tier) */}
-      <div className="container mx-auto px-4 py-8">
-        <ReportContent scanData={scanData} domain={domain} tier={tier} heading={heading} />
-
-        {/* Score visualization */}
-        <div className="bg-white rounded-xl shadow-soft p-6 mb-8">
-          <div className="flex items-center gap-6">
-            <div className="relative w-24 h-24">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="#e2e8f0"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke={
-                    (scanData.score ?? 0) >= 70
-                      ? '#34d399'
-                      : (scanData.score ?? 0) >= 40
-                        ? '#fcd34d'
-                        : '#fca5a5'
-                  }
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${((scanData.score ?? 0) / 100) * 251.2} 251.2`}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-display font-bold text-gecko-800">
-                  {scanData.score ?? '?'}
-                </span>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gecko-800">Privacy Score</h3>
-              <p className="text-gecko-600">
-                {(scanData.score ?? 0) >= 70
-                  ? 'Low Risk'
-                  : (scanData.score ?? 0) >= 40
-                    ? 'Moderate Risk'
-                    : 'High Risk'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Call to action */}
-        <div className="bg-advisor-50 border border-advisor-200 rounded-xl p-6 text-center">
-          <h3 className="text-lg font-semibold text-gecko-800 mb-2">
-            Want to check another website?
-          </h3>
-          <p className="text-gecko-600 mb-4">
-            Analyze any website&apos;s privacy practices with our free scanner.
-          </p>
+      {/* Main Report Container */}
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Back to Home */}
+        <div className="mb-6">
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-advisor-600 text-white font-medium rounded-lg hover:bg-advisor-700 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-advisor-600 hover:text-advisor-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-advisor-500 rounded"
           >
-            Scan a Website
+            <span aria-hidden="true">←</span>
+            Back to Home
           </Link>
         </div>
+
+        {/* SSR Content (crawlable - guaranteed 300+ words for full tier) */}
+        {/* Hidden visually but available to search engines */}
+        <div className="sr-only">
+          <ReportContent scanData={scanData} domain={domain} tier={tier} heading={heading} />
+        </div>
+
+        {/* Interactive Client Component */}
+        <ReportPageClient
+          scan={data.scan}
+          evidence={data.evidence || []}
+          domain={domain}
+          shareUrl={shareUrl}
+        />
       </div>
     </>
   );
