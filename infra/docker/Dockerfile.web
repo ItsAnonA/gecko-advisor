@@ -30,6 +30,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 # Copy static files to correct location
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
+# Copy public folder (images, fonts, etc.) - required for Next.js standalone
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+
 USER nextjs
 
 EXPOSE 3000
