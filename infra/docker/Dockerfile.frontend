@@ -4,7 +4,8 @@ ENV CI=true
 COPY . .
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store pnpm install -r --frozen-lockfile
-RUN pnpm -w --filter @gecko-advisor/shared build && pnpm -w --filter @gecko-advisor/frontend build
+# Build only shared and frontend packages (skip web to avoid Google Fonts fetch issues on ARM64)
+RUN pnpm --filter @gecko-advisor/shared run build && pnpm --filter @gecko-advisor/frontend run build
 
 FROM nginx:1.27-alpine AS runner
 WORKDIR /usr/share/nginx/html
