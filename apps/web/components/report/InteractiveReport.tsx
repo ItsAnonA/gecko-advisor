@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 import React from 'react';
 import Link from 'next/link';
-import EnhancedScoreDial from './EnhancedScoreDial';
+import PremiumScoreDial from './PremiumScoreDial';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import type { ReportData } from '@/lib/api';
 
@@ -125,7 +125,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Score Dial */}
           <div className="flex-shrink-0">
-            <EnhancedScoreDial score={score} size="lg" label={scan.label ?? undefined} />
+            <PremiumScoreDial score={score} size="lg" label={scan.label ?? undefined} />
           </div>
 
           {/* Report Info */}
