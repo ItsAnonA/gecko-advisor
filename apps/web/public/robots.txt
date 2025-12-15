@@ -14,15 +14,15 @@ Allow: /reports
 # Allow sitemaps (must come before /api/ disallow)
 Allow: /api/sitemap.xml
 Allow: /api/sitemap-*.xml
-Allow: /api/ssr/privacy-policy/
-Allow: /api/ssr/blog
 
-# Disallow internal API endpoints
+# Disallow all API and internal endpoints
 Disallow: /api/
+Disallow: /admin/
 Disallow: /scan/
 Disallow: /dashboard
 Disallow: /reset-password
 Disallow: /settings
+Disallow: /_next/
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1
