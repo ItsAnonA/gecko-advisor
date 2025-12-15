@@ -12,7 +12,7 @@ import { loadDemoLists } from "../lists.js";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { logger } from "../logger.js";
-import { addScanJob, SCAN_PRIORITY } from "../queue.js";
+import { addScanJob, SCAN_PRIORITY, pauseQueue, resumeQueue, isQueuePaused, getQueueMetrics } from "../queue.js";
 import { createScanWithSlug } from "../services/slug.js";
 import { backfillDomainsFromScans, countIndexedDomains } from "../services/domainService.js";
 
@@ -720,4 +720,94 @@ adminRouter.get('/admin/scan-queue/items', adminGuard, async (req, res) => {
     offset,
     hasMore: offset + items.length < total,
   });
+});
+
+// =============================================================================
+// QUEUE CONTROL (pause/resume for maintenance)
+// =============================================================================
+
+/**
+ * Pause the BullMQ scan queue
+ * POST /admin/queue/pause
+ *
+ * Workers will finish current jobs but won't pick up new ones
+ */
+adminRouter.post('/admin/queue/pause', adminGuard, async (_req, res) => {
+  try {
+    const wasPaused = await isQueuePaused();
+    if (wasPaused) {
+      return res.json({
+        success: true,
+        message: 'Queue was already paused',
+        paused: true,
+      });
+    }
+
+    await pauseQueue();
+
+    logger.info('Admin paused scan queue');
+
+    res.json({
+      success: true,
+      message: 'Queue paused successfully. Workers will finish current jobs but won\'t pick up new ones.',
+      paused: true,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to pause queue');
+    return problem(res, 500, 'Failed to pause queue', error instanceof Error ? error.message : undefined);
+  }
+});
+
+/**
+ * Resume the BullMQ scan queue
+ * POST /admin/queue/resume
+ */
+adminRouter.post('/admin/queue/resume', adminGuard, async (_req, res) => {
+  try {
+    const wasPaused = await isQueuePaused();
+    if (!wasPaused) {
+      return res.json({
+        success: true,
+        message: 'Queue was already running',
+        paused: false,
+      });
+    }
+
+    await resumeQueue();
+
+    logger.info('Admin resumed scan queue');
+
+    res.json({
+      success: true,
+      message: 'Queue resumed successfully. Workers will start picking up jobs.',
+      paused: false,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to resume queue');
+    return problem(res, 500, 'Failed to resume queue', error instanceof Error ? error.message : undefined);
+  }
+});
+
+/**
+ * Get queue status including pause state and metrics
+ * GET /admin/queue/status
+ */
+adminRouter.get('/admin/queue/status', adminGuard, async (_req, res) => {
+  try {
+    const [paused, metrics] = await Promise.all([
+      isQueuePaused(),
+      getQueueMetrics(),
+    ]);
+
+    res.json({
+      paused,
+      metrics,
+      message: paused
+        ? 'Queue is PAUSED - workers are not picking up new jobs'
+        : 'Queue is RUNNING - workers are processing jobs normally',
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get queue status');
+    return problem(res, 500, 'Failed to get queue status', error instanceof Error ? error.message : undefined);
+  }
 });

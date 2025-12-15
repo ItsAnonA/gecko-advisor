@@ -212,6 +212,32 @@ export async function checkRedisConnection() {
 }
 
 /**
+ * Pause the scan queue - stops workers from picking up new jobs
+ * Existing jobs in progress will complete
+ */
+export async function pauseQueue(): Promise<void> {
+  logger.info('Pausing scan queue...');
+  await scanQueue.pause();
+  logger.info('Scan queue paused');
+}
+
+/**
+ * Resume the scan queue - allows workers to pick up jobs again
+ */
+export async function resumeQueue(): Promise<void> {
+  logger.info('Resuming scan queue...');
+  await scanQueue.resume();
+  logger.info('Scan queue resumed');
+}
+
+/**
+ * Check if queue is paused
+ */
+export async function isQueuePaused(): Promise<boolean> {
+  return scanQueue.isPaused();
+}
+
+/**
  * Initialize Redis connections for queue operations with timeout and state checking
  * Must be called during application startup
  */
