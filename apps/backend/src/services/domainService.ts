@@ -155,6 +155,17 @@ export async function getIndexedDomains(
 ): Promise<Array<{ domain: string; lastScanned: Date | null }>> {
   const { limit = 5000, offset = 0 } = options;
 
+  // Early return if offset exceeds max indexed domains (prevents negative take values)
+  if (offset >= INDEX_GATING.MAX_INDEXED_DOMAINS) {
+    return [];
+  }
+
+  // Calculate effective limit respecting MAX_INDEXED_DOMAINS cap
+  const effectiveLimit = Math.min(limit, INDEX_GATING.MAX_INDEXED_DOMAINS - offset);
+  if (effectiveLimit <= 0) {
+    return [];
+  }
+
   // Calculate cutoff date for recency filter
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - INDEX_GATING.MAX_SCAN_AGE_DAYS);
@@ -189,7 +200,7 @@ export async function getIndexedDomains(
     orderBy: {
       lastScanned: 'desc',
     },
-    take: Math.min(limit, INDEX_GATING.MAX_INDEXED_DOMAINS - offset),
+    take: effectiveLimit,
     skip: offset,
   });
 
