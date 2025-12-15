@@ -86,9 +86,9 @@ export default function ScanProgressClient({ scanId }: ScanProgressClientProps) 
       setError(null);
       setLoading(false);
 
-      // Redirect to report when complete
+      // Redirect to report when complete (use /r/slug which redirects to /privacy-policy/domain)
       if ((data.status === 'done' || data.status === 'error') && data.slug) {
-        router.push(`/privacy-policy/${data.slug}`);
+        router.push(`/r/${data.slug}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load scan status'));

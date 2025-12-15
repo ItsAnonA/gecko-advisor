@@ -22,7 +22,8 @@ import {
 } from '@gecko-advisor/shared';
 
 // API URLs - MUST be set per environment
-const API_INTERNAL = process.env.API_INTERNAL_URL || 'http://localhost:5000';
+// Default to 5001 for local dev (5000 is taken by macOS Control Center on newer Macs)
+const API_INTERNAL = process.env.API_INTERNAL_URL || 'http://localhost:5001';
 
 if (!API_INTERNAL && typeof window === 'undefined') {
   console.warn('API_INTERNAL_URL not set - using localhost fallback');
