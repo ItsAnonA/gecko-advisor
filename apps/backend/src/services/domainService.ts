@@ -125,7 +125,26 @@ export async function upsertDomainOnScanComplete(
 }
 
 /**
- * Get all indexed domains for sitemap generation.
+ * Index gating configuration
+ * Only high-quality reports are included in sitemap
+ */
+const INDEX_GATING = {
+  // Minimum evidence items for a report to be indexed
+  MIN_EVIDENCE_COUNT: 3,
+  // Maximum age of scan in days (90 days = 3 months)
+  MAX_SCAN_AGE_DAYS: 90,
+  // Maximum domains to index (phased rollout)
+  MAX_INDEXED_DOMAINS: 1000,
+  // Require valid score
+  REQUIRE_SCORE: true,
+};
+
+/**
+ * Get indexed domains for sitemap generation with quality gating.
+ * Only includes domains that meet quality criteria:
+ * - Has at least MIN_EVIDENCE_COUNT findings
+ * - Scanned within MAX_SCAN_AGE_DAYS
+ * - Has a valid privacy score
  */
 export async function getIndexedDomains(
   prisma: PrismaClient,
@@ -136,34 +155,87 @@ export async function getIndexedDomains(
 ): Promise<Array<{ domain: string; lastScanned: Date | null }>> {
   const { limit = 5000, offset = 0 } = options;
 
+  // Calculate cutoff date for recency filter
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - INDEX_GATING.MAX_SCAN_AGE_DAYS);
+
+  // Query domains with quality filters via latestScan relation
   const domains = await prisma.domain.findMany({
     where: {
       isIndexed: true,
+      lastScanned: {
+        gte: cutoffDate, // Scanned within last 90 days
+      },
+      latestScan: {
+        status: 'done',
+        score: INDEX_GATING.REQUIRE_SCORE ? { not: null } : undefined,
+        evidence: {
+          // Has at least MIN_EVIDENCE_COUNT evidence items
+          some: {},
+        },
+      },
     },
     select: {
       domain: true,
       lastScanned: true,
+      latestScan: {
+        select: {
+          _count: {
+            select: { evidence: true },
+          },
+        },
+      },
     },
     orderBy: {
       lastScanned: 'desc',
     },
-    take: limit,
+    take: Math.min(limit, INDEX_GATING.MAX_INDEXED_DOMAINS - offset),
     skip: offset,
   });
 
-  return domains;
+  // Filter by minimum evidence count (post-query filter for accurate count)
+  const qualityDomains = domains
+    .filter((d) => (d.latestScan?._count?.evidence ?? 0) >= INDEX_GATING.MIN_EVIDENCE_COUNT)
+    .map(({ domain, lastScanned }) => ({ domain, lastScanned }));
+
+  return qualityDomains;
 }
 
 /**
  * Count total indexed domains (for sitemap pagination).
+ * Uses same quality gating criteria as getIndexedDomains.
  */
 export async function countIndexedDomains(prisma: PrismaClient): Promise<number> {
-  return prisma.domain.count({
+  // Calculate cutoff date for recency filter
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - INDEX_GATING.MAX_SCAN_AGE_DAYS);
+
+  // Count domains that meet quality criteria
+  // Note: This is an approximation - exact count requires filtering by evidence count
+  const count = await prisma.domain.count({
     where: {
       isIndexed: true,
+      lastScanned: {
+        gte: cutoffDate,
+      },
+      latestScan: {
+        status: 'done',
+        score: INDEX_GATING.REQUIRE_SCORE ? { not: null } : undefined,
+        evidence: {
+          some: {},
+        },
+      },
     },
   });
+
+  // Cap at MAX_INDEXED_DOMAINS for phased rollout
+  return Math.min(count, INDEX_GATING.MAX_INDEXED_DOMAINS);
 }
+
+/**
+ * Export index gating config for transparency/monitoring
+ */
+export { INDEX_GATING };
 
 /**
  * Mark a domain as not indexed (exclude from sitemap).
