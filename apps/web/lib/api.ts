@@ -253,3 +253,121 @@ export async function fetchIndexableDomains(
     return [];
   }
 }
+
+// ============================================================================
+// Client-Side API Functions (for Home page, Scan page)
+// ============================================================================
+
+/**
+ * Custom error type with HTTP status code
+ */
+export interface HttpError extends Error {
+  status?: number;
+}
+
+/**
+ * Start a privacy scan for a given URL (client-side)
+ */
+export interface ScanResponse {
+  scanId: string;
+  slug: string;
+  statusUrl: string;
+  resultsUrl: string;
+}
+
+export async function startScan(url: string, turnstileToken?: string): Promise<ScanResponse> {
+  const response = await fetch('/api/v2/scan', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      url,
+      ...(turnstileToken && { turnstileToken }),
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to start scan');
+  }
+
+  return response.json();
+}
+
+/**
+ * Scan status response (client-side)
+ */
+export interface ScanStatus {
+  id: string;
+  status: 'queued' | 'running' | 'done' | 'error';
+  progress: number;
+  slug?: string;
+  error?: string;
+}
+
+/**
+ * Get the status of a scan (client-side)
+ */
+export async function getScanStatus(scanId: string): Promise<ScanStatus> {
+  const response = await fetch(`/api/scan/${scanId}/status`, {
+    headers: {
+      'Cache-Control': 'no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      const error = new Error('Rate limit exceeded') as HttpError;
+      error.status = 429;
+      throw error;
+    }
+    throw new Error('Scan not found');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get recent reports for the homepage (client-side)
+ */
+export interface RecentReport {
+  slug: string;
+  score: number;
+  label: string;
+  domain: string;
+  createdAt: string;
+  evidenceCount?: number;
+}
+
+export interface RecentReportsResponse {
+  items: RecentReport[];
+}
+
+export async function getRecentReports(): Promise<RecentReportsResponse> {
+  const response = await fetch('/api/reports/recent');
+
+  if (!response.ok) {
+    throw new Error('Failed to load recent reports');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get stats for the homepage (client-side)
+ */
+export interface StatsResponse {
+  totalScans: number;
+}
+
+export async function getStats(): Promise<StatsResponse> {
+  const response = await fetch('/api/stats');
+
+  if (!response.ok) {
+    throw new Error('Failed to load stats');
+  }
+
+  return response.json();
+}
