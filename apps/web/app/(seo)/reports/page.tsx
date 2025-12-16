@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SEO_CONSTANTS, buildWebSiteSchema } from '@gecko-advisor/shared';
 import { fetchReports } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -87,9 +88,20 @@ export default async function ReportsPage({ searchParams }: Props) {
                 className="block bg-white rounded-xl shadow-soft p-6 hover:shadow-soft-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h2 className="font-mono text-lg font-medium text-gecko-800 truncate">
-                    {item.domain}
-                  </h2>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {/* Favicon */}
+                    <Image
+                      src={`https://www.google.com/s2/favicons?domain=${item.domain}&sz=32`}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded flex-shrink-0"
+                      unoptimized
+                    />
+                    <h2 className="font-mono text-lg font-medium text-gecko-800 truncate">
+                      {item.domain}
+                    </h2>
+                  </div>
                   <span
                     className={`flex-shrink-0 ml-2 px-2 py-1 text-sm font-semibold rounded ${
                       item.score >= 70

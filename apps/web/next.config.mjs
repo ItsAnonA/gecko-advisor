@@ -56,6 +56,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.geckoadvisor.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        pathname: '/s2/favicons/**',
+      },
     ],
   },
 
