@@ -133,8 +133,6 @@ const INDEX_GATING = {
   MIN_EVIDENCE_COUNT: 3,
   // Maximum age of scan in days (90 days = 3 months)
   MAX_SCAN_AGE_DAYS: 90,
-  // Maximum domains to index (phased rollout)
-  MAX_INDEXED_DOMAINS: 1000,
   // Require valid score
   REQUIRE_SCORE: true,
 };
@@ -154,17 +152,6 @@ export async function getIndexedDomains(
   } = {}
 ): Promise<Array<{ domain: string; lastScanned: Date | null }>> {
   const { limit = 5000, offset = 0 } = options;
-
-  // Early return if offset exceeds max indexed domains (prevents negative take values)
-  if (offset >= INDEX_GATING.MAX_INDEXED_DOMAINS) {
-    return [];
-  }
-
-  // Calculate effective limit respecting MAX_INDEXED_DOMAINS cap
-  const effectiveLimit = Math.min(limit, INDEX_GATING.MAX_INDEXED_DOMAINS - offset);
-  if (effectiveLimit <= 0) {
-    return [];
-  }
 
   // Calculate cutoff date for recency filter
   const cutoffDate = new Date();
@@ -200,7 +187,7 @@ export async function getIndexedDomains(
     orderBy: {
       lastScanned: 'desc',
     },
-    take: effectiveLimit,
+    take: limit,
     skip: offset,
   });
 
@@ -239,8 +226,7 @@ export async function countIndexedDomains(prisma: PrismaClient): Promise<number>
     },
   });
 
-  // Cap at MAX_INDEXED_DOMAINS for phased rollout
-  return Math.min(count, INDEX_GATING.MAX_INDEXED_DOMAINS);
+  return count;
 }
 
 /**
