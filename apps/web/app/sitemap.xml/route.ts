@@ -19,6 +19,9 @@ import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 const BASE_URL = SEO_CONSTANTS.BASE_URL;
 const URLS_PER_CHUNK = 10000;
 
+// Force dynamic generation - sitemap should always reflect current data
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   // Count indexable domains only (not total)
   const indexableCount = await fetchIndexableDomainCount();

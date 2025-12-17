@@ -221,7 +221,7 @@ export async function fetchReports(
 export async function fetchIndexableDomainCount(): Promise<number> {
   try {
     const res = await fetch(`${getApiInternalUrl()}/api/v2/domains/indexable-count`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 300 }, // 5 minutes - sitemap should update reasonably quickly
     });
 
     if (!res.ok) return 0;
@@ -243,7 +243,7 @@ export async function fetchIndexableDomains(
   try {
     const res = await fetch(
       `${getApiInternalUrl()}/api/v2/domains/indexable?offset=${offset}&limit=${limit}`,
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 300 } } // 5 minutes - matches count endpoint
     );
 
     if (!res.ok) return [];
