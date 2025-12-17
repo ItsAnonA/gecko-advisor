@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
  * Uses 308 Permanent Redirect for SEO.
  */
 
-import { notFound, redirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { fetchReportBySlug } from '@/lib/api';
 
 interface Props {
@@ -31,7 +31,7 @@ export default async function SlugRedirectPage({ params }: Props) {
   }
 
   // 308 Permanent Redirect to canonical URL
-  redirect(`/privacy-policy/${report.domain}`);
+  permanentRedirect(`/privacy-policy/${report.domain}`);
 }
 
 // Metadata for redirect pages (minimal)

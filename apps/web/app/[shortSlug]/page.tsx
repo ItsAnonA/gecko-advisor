@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
  * This maintains backwards compatibility with previously indexed URLs.
  */
 
-import { redirect, notFound } from 'next/navigation';
+import { permanentRedirect, notFound } from 'next/navigation';
 
 interface Props {
   params: Promise<{ shortSlug: string }>;
@@ -24,7 +24,7 @@ export default async function LegacyShortSlugPage({ params }: Props) {
 
   // Only redirect if it looks like a short slug (8 alphanumeric chars)
   if (SHORT_SLUG_PATTERN.test(shortSlug)) {
-    redirect(`/r/${shortSlug}`);
+    permanentRedirect(`/r/${shortSlug}`);
   }
 
   // For anything else, show 404
