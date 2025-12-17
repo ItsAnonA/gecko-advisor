@@ -163,7 +163,7 @@ export default function ScanProgressClient({ scanId }: ScanProgressClientProps) 
   return (
     <>
       <div className="flex items-center justify-end text-sm">
-        <a href="/docs" className="underline text-emerald-600 hover:text-emerald-700">Docs</a>
+        <Link href="/docs" className="underline text-emerald-600 hover:text-emerald-700">Docs</Link>
       </div>
       <h1 className="text-xl md:text-2xl font-bold text-zinc-900">{pageTitle}</h1>
       <div
