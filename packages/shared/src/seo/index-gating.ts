@@ -108,25 +108,31 @@ export function getIndexTier(scanData: ScanDataForGating | null | undefined): In
 
 /**
  * Checks if a scan should be included in sitemaps.
- * Only 'full' and 'limited' tiers are included.
+ * Only 'full' tier pages are included - they have sufficient content quality.
+ * Limited tier pages have thin content (~200 words) and should not be indexed.
  *
  * @param scanData - Scan data object
  * @returns true if scan should be in sitemap
  */
 export function isIndexable(scanData: ScanDataForGating | null | undefined): boolean {
   const tier = getIndexTier(scanData);
-  return tier !== 'noindex';
+  return tier === 'full';
 }
 
 /**
  * Gets robots meta directive based on index tier.
+ *
+ * Only 'full' tier gets indexed - these pages have complete scan data
+ * and sufficient content quality (300-600 words).
+ *
+ * 'limited' and 'noindex' tiers get noindex but follow links.
  *
  * @param tier - Index tier
  * @returns Object for Next.js metadata robots field
  */
 export function getRobotsDirective(tier: IndexTier): { index: boolean; follow: boolean } {
   return {
-    index: tier !== 'noindex',
+    index: tier === 'full',
     follow: true, // Always follow links even on noindex pages
   };
 }
