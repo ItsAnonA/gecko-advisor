@@ -10,13 +10,16 @@ SPDX-License-Identifier: MIT
  * This ensures users landing on /privacy-policy are directed to useful content.
  */
 
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 
 export default function PrivacyPolicyIndex() {
-  redirect('/reports');
+  permanentRedirect('/reports');
 }
 
 // Metadata for SEO - noindex since it redirects
 export const metadata = {
-  robots: 'noindex, follow',
+  robots: {
+    index: false,
+    follow: true,
+  },
 };

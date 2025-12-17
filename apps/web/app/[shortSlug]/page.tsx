@@ -37,11 +37,17 @@ export async function generateMetadata({ params }: Props) {
 
   if (SHORT_SLUG_PATTERN.test(shortSlug)) {
     return {
-      robots: 'noindex, follow',
+      robots: {
+        index: false,
+        follow: true,
+      },
     };
   }
 
   return {
-    robots: 'noindex, nofollow',
+    robots: {
+      index: false,
+      follow: false,
+    },
   };
 }
