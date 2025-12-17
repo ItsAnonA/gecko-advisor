@@ -8,16 +8,24 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Backend API URL for rewrites (local dev or Docker)
+// Backend API URL for rewrites (local dev only)
+// In production, nginx handles /api/* routing - no rewrites needed
 const API_URL = process.env.API_INTERNAL_URL || 'http://localhost:5001';
+const isProduction = process.env.NODE_ENV === 'production';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
 
-  // Rewrite /api/* to backend (for local dev without nginx)
+  // Rewrite /api/* to backend (LOCAL DEV ONLY - nginx handles this in production)
+  // In production builds, rewrites are disabled to prevent baked localhost:5001
   async rewrites() {
+    // Skip rewrites in production - nginx proxies /api/* to backend
+    if (isProduction) {
+      return [];
+    }
+    // Local dev: proxy /api/* to backend directly
     return [
       {
         source: '/api/:path*',
