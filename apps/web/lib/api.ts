@@ -23,10 +23,10 @@ import {
 
 // API URLs - MUST be set per environment
 // Default to 5001 for local dev (5000 is taken by macOS Control Center on newer Macs)
-const API_INTERNAL = process.env.API_INTERNAL_URL || 'http://localhost:5001';
-
-if (!API_INTERNAL && typeof window === 'undefined') {
-  console.warn('API_INTERNAL_URL not set - using localhost fallback');
+// IMPORTANT: Use getter function to ensure env var is read at RUNTIME, not build time
+// Next.js standalone builds bake top-level constants at build time
+function getApiInternalUrl(): string {
+  return process.env.API_INTERNAL_URL || 'http://localhost:5001';
 }
 
 /**
@@ -128,7 +128,7 @@ export const getReportForDomain = cache(
  */
 async function fetchReportByDomain(domain: string): Promise<ReportData | null> {
   try {
-    const res = await fetch(`${API_INTERNAL}/api/v2/domain/${encodeURIComponent(domain)}`, {
+    const res = await fetch(`${getApiInternalUrl()}/api/v2/domain/${encodeURIComponent(domain)}`, {
       next: { revalidate: 3600 }, // Cache for 1 hour
     });
 
@@ -152,7 +152,7 @@ export async function fetchReportBySlug(
   slug: string
 ): Promise<{ domain: string } | null> {
   try {
-    const res = await fetch(`${API_INTERNAL}/api/v2/report/${slug}`, {
+    const res = await fetch(`${getApiInternalUrl()}/api/v2/report/${slug}`, {
       next: { revalidate: 3600 },
     });
 
@@ -199,7 +199,7 @@ export async function fetchReports(
 } | null> {
   try {
     const res = await fetch(
-      `${API_INTERNAL}/api/v2/reports/all?page=${page}&limit=${limit}`,
+      `${getApiInternalUrl()}/api/v2/reports/all?page=${page}&limit=${limit}`,
       { next: { revalidate: 3600 } }
     );
 
@@ -220,7 +220,7 @@ export async function fetchReports(
  */
 export async function fetchIndexableDomainCount(): Promise<number> {
   try {
-    const res = await fetch(`${API_INTERNAL}/api/v2/domains/indexable-count`, {
+    const res = await fetch(`${getApiInternalUrl()}/api/v2/domains/indexable-count`, {
       next: { revalidate: 3600 },
     });
 
@@ -242,7 +242,7 @@ export async function fetchIndexableDomains(
 ): Promise<Array<{ domain: string; scannedAt?: string }>> {
   try {
     const res = await fetch(
-      `${API_INTERNAL}/api/v2/domains/indexable?offset=${offset}&limit=${limit}`,
+      `${getApiInternalUrl()}/api/v2/domains/indexable?offset=${offset}&limit=${limit}`,
       { next: { revalidate: 3600 } }
     );
 

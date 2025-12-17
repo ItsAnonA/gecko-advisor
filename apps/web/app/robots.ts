@@ -50,7 +50,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       },
     ],
-    // Point directly to API subdomain - bypasses nginx proxy issues
-    sitemap: 'https://api.geckoadvisor.com/api/sitemap.xml',
+    sitemap: `${SEO_CONSTANTS.BASE_URL}/sitemap.xml`,
   };
 }
