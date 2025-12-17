@@ -396,7 +396,7 @@ reportV2Router.get('/domains/indexable-count', async (_req, res) => {
 reportV2Router.get('/domains/indexable', async (req, res) => {
   try {
     const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
-    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit as string) || 100));
+    const limit = Math.min(10000, Math.max(1, parseInt(req.query.limit as string) || 100));
 
     // Get unique domains with their most recent scan date
     const scans = await prisma.scan.findMany({
