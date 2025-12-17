@@ -19,6 +19,9 @@ import type { NextRequest } from 'next/server';
 // Pattern for legacy short slugs (8 alphanumeric chars at root)
 const SHORT_SLUG_PATTERN = /^\/([a-zA-Z0-9]{8})$/;
 
+// Static pages that happen to be 8 characters - exclude from short slug redirect
+const STATIC_PAGES_8_CHARS = new Set(['security', 'checkout', 'settings', 'download', 'features', 'contacts', 'products', 'services', 'register', 'messages', 'feedback', 'archives', 'calendar', 'profiles', 'comments', 'articles']);
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -28,6 +31,12 @@ export function middleware(request: NextRequest) {
   const shortSlugMatch = pathname.match(SHORT_SLUG_PATTERN);
   if (shortSlugMatch) {
     const slug = shortSlugMatch[1];
+
+    // Don't redirect static pages that happen to be 8 characters
+    if (STATIC_PAGES_8_CHARS.has(slug.toLowerCase())) {
+      return NextResponse.next();
+    }
+
     const redirectUrl = new URL(`/r/${slug}`, request.url);
 
     const response = NextResponse.redirect(redirectUrl, 308);
