@@ -97,6 +97,11 @@ export interface ReportPayload {
   meta: {
     dataSharing: 'None' | 'Low' | 'Medium' | 'High';
     domain: string;
+    // SEO Index Gating Fields - Required for full tier classification
+    trackerCount: number;
+    thirdPartyCount: number;
+    cookieCount: number;
+    tlsGrade?: string;
   };
 }
 
@@ -179,8 +184,14 @@ export function buildReportPayload(scan: ScanEntity, options: BuildReportPayload
       .map((entry) => extractDomain(entry.details))
       .filter(Boolean)
   );
-  const cookieIssues = evidence.filter((entry) => entry.kind === 'cookie').length;
-  const dataSharingIndex = trackerDomains.size * 2 + thirdpartyDomains.size + cookieIssues;
+  const cookieCount = evidence.filter((entry) => entry.kind === 'cookie').length;
+  const dataSharingIndex = trackerDomains.size * 2 + thirdpartyDomains.size + cookieCount;
+
+  // Extract TLS grade from evidence for SEO index gating
+  const tlsEvidence = evidence.find((entry) => entry.kind === 'tls');
+  const tlsGrade = tlsEvidence
+    ? (tlsEvidence.details as { grade?: string })?.grade
+    : undefined;
   let dataSharing: 'None' | 'Low' | 'Medium' | 'High' = 'None';
   if (dataSharingIndex > 8) dataSharing = 'High';
   else if (dataSharingIndex > 3) dataSharing = 'Medium';
@@ -203,6 +214,11 @@ export function buildReportPayload(scan: ScanEntity, options: BuildReportPayload
     meta: {
       dataSharing,
       domain,
+      // SEO Index Gating Fields - Required for full tier classification
+      trackerCount: trackerDomains.size,
+      thirdPartyCount: thirdpartyDomains.size,
+      cookieCount,
+      tlsGrade,
     },
   };
 }
