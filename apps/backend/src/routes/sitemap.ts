@@ -20,7 +20,8 @@ const STATIC_PAGES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/reports', changefreq: 'hourly', priority: '0.9' },
   { path: '/blog', changefreq: 'daily', priority: '0.8' },
-  // Note: /about, /faq, /roadmap, /security, /legal pages need to be created
+  { path: '/about', changefreq: 'monthly', priority: '0.7' },
+  // Note: /faq, /roadmap, /security, /legal pages need to be created
   // before adding them back to the sitemap
 ];
 

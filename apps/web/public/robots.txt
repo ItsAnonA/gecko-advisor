@@ -10,6 +10,7 @@ Allow: /privacy-policy/
 Allow: /r/
 Allow: /blog/
 Allow: /reports
+Allow: /about
 
 # Allow sitemaps (must come before /api/ disallow)
 Allow: /api/sitemap.xml
@@ -23,6 +24,7 @@ Disallow: /dashboard
 Disallow: /reset-password
 Disallow: /settings
 Disallow: /_next/
+Disallow: /ssr
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1
