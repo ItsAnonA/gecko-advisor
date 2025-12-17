@@ -314,6 +314,11 @@ services:
         max_attempts: 5
         window: 120s
 
+    # CRITICAL: Connect to coolify network for Traefik proxy discovery
+    networks:
+      - default
+      - coolify
+
 # ============================================================================
 # VOLUMES - PRODUCTION DATA PERSISTENCE
 # ============================================================================
@@ -322,3 +327,10 @@ volumes:
     # PostgreSQL data with query logging enabled
   privacy-redis:
     # Redis data with AOF + RDB persistence enabled
+
+# ============================================================================
+# NETWORKS - Coolify Proxy Network
+# ============================================================================
+networks:
+  coolify:
+    external: true
