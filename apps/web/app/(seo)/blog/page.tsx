@@ -4,6 +4,7 @@ SPDX-License-Identifier: MIT
 */
 
 import { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
@@ -31,7 +32,63 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BlogPage() {
+interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImage: string | null;
+  publishedAt: string | null;
+  readTimeMinutes: number | null;
+}
+
+interface BlogPostsResponse {
+  items: BlogPost[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+async function getBlogPosts(): Promise<BlogPostsResponse> {
+  const apiUrl = process.env.API_INTERNAL_URL || 'http://localhost:5000';
+  const res = await fetch(`${apiUrl}/api/v2/blog/posts?page=1&limit=20`, {
+    next: { revalidate: 3600 }, // Cache for 1 hour
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch blog posts');
+  }
+
+  return res.json();
+}
+
+function formatDate(dateString: string | null): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+export default async function BlogPage() {
+  let posts: BlogPost[] = [];
+  let error: string | null = null;
+
+  try {
+    const data = await getBlogPosts();
+    posts = data.items;
+  } catch (e) {
+    error = e instanceof Error ? e.message : 'Failed to load blog posts';
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Breadcrumbs
@@ -49,52 +106,128 @@ export default function BlogPage() {
         </p>
       </div>
 
-      {/* Coming Soon State */}
-      <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-soft">
-        <div className="mb-6">
-          <svg
-            className="mx-auto h-16 w-16 text-advisor-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-            />
-          </svg>
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-200">
+          <p className="text-red-600">{error}</p>
         </div>
-        <h2 className="text-2xl font-bold text-gecko-800 mb-3">Blog Coming Soon</h2>
-        <p className="text-gecko-600 max-w-md mx-auto mb-8">
-          We&apos;re working on privacy guides, security tutorials, and industry insights. Check back
-          soon for our first articles.
-        </p>
+      )}
 
-        {/* Newsletter Signup Placeholder */}
-        <div className="max-w-md mx-auto bg-advisor-50 rounded-xl p-6 border border-advisor-200">
-          <h3 className="font-semibold text-gecko-800 mb-2">Get Notified</h3>
-          <p className="text-sm text-gecko-600 mb-4">
-            Follow us on GitHub to stay updated when we publish new content.
-          </p>
-          <a
-            href="https://github.com/privacygecko/gecko-advisor"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gecko-800 text-white font-semibold rounded-lg hover:bg-gecko-700 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+      {/* Empty State */}
+      {!error && posts.length === 0 && (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-soft">
+          <div className="mb-6">
+            <svg
+              className="mx-auto h-16 w-16 text-advisor-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
               <path
-                fillRule="evenodd"
-                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                clipRule="evenodd"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
               />
             </svg>
-            Watch on GitHub
-          </a>
+          </div>
+          <h2 className="text-2xl font-bold text-gecko-800 mb-3">No Posts Yet</h2>
+          <p className="text-gecko-600 max-w-md mx-auto">
+            Check back soon for privacy insights and guides.
+          </p>
         </div>
-      </div>
+      )}
+
+      {/* Blog Posts Grid */}
+      {!error && posts.length > 0 && (
+        <>
+          {/* Stats */}
+          <div className="mb-6 text-sm text-gecko-600">
+            Showing <span className="font-semibold text-gecko-800">{posts.length}</span> articles
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post) => (
+              <Link
+                key={post.id}
+                href={`/blog/${post.slug}`}
+                className="group block"
+              >
+                <article className="h-full bg-white rounded-2xl border border-gray-200 shadow-soft hover:shadow-xl transition-all duration-200 group-hover:-translate-y-1 overflow-hidden">
+                  {/* Cover Image */}
+                  <div className="aspect-video w-full overflow-hidden bg-gradient-to-br from-advisor-100 to-advisor-200">
+                    {post.coverImage ? (
+                      <Image
+                        src={post.coverImage}
+                        alt=""
+                        width={400}
+                        height={225}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-advisor-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-1">
+                    {/* Meta */}
+                    <div className="flex items-center gap-2 text-xs text-gecko-500 mb-2">
+                      {post.publishedAt && (
+                        <time dateTime={post.publishedAt}>
+                          {formatDate(post.publishedAt)}
+                        </time>
+                      )}
+                      {post.publishedAt && post.readTimeMinutes && (
+                        <span aria-hidden="true">-</span>
+                      )}
+                      {post.readTimeMinutes && (
+                        <span>{post.readTimeMinutes} min read</span>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="text-lg font-semibold text-gecko-800 mb-2 line-clamp-2 group-hover:text-advisor-600 transition-colors">
+                      {post.title}
+                    </h2>
+
+                    {/* Excerpt */}
+                    <p className="text-sm text-gecko-600 line-clamp-3 flex-1">
+                      {post.excerpt}
+                    </p>
+
+                    {/* Read More */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <span className="text-sm font-medium text-advisor-600 group-hover:text-advisor-500 transition-colors inline-flex items-center gap-1">
+                        Read more
+                        <svg
+                          className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Call to Action */}
       <div className="mt-12 text-center bg-stone-50 rounded-2xl shadow-lg p-8 border border-gray-200">
