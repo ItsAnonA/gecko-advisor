@@ -3,6 +3,9 @@
 
 FROM nginx:1.27-alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Copy nginx configuration template
 COPY infra/docker/nginx.tmpl.conf /nginx.tmpl.conf
 COPY infra/docker/docker-entrypoint.sh /docker-entrypoint.sh
