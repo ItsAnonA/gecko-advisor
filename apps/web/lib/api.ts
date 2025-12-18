@@ -216,6 +216,90 @@ export async function fetchReports(
 }
 
 /**
+ * Blog post structure for list view.
+ */
+export interface BlogPostSummary {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImage: string | null;
+  publishedAt: string | null;
+  readTimeMinutes: number | null;
+}
+
+/**
+ * Fetches paginated list of blog posts.
+ * Returns null on error (graceful degradation).
+ */
+export async function fetchBlogPosts(
+  page: number = 1,
+  limit: number = 20
+): Promise<{
+  items: BlogPostSummary[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+} | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/blog/posts?page=${page}&limit=${limit}`,
+      { next: { revalidate: 3600 } }
+    );
+
+    if (!res.ok) {
+      console.error(`Failed to fetch blog posts: ${res.status}`);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Failed to fetch blog posts:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetches a single blog post by slug.
+ * Returns null if not found or on error.
+ */
+export async function fetchBlogPost(slug: string): Promise<{
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string | null;
+  publishedAt: string | null;
+  updatedAt: string;
+  readTimeMinutes: number | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+} | null> {
+  try {
+    const res = await fetch(`${getApiInternalUrl()}/api/v2/blog/posts/${slug}`, {
+      next: { revalidate: 3600 },
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      console.error(`Failed to fetch blog post: ${res.status}`);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Failed to fetch blog post:', error);
+    return null;
+  }
+}
+
+/**
  * Fetches count of indexable domains for sitemap.
  */
 export async function fetchIndexableDomainCount(): Promise<number> {

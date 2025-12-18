@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { fetchBlogPosts, BlogPostSummary } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Privacy Blog | Gecko Advisor',
@@ -32,41 +33,6 @@ export const metadata: Metadata = {
   },
 };
 
-interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  coverImage: string | null;
-  publishedAt: string | null;
-  readTimeMinutes: number | null;
-}
-
-interface BlogPostsResponse {
-  items: BlogPost[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
-
-async function getBlogPosts(): Promise<BlogPostsResponse> {
-  const apiUrl = process.env.API_INTERNAL_URL || 'http://localhost:5000';
-  const res = await fetch(`${apiUrl}/api/v2/blog/posts?page=1&limit=20`, {
-    next: { revalidate: 3600 }, // Cache for 1 hour
-  });
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch blog posts');
-  }
-
-  return res.json();
-}
-
 function formatDate(dateString: string | null): string {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -79,15 +45,9 @@ function formatDate(dateString: string | null): string {
 }
 
 export default async function BlogPage() {
-  let posts: BlogPost[] = [];
-  let error: string | null = null;
-
-  try {
-    const data = await getBlogPosts();
-    posts = data.items;
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Failed to load blog posts';
-  }
+  // Use shared API helper with graceful error handling (returns null on error)
+  const data = await fetchBlogPosts(1, 20);
+  const posts: BlogPostSummary[] = data?.items ?? [];
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -106,15 +66,8 @@ export default async function BlogPage() {
         </p>
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-200">
-          <p className="text-red-600">{error}</p>
-        </div>
-      )}
-
       {/* Empty State */}
-      {!error && posts.length === 0 && (
+      {posts.length === 0 && (
         <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-soft">
           <div className="mb-6">
             <svg
@@ -139,7 +92,7 @@ export default async function BlogPage() {
       )}
 
       {/* Blog Posts Grid */}
-      {!error && posts.length > 0 && (
+      {posts.length > 0 && (
         <>
           {/* Stats */}
           <div className="mb-6 text-sm text-gecko-600">

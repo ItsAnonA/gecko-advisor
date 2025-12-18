@@ -8,42 +8,15 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
-
-interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  coverImage: string | null;
-  publishedAt: string | null;
-  updatedAt: string;
-  readTimeMinutes: number | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-}
+import { fetchBlogPost } from '@/lib/api';
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-async function getBlogPost(slug: string): Promise<BlogPost | null> {
-  const apiUrl = process.env.API_INTERNAL_URL || 'http://localhost:5000';
-  const res = await fetch(`${apiUrl}/api/v2/blog/posts/${slug}`, {
-    next: { revalidate: 3600 },
-  });
-
-  if (!res.ok) {
-    if (res.status === 404) return null;
-    throw new Error('Failed to fetch blog post');
-  }
-
-  return res.json();
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getBlogPost(slug);
+  const post = await fetchBlogPost(slug);
 
   if (!post) {
     return {
@@ -161,7 +134,7 @@ function renderMarkdown(content: string): string {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getBlogPost(slug);
+  const post = await fetchBlogPost(slug);
 
   if (!post) {
     notFound();
