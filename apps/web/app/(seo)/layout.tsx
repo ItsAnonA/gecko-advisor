@@ -27,12 +27,13 @@ export default function SEOLayout({ children }: { children: React.ReactNode }) {
             >
               <div className="relative">
                 <Image
-                  src="/images/GeckoAdvisor_Logo.webp"
+                  src="/images/GeckoAdvisor_Logo.png"
                   alt="Gecko Advisor by PrivacyGecko"
-                  width={64}
-                  height={64}
-                  className="h-16 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
+                  width={180}
+                  height={58}
+                  className="h-10 sm:h-12 w-auto object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
                   priority
+                  unoptimized
                 />
               </div>
             </Link>
