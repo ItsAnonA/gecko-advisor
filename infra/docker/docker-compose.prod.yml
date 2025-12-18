@@ -315,9 +315,31 @@ services:
         window: 120s
 
     # CRITICAL: Connect to coolify network for Traefik proxy discovery
+    # Using network alias for stable DNS name (survives container name changes)
     networks:
-      - default
-      - coolify
+      default:
+      coolify:
+        aliases:
+          - gecko-advisor-nginx
+
+    # Traefik labels for automatic routing (when Docker provider is enabled)
+    labels:
+      - traefik.enable=true
+      # HTTP Router - redirect to HTTPS
+      - traefik.http.routers.gecko-advisor-http.rule=Host(`geckoadvisor.com`)
+      - traefik.http.routers.gecko-advisor-http.entrypoints=http
+      - traefik.http.routers.gecko-advisor-http.middlewares=redirect-to-https
+      # HTTPS Router
+      - traefik.http.routers.gecko-advisor-https.rule=Host(`geckoadvisor.com`)
+      - traefik.http.routers.gecko-advisor-https.entrypoints=https
+      - traefik.http.routers.gecko-advisor-https.tls=true
+      - traefik.http.routers.gecko-advisor-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.gecko-advisor-https.middlewares=gzip
+      # Service
+      - traefik.http.services.gecko-advisor.loadbalancer.server.port=80
+      # Middlewares
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.gzip.compress=true
 
 # ============================================================================
 # VOLUMES - PRODUCTION DATA PERSISTENCE
