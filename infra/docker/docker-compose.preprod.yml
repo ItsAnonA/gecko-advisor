@@ -23,6 +23,11 @@ services:
     image: redis:7
     volumes:
       - privacy-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   backend:
@@ -44,13 +49,14 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5000/api/health',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5000/api/readyz',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 45s
 
   worker:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-worker:preprod
@@ -65,13 +71,14 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5050/health',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Next.js app serves ALL frontend routes after Vite-to-Next.js migration
   web:
@@ -94,6 +101,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Nginx reverse proxy - routes /api/* to backend, everything else to Next.js
   nginx:
@@ -113,12 +121,18 @@ services:
       CSP: ${CSP:-}
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       web:
         condition: service_healthy
     expose:
       - "80"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80/robots.txt || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
 
 volumes:
   privacy-postgres:

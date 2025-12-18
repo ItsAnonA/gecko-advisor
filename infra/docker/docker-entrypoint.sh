@@ -1,20 +1,36 @@
 #!/bin/sh
 set -e
 
-# Render nginx config from template with env vars
-# Debug: print variables to verify they're being passed correctly
-echo "Environment variables received:"
-env | grep -E '^CSP=' || echo "CSP not set, will use default"
-env | grep -E '^BACKEND_PROXY_URL=' || echo "BACKEND_PROXY_URL not set"
-env | grep -E '^NEXTJS_PROXY_URL=' || echo "NEXTJS_PROXY_URL not set"
+echo "=== Nginx Startup Validation ==="
+
+# Validate required environment variables
+if [ -z "$BACKEND_PROXY_URL" ]; then
+  echo "ERROR: BACKEND_PROXY_URL is not set"
+  exit 1
+fi
+
+if [ -z "$NEXTJS_PROXY_URL" ]; then
+  echo "ERROR: NEXTJS_PROXY_URL is not set"
+  exit 1
+fi
+
+echo "Environment variables validated:"
+echo "  BACKEND_PROXY_URL: $BACKEND_PROXY_URL"
+echo "  NEXTJS_PROXY_URL: $NEXTJS_PROXY_URL"
+env | grep -E '^CSP=' || echo "  CSP: not set (using default)"
 
 # Use envsubst to substitute variables in nginx template
+echo "Generating nginx config from template..."
 envsubst '${CSP} ${BACKEND_PROXY_URL} ${NEXTJS_PROXY_URL}' < /nginx.tmpl.conf > /etc/nginx/nginx.conf
 
-# Debug: verify variables were applied correctly
-echo "Generated nginx config:"
-grep "Content-Security-Policy" /etc/nginx/nginx.conf || echo "CSP header not found in config"
-grep "proxy_pass" /etc/nginx/nginx.conf || echo "proxy_pass not found in config"
+# Validate nginx config before starting
+echo "Validating nginx configuration..."
+nginx -t || {
+  echo "ERROR: Invalid nginx configuration"
+  cat /etc/nginx/nginx.conf
+  exit 1
+}
 
+echo "Nginx config validated successfully"
+echo "=== Starting nginx ==="
 exec nginx -g 'daemon off;'
-

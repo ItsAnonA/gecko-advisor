@@ -159,12 +159,13 @@ services:
         window: 120s
 
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5000/api/health',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
+      # Use /api/readyz (readiness) instead of /api/health (liveness) to ensure DB/Redis/Queue are ready
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5000/api/readyz',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))\" "]
       interval: 10s
       timeout: 5s
       retries: 5
-      # CRITICAL: 30s start period allows time for Prisma migrations
-      start_period: 30s
+      # CRITICAL: 45s start period allows time for Prisma migrations + initialization
+      start_period: 45s
 
   # ==========================================================================
   # WORKER SERVICE
@@ -235,7 +236,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      # Increased from 20s to allow for full initialization
+      start_period: 30s
 
   # ==========================================================================
   # NEXT.JS WEB SERVICE - Main Frontend (SSR)
@@ -274,7 +276,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      # Increased from 20s to allow for Next.js warmup
+      start_period: 30s
 
   # ==========================================================================
   # NGINX REVERSE PROXY SERVICE
@@ -314,6 +317,14 @@ services:
         max_attempts: 5
         window: 120s
 
+    # CRITICAL: Health check ensures Traefik only routes to healthy nginx
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80/robots.txt || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
     # CRITICAL: Connect to coolify network for Traefik proxy discovery
     # Using network alias for stable DNS name (survives container name changes)
     networks:
@@ -337,6 +348,10 @@ services:
       - traefik.http.routers.gecko-advisor-https.middlewares=gzip
       # Service
       - traefik.http.services.gecko-advisor.loadbalancer.server.port=80
+      # Health-based routing (wait for health check to pass before routing)
+      - traefik.http.services.gecko-advisor.loadbalancer.healthcheck.path=/robots.txt
+      - traefik.http.services.gecko-advisor.loadbalancer.healthcheck.interval=5s
+      - traefik.http.services.gecko-advisor.loadbalancer.healthcheck.timeout=3s
       # Middlewares
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
       - traefik.http.middlewares.gzip.compress=true
