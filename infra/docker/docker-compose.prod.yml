@@ -1,5 +1,6 @@
 # Production Docker Compose - Next.js Frontend with Nginx Reverse Proxy
 # After Vite-to-Next.js migration, all frontend routes go through Next.js
+# IMPORTANT: Service names use 'ga-' prefix to avoid DNS collisions with other apps
 
 name: privacy-advisor-prod
 
@@ -7,7 +8,7 @@ services:
   # ==========================================================================
   # DATABASE SERVICE - PostgreSQL 16
   # ==========================================================================
-  db:
+  ga-db:
     image: postgres:16
 
     environment:
@@ -41,7 +42,7 @@ services:
   # ==========================================================================
   # CACHE SERVICE - Redis 7
   # ==========================================================================
-  redis:
+  ga-redis:
     image: redis:7
 
     volumes:
@@ -68,7 +69,7 @@ services:
   # ==========================================================================
   # BACKEND SERVICE
   # ==========================================================================
-  backend:
+  ga-backend:
     # Pull pre-built image from GHCR (same as staging)
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-backend:main
     pull_policy: always
@@ -80,9 +81,9 @@ services:
       PORT: ${PORT:-5000}
       BACKEND_PORT: ${BACKEND_PORT:-5000}
 
-      # Database & Cache
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/privacy}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # Database & Cache (using unique service names)
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@ga-db:5432/privacy}
+      REDIS_URL: ${REDIS_URL:-redis://ga-redis:6379}
 
       # Security & Authentication (REQUIRED)
       JWT_SECRET: ${JWT_SECRET}
@@ -145,9 +146,9 @@ services:
 
     # CRITICAL: Database MUST be healthy before backend starts
     depends_on:
-      db:
+      ga-db:
         condition: service_healthy
-      redis:
+      ga-redis:
         condition: service_healthy
 
     restart: unless-stopped
@@ -170,7 +171,7 @@ services:
   # ==========================================================================
   # WORKER SERVICE
   # ==========================================================================
-  worker:
+  ga-worker:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-worker:main
     pull_policy: always
 
@@ -179,9 +180,9 @@ services:
       NODE_ENV: production
       APP_ENV: production
 
-      # Database & Cache
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/privacy}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # Database & Cache (using unique service names)
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@ga-db:5432/privacy}
+      REDIS_URL: ${REDIS_URL:-redis://ga-redis:6379}
 
       # Public URL
       WORKER_PUBLIC_URL: ${WORKER_PUBLIC_URL:-https://worker.geckoadvisor.com}
@@ -218,9 +219,9 @@ services:
       OBJECT_STORAGE_SIGNED_URL_SECONDS: ${OBJECT_STORAGE_SIGNED_URL_SECONDS:-3600}
 
     depends_on:
-      db:
+      ga-db:
         condition: service_healthy
-      redis:
+      ga-redis:
         condition: service_healthy
 
     restart: unless-stopped
@@ -243,21 +244,21 @@ services:
   # NEXT.JS WEB SERVICE - Main Frontend (SSR)
   # ==========================================================================
   # After Vite-to-Next.js migration, this serves ALL frontend routes
-  web:
+  ga-web:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-web:main
     pull_policy: always
 
     environment:
       NODE_ENV: production
-      # Internal URL to backend API (Docker network)
-      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://backend:5000}
+      # Internal URL to backend API (Docker network) - using unique service name
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://ga-backend:5000}
       # Public base URL for canonical URLs and OG tags
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://geckoadvisor.com}
       # Cloudflare Turnstile (Frontend Site Key - optional)
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
 
     depends_on:
-      backend:
+      ga-backend:
         condition: service_healthy
 
     expose:
@@ -283,7 +284,7 @@ services:
   # NGINX REVERSE PROXY SERVICE
   # ==========================================================================
   # Routes /api/* to backend, all other routes to Next.js web service
-  nginx:
+  ga-nginx:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-nginx:main
     pull_policy: always
 
@@ -291,19 +292,19 @@ services:
       # Core Settings
       APP_ENV: production
 
-      # Backend Proxy URL for internal Docker networking
-      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
+      # Backend Proxy URL for internal Docker networking (using unique service name)
+      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://ga-backend:5000}
 
-      # Next.js Proxy URL - ALL frontend routes go here after migration
-      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
+      # Next.js Proxy URL - ALL frontend routes go here after migration (using unique service name)
+      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://ga-web:3000}
 
       # Security
       CSP: ${CSP:-}
 
     depends_on:
-      backend:
+      ga-backend:
         condition: service_healthy
-      web:
+      ga-web:
         condition: service_healthy
 
     expose:

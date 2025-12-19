@@ -1,10 +1,11 @@
 # Pre-production Docker Compose - Next.js Frontend with Nginx Reverse Proxy
 # After Vite-to-Next.js migration, all frontend routes go through Next.js
+# IMPORTANT: Service names use 'ga-' prefix to avoid DNS collisions with other apps
 
 name: gecko-advisor-preprod
 
 services:
-  db:
+  ga-db:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
@@ -19,7 +20,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  redis:
+  ga-redis:
     image: redis:7
     volumes:
       - privacy-redis:/data
@@ -30,14 +31,14 @@ services:
       retries: 5
     restart: unless-stopped
 
-  backend:
+  ga-backend:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-backend:preprod
     pull_policy: always
     environment:
       NODE_ENV: production
       APP_ENV: preprod
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/privacy}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@ga-db:5432/privacy}
+      REDIS_URL: ${REDIS_URL:-redis://ga-redis:6379}
       ADMIN_API_KEY: ${ADMIN_API_KEY}
       BASE_URL: ${BASE_URL:-https://preprod.geckoadvisor.com}
       BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-https://preprodapi.geckoadvisor.com}
@@ -46,9 +47,9 @@ services:
     expose:
       - "5000"
     depends_on:
-      db:
+      ga-db:
         condition: service_healthy
-      redis:
+      ga-redis:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -58,19 +59,19 @@ services:
       retries: 5
       start_period: 45s
 
-  worker:
+  ga-worker:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-worker:preprod
     pull_policy: always
     environment:
       NODE_ENV: production
       APP_ENV: preprod
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/privacy}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@ga-db:5432/privacy}
+      REDIS_URL: ${REDIS_URL:-redis://ga-redis:6379}
       WORKER_PUBLIC_URL: ${WORKER_PUBLIC_URL:-https://pworker.geckoadvisor.com}
     depends_on:
-      db:
+      ga-db:
         condition: service_healthy
-      redis:
+      ga-redis:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -81,17 +82,17 @@ services:
       start_period: 30s
 
   # Next.js app serves ALL frontend routes after Vite-to-Next.js migration
-  web:
+  ga-web:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-web:preprod
     pull_policy: always
     environment:
       NODE_ENV: production
       # Internal URL to backend API (Docker network)
-      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://backend:5000}
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://ga-backend:5000}
       # Public base URL for canonical URLs and OG tags
       NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://preprod.geckoadvisor.com}
     depends_on:
-      backend:
+      ga-backend:
         condition: service_healthy
     expose:
       - "3000"
@@ -104,7 +105,7 @@ services:
       start_period: 30s
 
   # Nginx reverse proxy - routes /api/* to backend, everything else to Next.js
-  nginx:
+  ga-nginx:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-itsanona}/gecko-advisor-nginx:preprod
     pull_policy: always
     environment:
@@ -113,16 +114,16 @@ services:
       BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-https://preprodapi.geckoadvisor.com}
 
       # Backend Proxy URL for internal Docker networking
-      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://backend:5000}
+      BACKEND_PROXY_URL: ${BACKEND_PROXY_URL:-http://ga-backend:5000}
 
       # Next.js Proxy URL - ALL frontend routes go here after migration
-      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://web:3000}
+      NEXTJS_PROXY_URL: ${NEXTJS_PROXY_URL:-http://ga-web:3000}
 
       CSP: ${CSP:-}
     depends_on:
-      backend:
+      ga-backend:
         condition: service_healthy
-      web:
+      ga-web:
         condition: service_healthy
     expose:
       - "80"
