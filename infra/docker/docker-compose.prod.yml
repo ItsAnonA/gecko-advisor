@@ -317,13 +317,13 @@ services:
         max_attempts: 5
         window: 120s
 
-    # CRITICAL: Health check ensures Traefik only routes to healthy nginx
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:80/robots.txt || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 15s
+    # TODO: Re-enable health check after nginx image is rebuilt with curl installed
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -sf http://localhost:80/robots.txt || exit 1"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 15s
 
     # CRITICAL: Connect to coolify network for Traefik proxy discovery
     # Using network alias for stable DNS name (survives container name changes)
