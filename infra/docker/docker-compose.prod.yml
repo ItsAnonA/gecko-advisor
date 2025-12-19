@@ -336,6 +336,7 @@ services:
     # Traefik labels for automatic routing (when Docker provider is enabled)
     labels:
       - traefik.enable=true
+      # ========== Main Domain (geckoadvisor.com) ==========
       # HTTP Router - redirect to HTTPS
       - traefik.http.routers.gecko-advisor-http.rule=Host(`geckoadvisor.com`)
       - traefik.http.routers.gecko-advisor-http.entrypoints=http
@@ -346,13 +347,26 @@ services:
       - traefik.http.routers.gecko-advisor-https.tls=true
       - traefik.http.routers.gecko-advisor-https.tls.certresolver=letsencrypt
       - traefik.http.routers.gecko-advisor-https.middlewares=gzip
-      # Service
+      - traefik.http.routers.gecko-advisor-https.service=gecko-advisor
+      # ========== API Domain (api.geckoadvisor.com) ==========
+      # HTTP Router - redirect to HTTPS
+      - traefik.http.routers.gecko-api-http.rule=Host(`api.geckoadvisor.com`)
+      - traefik.http.routers.gecko-api-http.entrypoints=http
+      - traefik.http.routers.gecko-api-http.middlewares=redirect-to-https
+      # HTTPS Router
+      - traefik.http.routers.gecko-api-https.rule=Host(`api.geckoadvisor.com`)
+      - traefik.http.routers.gecko-api-https.entrypoints=https
+      - traefik.http.routers.gecko-api-https.tls=true
+      - traefik.http.routers.gecko-api-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.gecko-api-https.middlewares=gzip
+      - traefik.http.routers.gecko-api-https.service=gecko-advisor
+      # ========== Service Configuration ==========
       - traefik.http.services.gecko-advisor.loadbalancer.server.port=80
       # Health-based routing (wait for health check to pass before routing)
       - traefik.http.services.gecko-advisor.loadbalancer.healthcheck.path=/robots.txt
       - traefik.http.services.gecko-advisor.loadbalancer.healthcheck.interval=5s
       - traefik.http.services.gecko-advisor.loadbalancer.healthcheck.timeout=3s
-      # Middlewares
+      # ========== Middlewares ==========
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
       - traefik.http.middlewares.gzip.compress=true
 
