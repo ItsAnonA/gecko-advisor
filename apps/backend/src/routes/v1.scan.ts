@@ -7,6 +7,8 @@ import {
   AddressScanRequestSchema,
   ScanQueuedResponseSchema,
   normalizeUrl,
+  isBlockedDomain,
+  getBlockReason,
 } from "@gecko-advisor/shared";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
@@ -16,6 +18,7 @@ import { findReusableScan } from "../services/dedupe.js";
 import { logger } from "../logger.js";
 import { config } from "../config.js";
 import { requireTurnstile } from "../middleware/turnstile.js";
+import { scanRateLimiter, rateLimitService } from "../middleware/scanRateLimit.js";
 
 const UrlScanBodySchema = UrlScanRequestSchema.extend({
   force: z.boolean().optional(),
@@ -32,7 +35,7 @@ const mapToLegacyQueued = (payload: z.infer<typeof ScanQueuedResponseSchema>) =>
 
 export const scanV1Router = Router();
 
-scanV1Router.post(['/', '/url'], requireTurnstile, async (req, res) => {
+scanV1Router.post(['/', '/url'], requireTurnstile, scanRateLimiter, async (req, res) => {
   const parsed = UrlScanBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return problem(res, 400, 'Invalid Request', parsed.error.flatten());
@@ -45,6 +48,14 @@ scanV1Router.post(['/', '/url'], requireTurnstile, async (req, res) => {
     normalized = normalizeUrl(url);
   } catch (error) {
     return problem(res, 400, 'Invalid URL', error instanceof Error ? error.message : 'Unable to parse URL');
+  }
+
+  // Check blocklist - reject adult content domains
+  const hostname = normalized.hostname;
+  if (isBlockedDomain(hostname)) {
+    const reason = getBlockReason(hostname);
+    logger.info({ hostname, reason, ip: req.ip }, 'Blocked domain scan attempt (v1)');
+    return problem(res, 403, 'Domain Blocked', 'This domain cannot be scanned due to content policy.');
   }
 
   const normalizedInput = normalized.toString();
@@ -91,6 +102,10 @@ scanV1Router.post(['/', '/url'], requireTurnstile, async (req, res) => {
         removeOnFail: config.nodeEnv === 'development' ? false : 200,
       }
     );
+
+    // Increment rate limit counter after successful queue
+    const identifier = req.ip || 'unknown';
+    await rateLimitService.incrementScan(identifier);
 
     const response = mapToLegacyQueued(ScanQueuedResponseSchema.parse({
       scanId: scan.id,

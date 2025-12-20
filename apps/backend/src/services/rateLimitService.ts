@@ -3,18 +3,21 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import type { PrismaClient } from '@prisma/client';
+import { redis } from '../cache.js';
+import { logger } from '../logger.js';
 
 /**
  * Rate Limit Service
  *
- * Manages daily scan limits for free tier users (3 scans/day).
+ * Manages scan rate limits with two layers:
+ * 1. Burst protection: 1 scan per minute per IP (Redis-based)
+ * 2. Daily limit: 10 scans per day per IP (database-based)
+ *
  * Pro users bypass rate limiting entirely.
  *
  * Rate limits are tracked by:
  * - User ID (for authenticated users)
  * - IP address (for anonymous users)
- *
- * Limits reset daily at midnight UTC.
  */
 
 export interface RateLimitInfo {
@@ -22,15 +25,19 @@ export interface RateLimitInfo {
   scansUsed: number;
   scansRemaining: number;
   resetAt: Date;
+  burstLimited?: boolean;
+  retryAfterSeconds?: number;
 }
 
 export class RateLimitService {
-  private static readonly FREE_TIER_LIMIT = 3;
+  private static readonly FREE_TIER_LIMIT = 10;
+  private static readonly BURST_WINDOW_SECONDS = 60; // 1 minute
 
   constructor(private prisma: PrismaClient) {}
 
   /**
-   * Check if the identifier has exceeded their daily rate limit
+   * Check if the identifier has exceeded their rate limits
+   * Checks both burst (1/min) and daily (10/day) limits
    *
    * @param identifier - User ID or IP address
    * @returns Rate limit information
@@ -38,6 +45,27 @@ export class RateLimitService {
   async checkRateLimit(identifier: string): Promise<RateLimitInfo> {
     const today = this.getTodayString();
     const resetAt = this.getTomorrowMidnight();
+
+    // Check burst limit first (faster, Redis-based)
+    const burstKey = `rate_limit:burst:${identifier}`;
+    try {
+      const ttl = await redis.ttl(burstKey);
+      if (ttl > 0) {
+        // Burst limited - must wait
+        logger.debug({ identifier, ttl }, 'Burst rate limit hit');
+        return {
+          allowed: false,
+          scansUsed: 0,
+          scansRemaining: 0,
+          resetAt,
+          burstLimited: true,
+          retryAfterSeconds: ttl,
+        };
+      }
+    } catch (error) {
+      // Redis error - continue to daily limit check
+      logger.warn({ error, identifier }, 'Failed to check burst rate limit');
+    }
 
     // Get or create today's rate limit record
     const rateLimit = await this.prisma.rateLimit.upsert({
@@ -69,12 +97,22 @@ export class RateLimitService {
 
   /**
    * Increment the scan count for the identifier
+   * Sets both the burst limit (1 min) and increments daily count
    *
    * @param identifier - User ID or IP address
    */
   async incrementScan(identifier: string): Promise<void> {
     const today = this.getTodayString();
 
+    // Set burst limit key (1 minute window)
+    const burstKey = `rate_limit:burst:${identifier}`;
+    try {
+      await redis.setex(burstKey, RateLimitService.BURST_WINDOW_SECONDS, '1');
+    } catch (error) {
+      logger.warn({ error, identifier }, 'Failed to set burst rate limit');
+    }
+
+    // Increment daily count
     await this.prisma.rateLimit.upsert({
       where: {
         identifier_date: {

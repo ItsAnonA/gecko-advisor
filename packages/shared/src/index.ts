@@ -9,3 +9,4 @@ export * from './objectStorage.js';
 export * from './reportPayload.js';
 export * from './reportStorage.js';
 export * from './seo/index.js';
+export * from './blocklist/index.js';

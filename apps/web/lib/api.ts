@@ -17,6 +17,7 @@ import {
   getIndexTier,
   getPageHeading,
   buildMetaDescription,
+  isBlockedDomain,
   type IndexTier,
   type ScanDataForMetadata,
 } from '@gecko-advisor/shared';
@@ -112,10 +113,16 @@ export const getReportForDomain = cache(
           thirdPartyCount: data.meta?.thirdPartyCount,
           cookieCount: data.meta?.cookieCount,
           tlsGrade: data.meta?.tlsGrade,
+          domain, // Include domain for blocklist checking
         }
       : null;
 
-    const tier = getIndexTier(scanData);
+    // Determine index tier - force noindex for blocked domains even without scan data
+    let tier = getIndexTier(scanData);
+    if (tier !== 'noindex' && isBlockedDomain(domain)) {
+      tier = 'noindex';
+    }
+
     const heading = getPageHeading(domain, data?.scan.score);
     const description = buildMetaDescription(scanData, domain);
 

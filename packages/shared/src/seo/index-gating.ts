@@ -3,6 +3,8 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 
+import { isBlockedDomain } from '../blocklist/index.js';
+
 /**
  * SEO Index Gating Logic
  *
@@ -32,6 +34,8 @@ export interface ScanDataForGating {
   thirdPartyCount?: number;
   cookieCount?: number;
   tlsGrade?: string;
+  // Domain for blocklist checking (optional for backward compatibility)
+  domain?: string;
 }
 
 /**
@@ -61,6 +65,11 @@ export interface ScanDataForGating {
 export function getIndexTier(scanData: ScanDataForGating | null | undefined): IndexTier {
   // No data = noindex
   if (!scanData) {
+    return 'noindex';
+  }
+
+  // Blocked domain (adult content) = noindex
+  if (scanData.domain && isBlockedDomain(scanData.domain)) {
     return 'noindex';
   }
 
