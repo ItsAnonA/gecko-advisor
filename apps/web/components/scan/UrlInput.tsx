@@ -253,7 +253,10 @@ function RecentScansDropdown({
             className={`px-3 py-2.5 cursor-pointer flex items-center gap-3 transition-colors duration-150 ${
               index === selectedIndex ? 'bg-advisor-50' : 'hover:bg-gray-50'
             }`}
-            onClick={() => onSelect(scan.url)}
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent input blur
+              onSelect(scan.url);
+            }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

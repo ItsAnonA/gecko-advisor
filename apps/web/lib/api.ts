@@ -367,6 +367,54 @@ export interface ScanResponse {
   resultsUrl: string;
 }
 
+/**
+ * Rate limit error response from the API
+ */
+export interface RateLimitErrorResponse {
+  type: 'rate_limit_exceeded';
+  title: string;
+  status: 429;
+  detail: string;
+  retryAfterSeconds?: number;
+  scansUsed?: number;
+  scansRemaining?: number;
+  resetAt?: string;
+}
+
+/**
+ * Custom error class that preserves the full API error response
+ */
+export class ScanError extends Error {
+  public readonly status: number;
+  public readonly response: unknown;
+
+  constructor(message: string, status: number, response: unknown) {
+    super(message);
+    this.name = 'ScanError';
+    this.status = status;
+    this.response = response;
+  }
+
+  /**
+   * Check if this is a rate limit error
+   */
+  isRateLimitError(): boolean {
+    return this.status === 429;
+  }
+
+  /**
+   * Get the rate limit error response if applicable
+   */
+  getRateLimitError(): RateLimitErrorResponse | null {
+    if (!this.isRateLimitError()) return null;
+    const res = this.response as Record<string, unknown>;
+    if (res?.type === 'rate_limit_exceeded') {
+      return this.response as RateLimitErrorResponse;
+    }
+    return null;
+  }
+}
+
 export async function startScan(url: string, turnstileToken?: string): Promise<ScanResponse> {
   const response = await fetch('/api/v2/scan', {
     method: 'POST',
@@ -380,8 +428,12 @@ export async function startScan(url: string, turnstileToken?: string): Promise<S
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to start scan');
+    const errorBody = await response.json();
+    throw new ScanError(
+      errorBody.detail || 'Failed to start scan',
+      response.status,
+      errorBody
+    );
   }
 
   return response.json();

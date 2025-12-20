@@ -9,3 +9,5 @@ export { default as TurnstileWidget, useTurnstileEnabled } from './TurnstileWidg
 export { default as ProgressDial } from './ProgressDial';
 export { default as ScanProgress } from './ScanProgress';
 export type { ScanProgressProps } from './ScanProgress';
+export { RateLimitIndicator } from './RateLimitIndicator';
+export type { RateLimitError } from './RateLimitIndicator';

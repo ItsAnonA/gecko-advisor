@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UrlInput, saveRecentScan, TurnstileWidget, useTurnstileEnabled } from '@/components/scan';
-import type { UrlInputRef } from '@/components/scan';
+import { UrlInput, saveRecentScan, TurnstileWidget, useTurnstileEnabled, RateLimitIndicator } from '@/components/scan';
+import type { UrlInputRef, RateLimitError } from '@/components/scan';
 import { Card, GradeBadge } from '@/components/ui';
-import { startScan, getRecentReports, getStats, type RecentReport, type StatsResponse } from '@/lib/api';
+import { startScan, getRecentReports, getStats, ScanError, type RecentReport, type StatsResponse } from '@/lib/api';
 
 /**
  * Helper function for relative time formatting
@@ -48,6 +48,7 @@ export default function ScanForm() {
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimitError, setRateLimitError] = useState<RateLimitError | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [recentReports, setRecentReports] = useState<RecentReport[]>([]);
   const router = useRouter();
@@ -68,6 +69,7 @@ export default function ScanForm() {
   const handleScan = useCallback(async () => {
     try {
       setError(null);
+      setRateLimitError(null);
 
       // Validate URL using the UrlInput ref
       if (!urlInputRef.current?.isValid()) {
@@ -101,6 +103,26 @@ export default function ScanForm() {
       // Navigate to scan progress page
       router.push(`/scan/${data.scanId}?slug=${encodeURIComponent(data.slug)}`);
     } catch (err) {
+      // Check if it's a rate limit error
+      if (err instanceof ScanError && err.isRateLimitError()) {
+        const rateLimitData = err.getRateLimitError();
+        if (rateLimitData) {
+          setRateLimitError({
+            type: 'rate_limit_exceeded',
+            title: rateLimitData.title,
+            status: 429,
+            detail: rateLimitData.detail,
+            retryAfterSeconds: rateLimitData.retryAfterSeconds,
+            scansUsed: rateLimitData.scansUsed,
+            scansRemaining: rateLimitData.scansRemaining,
+            resetAt: rateLimitData.resetAt,
+          });
+          // Don't set generic error for rate limits - the indicator handles it
+          setLoading(false);
+          return;
+        }
+      }
+
       const message = err instanceof Error ? err.message : 'Failed to start scan';
       setError(message);
       console.error('[ScanForm] Scan failed:', err);
@@ -223,6 +245,12 @@ export default function ScanForm() {
             maxRecentScans={5}
           />
         </div>
+
+        {/* Rate Limit Indicator - only shown when rate limited */}
+        <RateLimitIndicator
+          rateLimitError={rateLimitError}
+          onCountdownComplete={() => setRateLimitError(null)}
+        />
 
         {/* Error message */}
         {error && (
