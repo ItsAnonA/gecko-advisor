@@ -1,11 +1,23 @@
 // SPDX-License-Identifier: MIT
 import { Router } from "express";
-import { buildReportPayload, etldPlusOne } from "@gecko-advisor/shared";
+import { buildReportPayload, etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { logger } from "../logger.js";
 import { CacheService, CACHE_KEYS, CACHE_TTL } from "../cache.js";
 import { getReportDownloadUrl, getReportFromStorage } from "../services/reportArchive.js";
+
+/**
+ * Extract domain from URL for blocklist checking
+ */
+function getDomainFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
 
 export const reportV2Router = Router();
 
@@ -16,11 +28,25 @@ reportV2Router.get(['/report/:slug', '/r/:slug'], async (req, res) => {
     // First, get minimal scan info to get the scanId for Object Storage lookup
     const scanInfo = await prisma.scan.findUnique({
       where: { slug },
-      select: { id: true, status: true },
+      select: { id: true, status: true, input: true },
     });
 
     if (!scanInfo) {
       return problem(res, 404, 'Report not found');
+    }
+
+    // Return 410 Gone for blocked domains (adult content)
+    // This helps Google de-index these pages faster
+    const domain = getDomainFromUrl(scanInfo.input);
+    if (isBlockedDomain(domain)) {
+      logger.info({ slug, domain }, 'Blocked domain report requested - returning 410 Gone');
+      res.status(410).json({
+        type: 'gone',
+        status: 410,
+        title: 'Report Removed',
+        detail: 'This report has been removed due to content policy.',
+      });
+      return;
     }
 
     // Try Object Storage first (faster, reduces DB load)
@@ -126,23 +152,26 @@ reportV2Router.get('/reports/recent', async (_req, res) => {
           },
         });
 
-        return scans.map((scan) => {
-          let domain = scan.input;
-          try {
-            const url = new URL(scan.input);
-            domain = etldPlusOne(url.hostname);
-          } catch {
-            // ignore
-          }
-          return {
-            slug: scan.slug,
-            score: scan.score ?? 0,
-            label: scan.label ?? 'Moderate Privacy Risk',
-            domain,
-            createdAt: scan.createdAt,
-            evidenceCount: scan._count.evidence,
-          };
-        });
+        return scans
+          .map((scan) => {
+            let domain = scan.input;
+            try {
+              const url = new URL(scan.input);
+              domain = etldPlusOne(url.hostname);
+            } catch {
+              // ignore
+            }
+            return {
+              slug: scan.slug,
+              score: scan.score ?? 0,
+              label: scan.label ?? 'Moderate Privacy Risk',
+              domain,
+              createdAt: scan.createdAt,
+              evidenceCount: scan._count.evidence,
+            };
+          })
+          // Filter out blocked domains from recent reports list
+          .filter((item) => !isBlockedDomain(item.domain));
       },
       CACHE_TTL.RECENT_REPORTS
     );
@@ -207,23 +236,26 @@ reportV2Router.get('/reports/all', async (req, res) => {
       },
     });
 
-    const items = scans.map((scan) => {
-      let domain = scan.input;
-      try {
-        const url = new URL(scan.input);
-        domain = etldPlusOne(url.hostname);
-      } catch {
-        // ignore
-      }
-      return {
-        slug: scan.slug,
-        score: scan.score ?? 0,
-        label: scan.label ?? 'Moderate Privacy Risk',
-        domain,
-        createdAt: scan.createdAt,
-        evidenceCount: scan._count.evidence,
-      };
-    });
+    const items = scans
+      .map((scan) => {
+        let domain = scan.input;
+        try {
+          const url = new URL(scan.input);
+          domain = etldPlusOne(url.hostname);
+        } catch {
+          // ignore
+        }
+        return {
+          slug: scan.slug,
+          score: scan.score ?? 0,
+          label: scan.label ?? 'Moderate Privacy Risk',
+          domain,
+          createdAt: scan.createdAt,
+          evidenceCount: scan._count.evidence,
+        };
+      })
+      // Filter out blocked domains from reports list
+      .filter((item) => !isBlockedDomain(item.domain));
 
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -275,23 +307,26 @@ reportV2Router.get('/reports', async (req, res) => {
       },
     });
 
-    const items = scans.map((scan) => {
-      let domain = scan.input;
-      try {
-        const url = new URL(scan.input);
-        domain = etldPlusOne(url.hostname);
-      } catch {
-        // ignore
-      }
-      return {
-        slug: scan.slug,
-        score: scan.score ?? 0,
-        label: scan.label ?? 'Moderate Privacy Risk',
-        domain,
-        createdAt: scan.createdAt,
-        evidenceCount: scan._count.evidence,
-      };
-    });
+    const items = scans
+      .map((scan) => {
+        let domain = scan.input;
+        try {
+          const url = new URL(scan.input);
+          domain = etldPlusOne(url.hostname);
+        } catch {
+          // ignore
+        }
+        return {
+          slug: scan.slug,
+          score: scan.score ?? 0,
+          label: scan.label ?? 'Moderate Privacy Risk',
+          domain,
+          createdAt: scan.createdAt,
+          evidenceCount: scan._count.evidence,
+        };
+      })
+      // Filter out blocked domains from reports list
+      .filter((item) => !isBlockedDomain(item.domain));
 
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -327,6 +362,18 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
       }
     }
     domain = domain.replace(/^www\./, '').replace(/\/$/, '');
+
+    // Return 410 Gone for blocked domains (adult content)
+    if (isBlockedDomain(domain)) {
+      logger.info({ domain }, 'Blocked domain report requested - returning 410 Gone');
+      res.status(410).json({
+        type: 'gone',
+        status: 410,
+        title: 'Report Removed',
+        detail: 'This report has been removed due to content policy.',
+      });
+      return;
+    }
 
     // Find the most recent completed scan for this domain
     const scan = await prisma.scan.findFirst({
@@ -415,19 +462,22 @@ reportV2Router.get('/domains/indexable', async (req, res) => {
       },
     });
 
-    const domains = scans.map((scan) => {
-      let domain = scan.normalizedInput || scan.input;
-      try {
-        const url = new URL(domain.startsWith('http') ? domain : `https://${domain}`);
-        domain = etldPlusOne(url.hostname);
-      } catch {
-        // Keep as-is
-      }
-      return {
-        domain,
-        scannedAt: scan.createdAt.toISOString(),
-      };
-    });
+    const domains = scans
+      .map((scan) => {
+        let domain = scan.normalizedInput || scan.input;
+        try {
+          const url = new URL(domain.startsWith('http') ? domain : `https://${domain}`);
+          domain = etldPlusOne(url.hostname);
+        } catch {
+          // Keep as-is
+        }
+        return {
+          domain,
+          scannedAt: scan.createdAt.toISOString(),
+        };
+      })
+      // Filter out blocked domains from sitemap/indexable list
+      .filter((item) => !isBlockedDomain(item.domain));
 
     res.json({ domains });
   } catch (error) {

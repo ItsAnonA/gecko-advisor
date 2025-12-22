@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import { Router } from "express";
-import { buildReportPayload } from "@gecko-advisor/shared";
+import { buildReportPayload, isBlockedDomain } from "@gecko-advisor/shared";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { logger } from "../logger.js";
@@ -27,6 +27,19 @@ domainV2Router.get('/domain/:domain', async (req, res) => {
 
     if (!domain || domain.length < 3) {
       return problem(res, 400, 'Invalid domain', 'Please provide a valid domain name');
+    }
+
+    // Return 410 Gone for blocked domains (adult content)
+    // This helps Google de-index these pages faster
+    if (isBlockedDomain(domain)) {
+      logger.info({ domain }, 'Blocked domain report requested - returning 410 Gone');
+      res.status(410).json({
+        type: 'gone',
+        status: 410,
+        title: 'Report Removed',
+        detail: 'This report has been removed due to content policy.',
+      });
+      return;
     }
 
     // Find the latest scan for this domain
