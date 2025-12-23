@@ -12,7 +12,8 @@
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "test": "vitest run",
         "postinstall": "prisma generate --schema=../../infra/prisma/schema.prisma",
-        "generate:openapi": "node ./scripts/generate-openapi.mjs"
+        "generate:openapi": "node ./scripts/generate-openapi.mjs",
+        "backfill:domains": "tsx ./scripts/backfill-domains.ts"
     },
     "dependencies": {
         "@paralleldrive/cuid2": "^2.2.2",

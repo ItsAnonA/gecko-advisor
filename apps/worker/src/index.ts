@@ -10,6 +10,71 @@ import { scanSiteJob } from "./scanner.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { initSentry, Sentry } from "./sentry.js";
+import { etldPlusOne } from "@gecko-advisor/shared";
+
+/**
+ * Normalize a URL or hostname to its effective domain (eTLD+1).
+ * Mirrors the backend's domainService.normalizeDomain function.
+ */
+function normalizeDomain(input: string): string {
+  let hostname = input.toLowerCase().trim();
+  hostname = hostname.replace(/^https?:\/\//, '');
+  hostname = hostname.replace(/^www\./, '');
+  hostname = hostname.split('/')[0] ?? hostname;
+  hostname = hostname.split('?')[0] ?? hostname;
+  hostname = hostname.split('#')[0] ?? hostname;
+  hostname = hostname.split(':')[0] ?? hostname;
+  return etldPlusOne(hostname);
+}
+
+/**
+ * Upsert a Domain record when a scan completes.
+ * This ensures the domain appears in the dynamic sitemap.
+ */
+async function upsertDomainOnScanComplete(
+  scanId: string,
+  url: string
+): Promise<void> {
+  try {
+    const domain = normalizeDomain(url);
+    if (!domain || domain === 'invalid') {
+      logger.debug({ url, domain }, 'Skipping domain upsert for invalid domain');
+      return;
+    }
+
+    const scan = await prisma.scan.findUnique({
+      where: { id: scanId },
+      select: { id: true, finishedAt: true, createdAt: true },
+    });
+
+    if (!scan) {
+      logger.warn({ scanId }, 'Scan not found for domain upsert');
+      return;
+    }
+
+    await prisma.domain.upsert({
+      where: { domain },
+      create: {
+        domain,
+        latestScanId: scan.id,
+        firstScanned: scan.finishedAt ?? new Date(),
+        lastScanned: scan.finishedAt ?? new Date(),
+        scanCount: 1,
+        isIndexed: true,
+      },
+      update: {
+        latestScanId: scan.id,
+        lastScanned: scan.finishedAt ?? new Date(),
+        scanCount: { increment: 1 },
+      },
+    });
+
+    logger.debug({ domain, scanId }, 'Domain record upserted for sitemap');
+  } catch (error) {
+    // Non-fatal error - log but don't fail the scan
+    logger.warn({ error, scanId, url }, 'Failed to upsert domain record');
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const RedisConstructor = Redis as unknown as typeof import('ioredis').default;
@@ -51,6 +116,9 @@ export const worker = new Worker<ScanJobData>(
 
       // Report 100% progress (scan status is updated atomically in scanner.ts)
       await job.updateProgress(100);
+
+      // Update Domain table for sitemap indexing
+      await upsertDomainOnScanComplete(scanId, url);
 
       // Update ScanQueue if this was a queued scan
       if (job.data.queueItemId) {
