@@ -149,6 +149,8 @@ const BLOCKED_DOMAINS = new Set([
   'hsex.icu',
   'ggpanalo.com',     // Gambling/adult
   'topcinema.cam',    // Piracy streaming
+  'desibf.com',       // South Asian adult content
+  'bestialitysextaboo.net', // Extreme adult content
 ]);
 
 /**
