@@ -41,9 +41,10 @@ const BLOCKED_PATTERNS: RegExp[] = [
   // Adult with exclusion for adultswim
   /adult(?!swim)/i,
 
-  // Anal - explicit adult term (no legitimate use in domain names)
-  // Excludes: analytics, analysis, analyst, analog, canal
-  /(?<!c)anal(?!ytics?|ysis|yst|og)/i,
+  // Anal - explicit adult term
+  // Excludes: analytics, analysis, analyst, analog, canal, ethanallen, kanal, analo
+  // Must be followed by adult-context suffixes or standalone
+  /(?<!c|eth|k)anal(?!ytics?|ysis|yst|og|len|yz)/i,
 
   // Common adult site brands/patterns
   /xhamster/i,
@@ -66,7 +67,10 @@ const BLOCKED_PATTERNS: RegExp[] = [
   /indian.*stories/i, // Indian adult stories sites
 
   // Piracy sites often paired with adult content
-  /(fap|wank|jerk)/i,
+  // Fap/wank/jerk - but exclude "ofapp", "fapi", "apk"
+  /(?<!o)fap(?!i|k)/i,
+  /wank/i,
+  /jerk(?!y)/i, // Exclude "jerky" (beef jerky)
   /yomovies/i,       // Piracy + adult content
   /moviesda/i,       // Piracy site
   /9xflix/i,         // Piracy site
