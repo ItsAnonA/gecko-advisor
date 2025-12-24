@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import type { PrismaClient, Scan, Domain } from "@prisma/client";
-import { etldPlusOne } from "@gecko-advisor/shared";
+import { etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
 
 /**
  * Normalize a URL or hostname to its effective domain (eTLD+1).
@@ -191,9 +191,10 @@ export async function getIndexedDomains(
     skip: offset,
   });
 
-  // Filter by minimum evidence count (post-query filter for accurate count)
+  // Filter by minimum evidence count AND blocklist (post-query filter for accurate count)
   const qualityDomains = domains
     .filter((d) => (d.latestScan?._count?.evidence ?? 0) >= INDEX_GATING.MIN_EVIDENCE_COUNT)
+    .filter((d) => !isBlockedDomain(d.domain)) // Exclude adult/blocked content from sitemap
     .map(({ domain, lastScanned }) => ({ domain, lastScanned }));
 
   return qualityDomains;

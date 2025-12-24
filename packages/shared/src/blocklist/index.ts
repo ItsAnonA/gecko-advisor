@@ -25,7 +25,7 @@ const BLOCKED_TLDS = new Set([
 const BLOCKED_PATTERNS: RegExp[] = [
   // Explicit terms
   /\bporn/i,
-  /\bxxx\b/i,
+  /\bxxx/i, // Match xxx anywhere (xxxindianstories, etc.)
   /\bsex(?!pert|ton|y\b)/i, // sex but not expert, sexton, sexy (brand names)
   /\badult(?!swim)/i, // adult but not adultswim
   /\bhentai/i,
@@ -49,9 +49,15 @@ const BLOCKED_PATTERNS: RegExp[] = [
   /\bbokep/i, // Indonesian
   /\bdesi.*hub/i, // South Asian
   /\bjav\b/i, // Japanese AV
+  /\bjavporn/i, // Japanese AV porn
+  /\bindian.*stories/i, // Indian adult stories sites
 
   // Piracy sites often paired with adult content
   /\b(fap|wank|jerk)/i,
+  /\byomovies/i, // Piracy + adult content
+  /\bmoviesda/i, // Piracy site
+  /\b9xflix/i, // Piracy site
+  /\bprmovies/i, // Piracy site
 
   // NOTE: Removed suffix patterns (tube$, hub$, cams?$, live$) as they cause
   // false positives with legitimate sites like blog.youtube, arca.live, etc.
@@ -81,6 +87,23 @@ const BLOCKED_DOMAINS = new Set([
   'dqza.app',
   'bboy1.com',
   'effectivegatecpm.com',
+
+  // From GSC Dec 2024 - adult query domains
+  'nudeindians2.net',
+  'nudeindians2',
+  'yomovies.poker',
+  'indiansexstories3',
+  'xxxindianstories.com',
+  'xxxindianstories',
+  'moviesda14.net',
+  'moviesda14',
+  'g2288.com',
+  'g2288',
+  'prmovies.fitness',
+  'soolakhi',
+  'soolakhi.com',
+  'bestjavporn',
+  'bestjavporn.com',
 
   // Common adult domains that might bypass patterns
   'cam4.com',

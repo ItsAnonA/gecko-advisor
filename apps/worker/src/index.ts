@@ -10,7 +10,7 @@ import { scanSiteJob } from "./scanner.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { initSentry, Sentry } from "./sentry.js";
-import { etldPlusOne } from "@gecko-advisor/shared";
+import { etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
 
 /**
  * Normalize a URL or hostname to its effective domain (eTLD+1).
@@ -39,6 +39,12 @@ async function upsertDomainOnScanComplete(
     const domain = normalizeDomain(url);
     if (!domain || domain === 'invalid') {
       logger.debug({ url, domain }, 'Skipping domain upsert for invalid domain');
+      return;
+    }
+
+    // Skip blocked domains (adult content) - don't add to sitemap
+    if (isBlockedDomain(domain)) {
+      logger.debug({ url, domain }, 'Skipping domain upsert for blocked domain');
       return;
     }
 
