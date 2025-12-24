@@ -34,9 +34,9 @@ const BLOCKED_PATTERNS: RegExp[] = [
   /\bnaked/i,        // Keep boundary
 
   // Sex with exclusions for legitimate terms
-  // Matches: hsex, teensex, hindisex, josex, kanesex
+  // Matches: hsex, teensex, hindisex, josex, kanesex, sextaboo
   // Excludes: analytics, sexton, essex, sussex, middlesex, lasexta, sexpert, sexy
-  /(?<!analy|es|us|le|la)sex(?!ton|y$|ta|pert)/i,
+  /(?<!analy|es|us|le|la)sex(?!ton|y$|ta\.|pert)/i,
 
   // Adult with exclusion for adultswim
   /adult(?!swim)/i,
