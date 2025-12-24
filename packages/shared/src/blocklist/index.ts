@@ -22,16 +22,28 @@ const BLOCKED_TLDS = new Set([
 
 // Keyword patterns to block (case-insensitive matching)
 // These patterns match common adult site naming conventions
+// NOTE: Removed word boundaries (\b) as they fail to match embedded terms in domain names
+// e.g., "upornia.com" contains "porn" but \bporn\b won't match it
 const BLOCKED_PATTERNS: RegExp[] = [
-  // Explicit terms
-  /\bporn/i,
-  /\bxxx/i, // Match xxx anywhere (xxxindianstories, etc.)
-  /\bsex(?!pert|ton|y\b)/i, // sex but not expert, sexton, sexy (brand names)
-  /\badult(?!swim)/i, // adult but not adultswim
-  /\bhentai/i,
-  /\berotic/i,
-  /\bnude/i,
-  /\bnaked/i,
+  // Explicit terms - NO word boundaries for domain matching
+  /porn/i,           // Matches: pornhub, upornia, amaporn, desiporn, etc.
+  /xxx/i,            // Matches: vxxx, xxxindian, etc.
+  /hentai/i,         // Matches: nhentai, hentaihaven, etc.
+  /eroti[ck]/i,      // Matches: erotica, erotik (international)
+  /\bnude/i,         // Keep boundary - avoid "denude" false positive
+  /\bnaked/i,        // Keep boundary
+
+  // Sex with exclusions for legitimate terms
+  // Matches: hsex, teensex, hindisex, josex, kanesex
+  // Excludes: analytics, sexton, essex, sussex, middlesex, lasexta, sexpert, sexy
+  /(?<!analy|es|us|le|la)sex(?!ton|y$|ta|pert)/i,
+
+  // Adult with exclusion for adultswim
+  /adult(?!swim)/i,
+
+  // Anal - explicit adult term (no legitimate use in domain names)
+  // Excludes: analytics, analysis, analyst, analog, canal
+  /(?<!c)anal(?!ytics?|ysis|yst|og)/i,
 
   // Common adult site brands/patterns
   /xhamster/i,
@@ -44,24 +56,21 @@ const BLOCKED_PATTERNS: RegExp[] = [
   /chaturbate/i,
   /onlyfans/i,
   /fansly/i,
+  /pornia/i,         // upornia, etc.
 
   // Regional/language specific
-  /\bbokep/i, // Indonesian
-  /\bdesi.*hub/i, // South Asian
-  /\bjav\b/i, // Japanese AV
-  /\bjavporn/i, // Japanese AV porn
-  /\bindian.*stories/i, // Indian adult stories sites
+  /bokep/i,          // Indonesian
+  /desi.*hub/i,      // South Asian
+  /\bjav\b/i,        // Japanese AV (keep boundary - short term)
+  /javporn/i,        // Japanese AV porn
+  /indian.*stories/i, // Indian adult stories sites
 
   // Piracy sites often paired with adult content
-  /\b(fap|wank|jerk)/i,
-  /\byomovies/i, // Piracy + adult content
-  /\bmoviesda/i, // Piracy site
-  /\b9xflix/i, // Piracy site
-  /\bprmovies/i, // Piracy site
-
-  // NOTE: Removed suffix patterns (tube$, hub$, cams?$, live$) as they cause
-  // false positives with legitimate sites like blog.youtube, arca.live, etc.
-  // Rely on explicit brand patterns and curated domain list instead.
+  /(fap|wank|jerk)/i,
+  /yomovies/i,       // Piracy + adult content
+  /moviesda/i,       // Piracy site
+  /9xflix/i,         // Piracy site
+  /prmovies/i,       // Piracy site
 ];
 
 // Curated blocklist of specific domains (from UT1 + GSC abuse data)
@@ -131,6 +140,11 @@ const BLOCKED_DOMAINS = new Set([
   'thothub.is',
   'fapello.com',
   'celebjihad.com',
+
+  // Found in sitemap Dec 2024 cleanup
+  'hsex.icu',
+  'ggpanalo.com',     // Gambling/adult
+  'topcinema.cam',    // Piracy streaming
 ]);
 
 /**
