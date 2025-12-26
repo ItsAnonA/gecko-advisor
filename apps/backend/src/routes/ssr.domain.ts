@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import { Router } from "express";
-import { buildReportPayload, labelForScore } from "@gecko-advisor/shared";
+import { buildReportPayload, labelForScore, isBlockedDomain } from "@gecko-advisor/shared";
 import { prisma } from "../prisma.js";
 import { logger } from "../logger.js";
 import { findLatestScanForDomain, normalizeDomain } from "../services/domainService.js";
@@ -499,6 +499,32 @@ ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain
     if (!domain || domain.length < 3) {
       res.status(400).setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(generate404Html(rawDomain));
+      return;
+    }
+
+    // Return 410 Gone for blocked domains (adult content)
+    // This helps Google de-index these pages faster
+    if (isBlockedDomain(domain)) {
+      logger.info({ domain, userAgent: req.get('User-Agent')?.substring(0, 50) }, 'SSR blocked domain - returning 410 Gone');
+      res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('X-Robots-Tag', 'noindex');
+      res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Removed | Gecko Advisor</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon_500x500.png">
+</head>
+<body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; text-align: center;">
+  <div>
+    <h1>Report Removed</h1>
+    <p>This report has been permanently removed due to content policy.</p>
+    <a href="/" style="color: #2ecc71;">Return to Home</a>
+  </div>
+</body>
+</html>`);
       return;
     }
 
