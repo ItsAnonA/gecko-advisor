@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 import React from 'react';
 import Link from 'next/link';
 import PremiumScoreDial from './PremiumScoreDial';
+import BenchmarkSection from './BenchmarkSection';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import type { ReportData } from '@/lib/api';
 
@@ -466,6 +467,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
             tlsGrade={tlsGrade}
             evidence={evidence}
             seoContent={seoContent}
+            meta={meta}
           />
         )}
         {activeTab === 'tracking' && <EvidencePanel evidence={trackingEvidence} title="Tracking & Analytics" emptyMessage="No trackers detected!" tabType="tracking" />}
@@ -580,7 +582,8 @@ function OverviewPanel({
   thirdPartyCount,
   tlsGrade,
   evidence,
-  seoContent
+  seoContent,
+  meta
 }: {
   score: number;
   domain: string;
@@ -589,9 +592,13 @@ function OverviewPanel({
   tlsGrade?: string;
   evidence: ReportData['evidence'];
   seoContent?: React.ReactNode;
+  meta?: ReportData['meta'];
 }) {
   return (
     <div role="tabpanel" id="tabpanel-overview" aria-labelledby="tab-overview" className="space-y-6">
+      {/* Market Comparison - Benchmark Section */}
+      <BenchmarkSection meta={meta} domain={domain} score={score} />
+
       {/* SEO Content - Crawlable by search engines */}
       {seoContent && (
         <div className="bg-white border border-gray-200 rounded-xl p-6">

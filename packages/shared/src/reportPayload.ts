@@ -89,6 +89,36 @@ export interface ReportEvidence {
   createdAt?: Date;
 }
 
+/**
+ * Benchmark comparison data for SEO content enrichment
+ */
+export interface BenchmarkComparison {
+  percentile: number; // 0-100, "better than X%"
+  comparedToAverage: number; // +/- points vs average score
+  trackerComparison: 'below' | 'average' | 'above';
+  cookieComparison: 'below' | 'average' | 'above';
+}
+
+/**
+ * Tracker insights for unique content generation
+ */
+export interface TrackerInsights {
+  uniqueTrackers: number;
+  commonTrackers: string[]; // Most common trackers found on this site
+  rarityScore: number; // 0-100, how unusual the tracker set is
+}
+
+/**
+ * Global benchmark summary (subset for display)
+ */
+export interface GlobalBenchmarkSummary {
+  totalDomains: number;
+  averageScore: number;
+  medianScore: number;
+  averageTrackerCount: number;
+  averageCookieCount: number;
+}
+
 export interface ReportPayload {
   scan: ScanEntity;
   issues: ReportIssue[];
@@ -102,6 +132,10 @@ export interface ReportPayload {
     thirdPartyCount: number;
     cookieCount: number;
     tlsGrade?: string;
+    // SEO Content Enrichment - Market Analysis Fields
+    benchmarks?: BenchmarkComparison;
+    trackerInsights?: TrackerInsights;
+    globalBenchmarks?: GlobalBenchmarkSummary;
   };
 }
 

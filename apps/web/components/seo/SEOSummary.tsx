@@ -16,16 +16,26 @@ SPDX-License-Identifier: MIT
 
 import type { IndexTier, ScanDataForMetadata } from '@gecko-advisor/shared';
 import { getScanFreshnessText } from '@gecko-advisor/shared';
+import type { ReportData } from '@/lib/api';
 
 interface Props {
   scanData: ScanDataForMetadata;
   domain: string;
   tier: IndexTier;
   heading: string;
+  /** Optional benchmark data for market comparison SEO content */
+  benchmarks?: ReportData['meta'];
 }
 
-export function SEOSummary({ scanData, domain, tier, heading }: Props) {
+export function SEOSummary({ scanData, domain, tier, heading, benchmarks }: Props) {
   const freshnessText = getScanFreshnessText(scanData.finishedAt);
+
+  // Extract benchmark data if available
+  const hasBenchmarks = benchmarks?.benchmarks && benchmarks?.globalBenchmarks;
+  const percentile = benchmarks?.benchmarks?.percentile;
+  const totalDomains = benchmarks?.globalBenchmarks?.totalDomains;
+  const averageScore = benchmarks?.globalBenchmarks?.averageScore;
+  const averageTrackerCount = benchmarks?.globalBenchmarks?.averageTrackerCount;
 
   return (
     <article className="seo-content">
@@ -71,6 +81,33 @@ export function SEOSummary({ scanData, domain, tier, heading }: Props) {
           observable privacy concerns.
         </p>
       </section>
+
+      {/* Market Comparison Section - SEO enrichment (~80 words) */}
+      {hasBenchmarks && typeof percentile === 'number' && (
+        <section className="mb-6">
+          <h3 className="text-lg font-semibold text-gecko-800 mb-2 flex items-center gap-2">
+            <span className="text-indigo-500">📈</span>
+            How does {domain} compare to other websites?
+          </h3>
+          <p className="text-gecko-700 mb-2">
+            Based on Gecko Advisor&apos;s analysis of <strong>{totalDomains?.toLocaleString()}</strong> websites,{' '}
+            <strong>{domain}</strong> scores better than <strong>{percentile}%</strong> of all sites we&apos;ve analyzed.
+            {typeof scanData.score === 'number' && typeof averageScore === 'number' && (
+              scanData.score >= averageScore
+                ? ` This is ${scanData.score - averageScore} points above the average score of ${averageScore}.`
+                : ` The average website scores ${averageScore}, which is ${averageScore - scanData.score} points higher.`
+            )}
+          </p>
+          <p className="text-gecko-600 text-sm">
+            {typeof scanData.trackerCount === 'number' && typeof averageTrackerCount === 'number' && (
+              scanData.trackerCount <= averageTrackerCount
+                ? `This site uses ${scanData.trackerCount} trackers, which is ${(averageTrackerCount - scanData.trackerCount).toFixed(1)} fewer than the average of ${averageTrackerCount.toFixed(1)} trackers per website.`
+                : `This site uses ${scanData.trackerCount} trackers, compared to an average of ${averageTrackerCount.toFixed(1)} trackers across all analyzed websites.`
+            )}
+            {' '}Market comparison data helps you understand how a website&apos;s privacy practices compare to industry norms.
+          </p>
+        </section>
+      )}
 
       {/* Tracker Analysis - full tier only (~80 words) */}
       {tier === 'full' && typeof scanData.trackerCount === 'number' && (

@@ -6,6 +6,62 @@ import { problem } from "../problem.js";
 import { logger } from "../logger.js";
 import { CacheService, CACHE_KEYS, CACHE_TTL } from "../cache.js";
 import { getReportDownloadUrl, getReportFromStorage } from "../services/reportArchive.js";
+import { createAnalyticsService } from "../services/analyticsService.js";
+
+// Create analytics service instance
+const analyticsService = createAnalyticsService(prisma);
+
+/**
+ * Enrich report payload with benchmark data for SEO content
+ */
+async function enrichReportWithBenchmarks(payload: ReturnType<typeof buildReportPayload>) {
+  try {
+    const score = payload.scan.score;
+    const trackerCount = payload.meta.trackerCount;
+    const cookieCount = payload.meta.cookieCount;
+
+    // Skip enrichment if no score (incomplete scan)
+    if (score === null || score === undefined) {
+      return payload;
+    }
+
+    // Get benchmark comparison and insights in parallel
+    const [benchmarks, globalBenchmarks, trackerInsights] = await Promise.all([
+      analyticsService.compareToBenchmarks(score, trackerCount, cookieCount),
+      analyticsService.getGlobalBenchmarks(),
+      analyticsService.getTrackerInsights(
+        payload.evidence
+          .filter(e => e.kind === 'tracker')
+          .map(e => {
+            const details = e.details as { domain?: string };
+            return details?.domain ?? '';
+          })
+          .filter(Boolean)
+      ),
+    ]);
+
+    // Add benchmark data to meta
+    return {
+      ...payload,
+      meta: {
+        ...payload.meta,
+        benchmarks,
+        trackerInsights,
+        globalBenchmarks: {
+          totalDomains: globalBenchmarks.totalDomains,
+          averageScore: globalBenchmarks.averageScore,
+          medianScore: globalBenchmarks.medianScore,
+          averageTrackerCount: globalBenchmarks.averageTrackerCount,
+          averageCookieCount: globalBenchmarks.averageCookieCount,
+        },
+      },
+    };
+  } catch (error) {
+    // Log but don't fail - benchmarks are optional enhancement
+    logger.warn({ error }, 'Failed to enrich report with benchmarks');
+    return payload;
+  }
+}
 
 /**
  * Extract domain from URL for blocklist checking
@@ -74,10 +130,13 @@ reportV2Router.get(['/report/:slug', '/r/:slug'], async (req, res) => {
       return problem(res, 404, 'Report not found');
     }
 
-    const payload = buildReportPayload(scan, {
+    const basePayload = buildReportPayload(scan, {
       evidence: scan.evidence ?? [],
       issues: scan.issues ?? [],
     });
+
+    // Enrich with benchmark data for SEO
+    const payload = await enrichReportWithBenchmarks(basePayload);
 
     const archive = await getReportDownloadUrl(scan.id);
     res.json(archive ? { ...payload, archive } : payload);
@@ -116,10 +175,14 @@ reportV2Router.get('/scan/:id', async (req, res) => {
       return problem(res, 404, 'Scan not found');
     }
 
-    const payload = buildReportPayload(scan, {
+    const basePayload = buildReportPayload(scan, {
       evidence: scan.evidence ?? [],
       issues: scan.issues ?? [],
     });
+
+    // Enrich with benchmark data for SEO
+    const payload = await enrichReportWithBenchmarks(basePayload);
+
     const archive = await getReportDownloadUrl(scan.id);
     res.json(archive ? { ...payload, archive } : payload);
   } catch (error) {
@@ -399,10 +462,13 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
       return problem(res, 404, 'No report found for this domain');
     }
 
-    const payload = buildReportPayload(scan, {
+    const basePayload = buildReportPayload(scan, {
       evidence: scan.evidence ?? [],
       issues: scan.issues ?? [],
     });
+
+    // Enrich with benchmark data for SEO
+    const payload = await enrichReportWithBenchmarks(basePayload);
 
     const archive = await getReportDownloadUrl(scan.id);
     res.json(archive ? { ...payload, archive } : payload);
@@ -483,5 +549,52 @@ reportV2Router.get('/domains/indexable', async (req, res) => {
   } catch (error) {
     logger.error({ error }, 'Error fetching indexable domains');
     return problem(res, 500, 'Failed to get domains');
+  }
+});
+
+// Analytics endpoint - global benchmarks for market analysis
+reportV2Router.get('/analytics/benchmarks', async (_req, res) => {
+  try {
+    const benchmarks = await analyticsService.getGlobalBenchmarks();
+    res.json(benchmarks);
+  } catch (error) {
+    logger.error({ error }, 'Error fetching analytics benchmarks');
+    return problem(res, 500, 'Failed to load benchmarks');
+  }
+});
+
+// Analytics endpoint - compare a score to benchmarks
+reportV2Router.get('/analytics/compare', async (req, res) => {
+  try {
+    const score = parseInt(req.query.score as string);
+    const trackers = parseInt(req.query.trackers as string) || 0;
+    const cookies = parseInt(req.query.cookies as string) || 0;
+
+    if (isNaN(score) || score < 0 || score > 100) {
+      return problem(res, 400, 'Invalid score parameter (must be 0-100)');
+    }
+
+    const comparison = await analyticsService.compareToBenchmarks(score, trackers, cookies);
+    res.json(comparison);
+  } catch (error) {
+    logger.error({ error }, 'Error comparing to benchmarks');
+    return problem(res, 500, 'Failed to compare benchmarks');
+  }
+});
+
+// Admin endpoint - refresh analytics cache
+reportV2Router.post('/analytics/refresh', async (req, res) => {
+  try {
+    // Simple admin key check (should be replaced with proper auth in production)
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== process.env.ADMIN_API_KEY) {
+      return problem(res, 401, 'Unauthorized');
+    }
+
+    await analyticsService.refreshCache();
+    res.json({ success: true, message: 'Analytics cache refreshed' });
+  } catch (error) {
+    logger.error({ error }, 'Error refreshing analytics cache');
+    return problem(res, 500, 'Failed to refresh cache');
   }
 });

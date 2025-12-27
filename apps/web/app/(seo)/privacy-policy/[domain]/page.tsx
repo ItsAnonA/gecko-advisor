@@ -126,12 +126,14 @@ export default async function ReportPage({ params }: Props) {
   if (faqSchema) schemas.push(faqSchema as unknown as Record<string, unknown>);
 
   // Build SEO content component to embed in Overview tab
+  // Pass benchmark data for market comparison SEO content
   const seoContent = (
     <SEOSummary
       scanData={scanData}
       domain={domain}
       tier={tier}
       heading={heading}
+      benchmarks={data.meta}
     />
   );
 

@@ -71,6 +71,25 @@ export interface ReportData {
     thirdPartyCount?: number;
     cookieCount?: number;
     tlsGrade?: string;
+    // Market Analysis - SEO Content Enrichment
+    benchmarks?: {
+      percentile: number;
+      comparedToAverage: number;
+      trackerComparison: 'below' | 'average' | 'above';
+      cookieComparison: 'below' | 'average' | 'above';
+    };
+    trackerInsights?: {
+      uniqueTrackers: number;
+      commonTrackers: string[];
+      rarityScore: number;
+    };
+    globalBenchmarks?: {
+      totalDomains: number;
+      averageScore: number;
+      medianScore: number;
+      averageTrackerCount: number;
+      averageCookieCount: number;
+    };
   };
 }
 
