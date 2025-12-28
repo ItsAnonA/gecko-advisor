@@ -13,20 +13,37 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const API_URL = process.env.API_INTERNAL_URL || 'http://localhost:5001';
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Umami Analytics - proxied through our domain to bypass ad blockers
+const UMAMI_URL = 'https://cloud.umami.is';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
 
   // Rewrite /api/* to backend (LOCAL DEV ONLY - nginx handles this in production)
-  // In production builds, rewrites are disabled to prevent baked localhost:5001
+  // Umami analytics proxy works in both dev and production
   async rewrites() {
-    // Skip rewrites in production - nginx proxies /api/* to backend
+    // Umami proxy rewrites - always enabled to bypass ad blockers
+    const umamiRewrites = [
+      {
+        source: '/stats/script.js',
+        destination: `${UMAMI_URL}/script.js`,
+      },
+      {
+        source: '/stats/api/send',
+        destination: `${UMAMI_URL}/api/send`,
+      },
+    ];
+
+    // Skip API rewrites in production - nginx proxies /api/* to backend
     if (isProduction) {
-      return [];
+      return umamiRewrites;
     }
-    // Local dev: proxy /api/* to backend directly
+
+    // Local dev: proxy /api/* to backend directly + Umami
     return [
+      ...umamiRewrites,
       {
         source: '/api/:path*',
         destination: `${API_URL}/api/:path*`,
@@ -75,6 +92,7 @@ const nextConfig = {
   // Environment variables exposed to the browser
   env: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'https://geckoadvisor.com',
+    NEXT_PUBLIC_UMAMI_WEBSITE_ID: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
   },
 
   // Disable x-powered-by header

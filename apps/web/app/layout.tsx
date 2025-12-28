@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared/seo';
+import { UmamiAnalytics } from '@/components/analytics';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -106,6 +107,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-light-bg antialiased font-sans">
         {children}
+        <UmamiAnalytics />
       </body>
     </html>
   );
