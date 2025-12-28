@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       follow: true,
     },
     openGraph: {
-      title: `${domain} Privacy Analysis | ${SEO_CONSTANTS.SITE_NAME}`,
+      title: `${domain} Privacy Score & Security Signals | ${SEO_CONSTANTS.SITE_NAME}`,
       description,
       url: `${SEO_CONSTANTS.BASE_URL}/privacy-policy/${domain}`,
       siteName: SEO_CONSTANTS.SITE_NAME,
@@ -127,6 +127,7 @@ export default async function ReportPage({ params }: Props) {
 
   // Build SEO content component to embed in Overview tab
   // Pass benchmark data for market comparison SEO content
+  // Pass topFixes for remediation recommendations SEO content
   const seoContent = (
     <SEOSummary
       scanData={scanData}
@@ -134,6 +135,7 @@ export default async function ReportPage({ params }: Props) {
       tier={tier}
       heading={heading}
       benchmarks={data.meta}
+      topFixes={data.topFixes}
     />
   );
 
@@ -146,22 +148,31 @@ export default async function ReportPage({ params }: Props) {
 
       {/* Main Content Container */}
       <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
-        {/* Breadcrumbs - At top for SEO and navigation */}
+        {/* Breadcrumbs - At top for SEO and navigation with Schema.org markup */}
         <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-            <li>
-              <Link href="/" className="hover:text-advisor-600 transition-colors">
-                Home
+          <ol
+            className="flex flex-wrap items-center gap-2 text-sm text-zinc-500"
+            itemScope
+            itemType="https://schema.org/BreadcrumbList"
+          >
+            <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+              <Link href="/" className="hover:text-advisor-600 transition-colors" itemProp="item">
+                <span itemProp="name">Home</span>
               </Link>
+              <meta itemProp="position" content="1" />
             </li>
-            <li>/</li>
-            <li>
-              <Link href="/reports" className="hover:text-advisor-600 transition-colors">
-                Privacy Reports
+            <li aria-hidden="true">/</li>
+            <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+              <Link href="/reports" className="hover:text-advisor-600 transition-colors" itemProp="item">
+                <span itemProp="name">Website Privacy Reports</span>
               </Link>
+              <meta itemProp="position" content="2" />
             </li>
-            <li>/</li>
-            <li className="text-zinc-700 font-medium">{domain}</li>
+            <li aria-hidden="true">/</li>
+            <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+              <span className="text-zinc-700 font-medium" itemProp="name">{domain}</span>
+              <meta itemProp="position" content="3" />
+            </li>
           </ol>
         </nav>
 

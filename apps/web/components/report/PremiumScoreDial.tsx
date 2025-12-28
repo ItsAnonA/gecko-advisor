@@ -386,6 +386,18 @@ const PremiumScoreDial = React.memo(function PremiumScoreDial({
           {style.description}
         </p>
       )}
+
+      {/* Methodology qualifier - anchors score to observable behavior */}
+      <p
+        className={`
+          mt-1 text-[10px] text-zinc-400 text-center tracking-wide uppercase
+          transition-all duration-700 delay-300
+          ${mounted ? 'opacity-100' : 'opacity-0'}
+        `}
+        aria-hidden="true"
+      >
+        Based on network behavior
+      </p>
     </div>
   );
 });

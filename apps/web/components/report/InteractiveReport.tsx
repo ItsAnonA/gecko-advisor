@@ -8,8 +8,10 @@ import React from 'react';
 import Link from 'next/link';
 import PremiumScoreDial from './PremiumScoreDial';
 import BenchmarkSection from './BenchmarkSection';
+import RecommendationsSection from './RecommendationsSection';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import type { ReportData } from '@/lib/api';
+import { generateShareCopy, getShareUrl, getTwitterShareUrl, getLinkedInShareUrl, copyToClipboard } from '@/lib/shareUtils';
 
 // ============================================================================
 // SVG Icons for evidence types
@@ -212,6 +214,181 @@ function isTlsVulnerability(item: ReportData['evidence'][0]): boolean {
   return !grade || !['A+', 'A', 'B'].includes(grade);
 }
 
+// ============================================================================
+// Score Breakdown Component - Uses new 5-category penalty system
+// ============================================================================
+interface PenaltyBreakdown {
+  tracking: number;
+  security: number;
+  thirdParty: number;
+  cookies: number;
+  compliance: number;
+}
+
+interface ScoreBreakdownProps {
+  meta?: ReportData['meta'];
+  score: number;
+}
+
+function ScoreBreakdownSection({ meta, score }: ScoreBreakdownProps) {
+  const penalties = meta?.penalties as PenaltyBreakdown | undefined;
+  const bonuses = meta?.bonuses as number | undefined;
+
+  // If no penalties data, don't render
+  if (!penalties) return null;
+
+  const getSeverity = (penalty: number, maxPenalty: number): 'none' | 'low' | 'medium' | 'high' => {
+    if (penalty === 0) return 'none';
+    const ratio = penalty / maxPenalty;
+    if (ratio < 0.3) return 'low';
+    if (ratio < 0.6) return 'medium';
+    return 'high';
+  };
+
+  const categories = [
+    {
+      key: 'tracking',
+      name: 'Tracking & Analytics',
+      penalty: penalties.tracking,
+      maxPenalty: 50,
+      icon: (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      )
+    },
+    {
+      key: 'security',
+      name: 'Security Headers',
+      penalty: penalties.security,
+      maxPenalty: 45,
+      icon: (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
+    },
+    {
+      key: 'thirdParty',
+      name: 'Third-Party Requests',
+      penalty: penalties.thirdParty,
+      maxPenalty: 15,
+      icon: (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      )
+    },
+    {
+      key: 'cookies',
+      name: 'Cookie Security',
+      penalty: penalties.cookies,
+      maxPenalty: 10,
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="9" strokeWidth="2" />
+          <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+          <circle cx="14" cy="8" r="1" fill="currentColor" />
+          <circle cx="10" cy="15" r="1.5" fill="currentColor" />
+          <circle cx="15" cy="13" r="1" fill="currentColor" />
+        </svg>
+      )
+    },
+    {
+      key: 'compliance',
+      name: 'Privacy Compliance',
+      penalty: penalties.compliance,
+      maxPenalty: 5,
+      icon: (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    }
+  ];
+
+  const severityStyles = {
+    none: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'None' },
+    low: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Low' },
+    medium: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Medium' },
+    high: { bg: 'bg-red-100', text: 'text-red-700', label: 'High' }
+  };
+
+  const totalPenalty = Object.values(penalties).reduce((sum, p) => sum + p, 0);
+  const bonusPoints = bonuses ?? 0;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+        <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+          <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Score Breakdown
+        </h3>
+        {/* Weight context - explains category prioritization */}
+        <p className="text-xs text-gray-500 mt-1">
+          Security and tracking issues have higher impact than disclosure-only signals.
+        </p>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {categories.map((cat) => {
+          const severity = getSeverity(cat.penalty, cat.maxPenalty);
+          const style = severityStyles[severity];
+
+          return (
+            <div key={cat.key} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center text-gray-500">
+                  {cat.icon}
+                </div>
+                <span className="text-sm font-medium text-zinc-800">{cat.name}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm tabular-nums text-zinc-600 font-medium">
+                  {cat.penalty === 0 ? '0' : `-${cat.penalty}`}
+                </span>
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${style.bg} ${style.text}`}>
+                  {style.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Bonuses row */}
+        {bonusPoints > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-emerald-50/50">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-emerald-800">TLS Bonus</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm tabular-nums text-emerald-700 font-bold">+{bonusPoints}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Total row */}
+        <div className="flex items-center justify-between px-4 py-3 bg-stone-50">
+          <span className="text-sm font-semibold text-zinc-900">Final Score</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500">
+              100 - {totalPenalty} + {bonusPoints} =
+            </span>
+            <span className="text-lg font-bold text-zinc-900">{score}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface InteractiveReportProps {
   data: ReportData;
   domain: string;
@@ -234,7 +411,7 @@ type TabId = 'overview' | 'tracking' | 'security' | 'cookies' | 'details';
  * - Print/Export options
  */
 export default function InteractiveReport({ data, domain, seoContent, heading }: InteractiveReportProps) {
-  const { scan, evidence, meta } = data;
+  const { scan, evidence, meta, topFixes } = data;
   const [activeTab, setActiveTab] = React.useState<TabId>('overview');
   const score = scan.score ?? 0;
 
@@ -313,9 +490,9 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
     },
     {
       id: 'security',
-      label: 'Vulnerabilities',
+      label: 'Security Checks',
       count: securityEvidence.length,
-      icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
     },
     {
       id: 'cookies',
@@ -345,7 +522,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
           <div className="flex-1 text-center md:text-left space-y-3">
             <div>
               <h1 className="text-2xl md:text-3xl font-display font-bold text-zinc-900">
-                <span className="font-mono">{domain}</span> Privacy & Security Analysis
+                <span className="font-mono">{domain}</span> Privacy & Security Signals
               </h1>
               <p className="text-zinc-600 break-all font-mono text-sm mt-1">{scan.input}</p>
             </div>
@@ -353,6 +530,12 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
             <div className="flex justify-center md:justify-start">
               <GradeBadge score={score} size="lg" showLabel={true} />
             </div>
+
+            {/* THE DIFFERENTIATOR - identical everywhere, above the fold */}
+            <p className="text-base text-zinc-700 bg-gray-50 border-l-3 border-emerald-500 px-4 py-2 rounded-r-lg" style={{ borderLeftWidth: '3px' }}>
+              <strong className="text-zinc-900">What websites actually do, not what they promise.</strong>
+              {' '}Gecko Advisor analyzes real network behavior — not privacy policies.
+            </p>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center md:justify-start gap-2 pt-2">
@@ -388,7 +571,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
         </div>
       </header>
 
-      {/* Quick Summary */}
+      {/* Quick Summary - methodology context, not verdict repetition */}
       <section className="bg-slate-50 rounded-xl border border-slate-200 p-4">
         <h2 className="text-lg font-semibold text-zinc-900 flex items-center gap-2 mb-2">
           <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -397,30 +580,38 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
           Quick Summary
         </h2>
         <p className="text-sm text-slate-700">
-          This site has {score >= 70 ? 'good' : score >= 40 ? 'fair' : 'poor'} privacy practices with{' '}
-          {trackerCount} tracker{trackerCount !== 1 ? 's' : ''} detected.{' '}
-          {evidence.length > 0 ? `${evidence.length} total findings analyzed.` : 'No significant issues found.'}
+          This score reflects publicly observable network behavior measured during a live scan.{' '}
+          {evidence.length > 0 ? `${evidence.length} signals analyzed` : 'No significant concerns detected'}
+          {trackerCount === 0
+            ? ', no tracking scripts detected.'
+            : `, ${trackerCount} tracker${trackerCount !== 1 ? 's' : ''} identified.`}
         </p>
       </section>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - with color-score consistency */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <MetricCard
           label="Data Sharing Risk"
           value={trackerCount === 0 && thirdPartyCount < 3 ? 'Low' : thirdPartyCount > 10 ? 'High' : 'Medium'}
           detail={`Trackers: ${trackerCount} • Third-party: ${thirdPartyCount} • Cookies: ${cookieCount}`}
           variant={trackerCount === 0 ? 'success' : trackerCount > 5 ? 'danger' : 'warning'}
+          score={score}
+          severity={trackerCount > 5 ? 'high' : trackerCount > 0 ? 'medium' : 'none'}
         />
         <MetricCard
           label="TLS/HTTPS"
           value={tlsGrade ? 'Valid' : 'Unknown'}
           detail={tlsGrade ? `TLS grade: ${tlsGrade}` : 'Unable to verify'}
-          variant={tlsGrade === 'A' ? 'success' : tlsGrade ? 'warning' : 'neutral'}
+          variant={tlsGrade === 'A' || tlsGrade === 'A+' ? 'success' : tlsGrade ? 'warning' : 'neutral'}
+          score={score}
+          severity={!tlsGrade || tlsGrade === 'F' ? 'high' : tlsGrade === 'D' || tlsGrade === 'C' ? 'medium' : 'low'}
         />
         <MetricCard
           label="Top Trackers"
           value={trackerCount > 0 ? `${trackerCount} found` : 'None detected'}
           variant={trackerCount === 0 ? 'success' : 'warning'}
+          score={score}
+          severity={trackerCount > 5 ? 'high' : trackerCount > 0 ? 'medium' : 'none'}
         />
       </div>
 
@@ -456,9 +647,15 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
         </nav>
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - ALL panels rendered in DOM for SEO, hidden attribute controls visibility */}
       <div className="mt-6">
-        {activeTab === 'overview' && (
+        {/* Overview Panel */}
+        <div
+          role="tabpanel"
+          id="tabpanel-overview"
+          aria-labelledby="tab-overview"
+          hidden={activeTab !== 'overview'}
+        >
           <OverviewPanel
             score={score}
             domain={domain}
@@ -468,12 +665,49 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
             evidence={evidence}
             seoContent={seoContent}
             meta={meta}
+            topFixes={topFixes}
           />
-        )}
-        {activeTab === 'tracking' && <EvidencePanel evidence={trackingEvidence} title="Tracking & Analytics" emptyMessage="No trackers detected!" tabType="tracking" />}
-        {activeTab === 'security' && <EvidencePanel evidence={securityEvidence} title="Security Analysis" emptyMessage="No security issues detected." tabType="security" />}
-        {activeTab === 'cookies' && <EvidencePanel evidence={cookieEvidence} title="Cookie Analysis" emptyMessage="No cookie issues detected." tabType="cookies" />}
-        {activeTab === 'details' && <EvidencePanel evidence={evidence} title="All Technical Details" emptyMessage="No issues detected." tabType="details" />}
+        </div>
+
+        {/* Tracking Panel */}
+        <div
+          role="tabpanel"
+          id="tabpanel-tracking"
+          aria-labelledby="tab-tracking"
+          hidden={activeTab !== 'tracking'}
+        >
+          <EvidencePanel evidence={trackingEvidence} title="Tracking & Analytics" emptyMessage="No trackers detected!" tabType="tracking" />
+        </div>
+
+        {/* Security Panel */}
+        <div
+          role="tabpanel"
+          id="tabpanel-security"
+          aria-labelledby="tab-security"
+          hidden={activeTab !== 'security'}
+        >
+          <EvidencePanel evidence={securityEvidence} title="Security Analysis" emptyMessage="No security issues detected." tabType="security" />
+        </div>
+
+        {/* Cookies Panel */}
+        <div
+          role="tabpanel"
+          id="tabpanel-cookies"
+          aria-labelledby="tab-cookies"
+          hidden={activeTab !== 'cookies'}
+        >
+          <EvidencePanel evidence={cookieEvidence} title="Cookie Analysis" emptyMessage="No cookie issues detected." tabType="cookies" />
+        </div>
+
+        {/* Full Report Panel */}
+        <div
+          role="tabpanel"
+          id="tabpanel-details"
+          aria-labelledby="tab-details"
+          hidden={activeTab !== 'details'}
+        >
+          <EvidencePanel evidence={evidence} title="All Technical Details" emptyMessage="No issues detected." tabType="details" />
+        </div>
       </div>
 
       {/* Score Explanation */}
@@ -497,34 +731,13 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
         </div>
       </details>
 
-      {/* Share Section */}
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-medium text-zinc-900">Share this report</div>
-            <div className="text-xs text-zinc-500 font-mono truncate max-w-xs">
-              https://geckoadvisor.com/privacy-policy/{domain}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={shareUrl}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
-            >
-              Share
-            </button>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`https://geckoadvisor.com/privacy-policy/${domain}`);
-                alert('Link copied!');
-              }}
-              className="px-4 py-2 bg-white border border-gray-300 text-zinc-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-            >
-              Copy link
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Share Section - with pre-written copy */}
+      <ShareSection
+        domain={domain}
+        score={score}
+        trackerCount={trackerCount}
+        tlsGrade={tlsGrade}
+      />
 
       {/* Footer Links */}
       <footer className="text-xs text-zinc-500 space-y-2">
@@ -541,17 +754,41 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
 
 // Helper Components
 
+/**
+ * MetricCard - Displays a key metric with color-score consistency
+ *
+ * CRITICAL: High scores (≥80) use neutral colors unless severity is explicitly 'high'
+ * This prevents green score + orange elements = score feels fake
+ */
 function MetricCard({
   label,
   value,
   detail,
-  variant = 'neutral'
+  variant = 'neutral',
+  score,
+  severity
 }: {
   label: string;
   value: string;
   detail?: string;
   variant?: 'success' | 'warning' | 'danger' | 'neutral';
+  /** Overall report score - used for color-score consistency */
+  score?: number;
+  /** Explicit severity override - only 'high' shows warning colors on high-score reports */
+  severity?: 'none' | 'low' | 'medium' | 'high';
 }) {
+  // CRITICAL: Color-score consistency rule
+  // High scores (≥80) get neutral colors unless severity is explicitly high
+  const effectiveVariant = React.useMemo(() => {
+    if (score !== undefined && score >= 80 && severity !== 'high') {
+      // High score report - use neutral colors for non-high-severity items
+      if (variant === 'warning' || variant === 'danger') {
+        return 'neutral';
+      }
+    }
+    return variant;
+  }, [score, severity, variant]);
+
   const variantStyles = {
     success: 'bg-green-50 border-green-200',
     warning: 'bg-amber-50 border-amber-200',
@@ -567,13 +804,129 @@ function MetricCard({
   };
 
   return (
-    <div className={`rounded-xl border p-4 ${variantStyles[variant]}`}>
+    <div className={`rounded-xl border p-4 ${variantStyles[effectiveVariant]}`}>
       <div className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{label}</div>
-      <div className={`text-lg font-bold mt-1 ${valueStyles[variant]}`}>{value}</div>
+      <div className={`text-lg font-bold mt-1 ${valueStyles[effectiveVariant]}`}>{value}</div>
       {detail && <div className="text-xs text-zinc-500 mt-1">{detail}</div>}
     </div>
   );
 }
+
+/**
+ * ShareSection - Displays pre-written share copy with social buttons
+ *
+ * Features:
+ * - Pre-written copy based on score and tracker count
+ * - Copy to clipboard functionality
+ * - Direct social share links (Twitter/X, LinkedIn)
+ */
+function ShareSection({
+  domain,
+  score,
+  trackerCount,
+  tlsGrade,
+}: {
+  domain: string;
+  score: number;
+  trackerCount: number;
+  tlsGrade?: string;
+}) {
+  const [copied, setCopied] = React.useState(false);
+  const shareParams = { domain, score, trackerCount, tlsGrade };
+  const { text } = generateShareCopy(shareParams);
+  const url = getShareUrl(domain);
+  const fullShareText = `${text} ${url}`;
+
+  const handleCopyText = async () => {
+    const success = await copyToClipboard(fullShareText);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const success = await copyToClipboard(url);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-4">
+      <h4 className="text-sm font-semibold text-zinc-900">Share this report</h4>
+
+      {/* Pre-written copy preview */}
+      <div className="bg-white border border-gray-200 rounded-lg p-3">
+        <p className="text-sm text-zinc-700 italic">&ldquo;{text}&rdquo;</p>
+        <button
+          onClick={handleCopyText}
+          className="mt-2 text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+        >
+          {copied ? (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Copied!
+            </>
+          ) : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy with link
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Social share buttons */}
+      <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={getTwitterShareUrl(shareParams)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          Share on X
+        </a>
+        <a
+          href={getLinkedInShareUrl(domain)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-[#0A66C2] text-white text-xs font-medium rounded-lg hover:bg-[#004182] transition-colors"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+          </svg>
+          Share on LinkedIn
+        </a>
+        <button
+          onClick={handleCopyLink}
+          className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-zinc-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          Copy link
+        </button>
+      </div>
+
+      {/* Direct link display */}
+      <div className="text-xs text-zinc-500 font-mono truncate">
+        {url}
+      </div>
+    </div>
+  );
+}
+
+// Minimum sample size for showing market comparison - below this, hide entirely
+const MIN_SAMPLE_FOR_COMPARISON = 50;
 
 function OverviewPanel({
   score,
@@ -583,7 +936,8 @@ function OverviewPanel({
   tlsGrade,
   evidence,
   seoContent,
-  meta
+  meta,
+  topFixes
 }: {
   score: number;
   domain: string;
@@ -593,86 +947,126 @@ function OverviewPanel({
   evidence: ReportData['evidence'];
   seoContent?: React.ReactNode;
   meta?: ReportData['meta'];
+  topFixes?: ReportData['topFixes'];
 }) {
+  // CRITICAL: Only show market comparison when we have enough data (N >= 50)
+  // No placeholder, no "coming soon", nothing - just hide entirely
+  const totalDomains = meta?.globalBenchmarks?.totalDomains ?? 0;
+  const hasBenchmarks = meta?.benchmarks && meta?.globalBenchmarks && totalDomains >= MIN_SAMPLE_FOR_COMPARISON;
+  const hasRecommendations = topFixes && topFixes.length > 0;
+
   return (
-    <div role="tabpanel" id="tabpanel-overview" aria-labelledby="tab-overview" className="space-y-6">
-      {/* Market Comparison - Benchmark Section */}
-      <BenchmarkSection meta={meta} domain={domain} score={score} />
+    <div className="space-y-6">
+      {/* ===== PRIMARY INSIGHTS ROW ===== */}
+      {/* Two-column dashboard layout on desktop, stacked on mobile */}
+      <div className={`grid gap-6 ${hasBenchmarks && hasRecommendations ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+        {/* Market Comparison - Left Column */}
+        {hasBenchmarks && (
+          <div className="min-w-0">
+            <BenchmarkSection meta={meta} domain={domain} score={score} />
+          </div>
+        )}
 
-      {/* SEO Content - Crawlable by search engines */}
-      {seoContent && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          {seoContent}
-        </div>
-      )}
+        {/* Recommended Actions - Right Column */}
+        {hasRecommendations && (
+          <div className="min-w-0">
+            <RecommendationsSection topFixes={topFixes} domain={domain} />
+          </div>
+        )}
+      </div>
 
-      {/* Key Findings */}
-      <div>
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4">Key Findings</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-xl">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+      {/* ===== QUICK STATS BAR ===== */}
+      {/* Compact horizontal stats strip */}
+      <div className="bg-gradient-to-r from-slate-50 to-stone-50 rounded-xl border border-slate-200/80 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Stat items */}
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Third-party connections */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide font-medium">Third-Party</div>
+                <div className="text-sm font-bold text-zinc-900">{thirdPartyCount} connections</div>
+              </div>
             </div>
-            <div>
-              <div className="font-medium text-zinc-900">Third-Party Connections</div>
-              <div className="text-sm text-zinc-600">{thirdPartyCount} external domains</div>
+
+            {/* TLS Status */}
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tlsGrade ? 'bg-emerald-100' : 'bg-zinc-100'}`}>
+                <svg className={`w-4 h-4 ${tlsGrade ? 'text-emerald-600' : 'text-zinc-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide font-medium">HTTPS</div>
+                <div className="text-sm font-bold text-zinc-900">{tlsGrade ? `Grade ${tlsGrade}` : 'Unknown'}</div>
+              </div>
+            </div>
+
+            {/* Trackers */}
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${trackerCount === 0 ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+                <svg className={`w-4 h-4 ${trackerCount === 0 ? 'text-emerald-600' : 'text-amber-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide font-medium">Trackers</div>
+                <div className="text-sm font-bold text-zinc-900">{trackerCount === 0 ? 'None found' : `${trackerCount} detected`}</div>
+              </div>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-xl">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <div>
-              <div className="font-medium text-zinc-900">HTTPS Status</div>
-              <div className="text-sm text-zinc-600">{tlsGrade ? `Valid (Grade ${tlsGrade})` : 'Unknown'}</div>
-            </div>
+
+          {/* Impact summary badge */}
+          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+            trackerCount === 0 && thirdPartyCount < 5
+              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+              : trackerCount > 5 || thirdPartyCount > 15
+              ? 'bg-red-100 text-red-700 border border-red-200'
+              : 'bg-amber-100 text-amber-700 border border-amber-200'
+          }`}>
+            {trackerCount === 0 && thirdPartyCount < 5
+              ? '✓ Low Risk'
+              : trackerCount > 5 || thirdPartyCount > 15
+              ? '⚠ High Risk'
+              : '● Moderate Risk'}
           </div>
         </div>
       </div>
 
-      {/* Score Breakdown */}
-      {evidence.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-4">Score Breakdown</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 px-3 font-medium text-zinc-600">Category</th>
-                  <th className="text-left py-2 px-3 font-medium text-zinc-600">Issues</th>
-                  <th className="text-left py-2 px-3 font-medium text-zinc-600">Impact</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { name: 'Trackers', count: trackerCount, impact: trackerCount > 5 ? 'High' : trackerCount > 0 ? 'Medium' : 'None' },
-                  { name: 'Third-Party', count: thirdPartyCount, impact: thirdPartyCount > 10 ? 'High' : thirdPartyCount > 3 ? 'Medium' : 'Low' },
-                  { name: 'Security', count: evidence.filter(e => e.kind === 'header' || e.kind === 'insecure').length, impact: 'Varies' },
-                ].map((row, i) => (
-                  <tr key={i} className="border-b border-gray-100">
-                    <td className="py-2 px-3 text-zinc-900">{row.name}</td>
-                    <td className="py-2 px-3 text-zinc-600">{row.count}</td>
-                    <td className="py-2 px-3">
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${
-                        row.impact === 'High' ? 'bg-red-100 text-red-700' :
-                        row.impact === 'Medium' ? 'bg-amber-100 text-amber-700' :
-                        row.impact === 'None' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {row.impact}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ===== SCORE BREAKDOWN ===== */}
+      {/* Penalty category breakdown using new scoring algorithm */}
+      <ScoreBreakdownSection meta={meta} score={score} />
+
+      {/* ===== SEO CONTENT ===== */}
+      {/* Native details/summary - semantic, accessible, and crawlable */}
+      {seoContent && (
+        <details className="bg-white border border-gray-200 rounded-xl overflow-hidden group">
+          <summary className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50/50 transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-sm font-semibold text-zinc-800">Detailed Analysis Report</span>
+            </div>
+            <svg
+              className="w-4 h-4 text-zinc-400 transition-transform duration-200 group-open:rotate-180"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="px-6 py-4 border-t border-gray-100">
+            {seoContent}
           </div>
-        </div>
+        </details>
       )}
     </div>
   );

@@ -13,6 +13,9 @@ interface BenchmarkSectionProps {
   score: number;
 }
 
+// Minimum sample size for statistically meaningful percentile
+const MIN_SAMPLE_SIZE = 50;
+
 /**
  * BenchmarkSection - Market comparison with distinctive visual hierarchy
  *
@@ -59,40 +62,31 @@ export default function BenchmarkSection({ meta, domain, score }: BenchmarkSecti
   const { percentile, comparedToAverage, trackerComparison, cookieComparison } = benchmarks;
   const { totalDomains, averageScore, averageTrackerCount, averageCookieCount } = globalBenchmarks;
 
+  // Check if we have enough data for meaningful percentile
+  const hasEnoughData = totalDomains >= MIN_SAMPLE_SIZE;
+
   // Ring calculation
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (animatedPercentile / 100) * circumference;
 
-  // Dynamic colors based on percentile
-  const getPercentileTheme = () => {
-    if (percentile >= 75) return {
-      ring: '#10b981',
-      ringGlow: 'rgba(16, 185, 129, 0.35)',
-      bg: 'from-emerald-50/80 to-stone-50',
-      text: 'text-emerald-700',
-      badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      label: 'Excellent'
-    };
-    if (percentile >= 50) return {
-      ring: '#f59e0b',
-      ringGlow: 'rgba(245, 158, 11, 0.35)',
-      bg: 'from-amber-50/80 to-stone-50',
-      text: 'text-amber-700',
-      badge: 'bg-amber-100 text-amber-800 border-amber-200',
-      label: 'Average'
-    };
-    return {
-      ring: '#ef4444',
-      ringGlow: 'rgba(239, 68, 68, 0.35)',
-      bg: 'from-red-50/60 to-stone-50',
-      text: 'text-red-700',
-      badge: 'bg-red-100 text-red-800 border-red-200',
-      label: 'Below Average'
-    };
+  // NEUTRAL theme - percentile ring is context, not judgment
+  // No red/green based on percentile - always neutral slate
+  const theme = {
+    ring: '#64748b',           // slate-500 - always neutral
+    ringGlow: 'rgba(100, 116, 139, 0.2)',
+    bg: 'from-slate-50/80 to-stone-50',
+    text: 'text-slate-600',
+    badge: 'bg-slate-100 text-slate-700 border-slate-200'
   };
 
-  const theme = getPercentileTheme();
+  // Neutral position label - no judgment
+  const getPositionLabel = (p: number): string => {
+    if (p >= 75) return 'Upper quartile';
+    if (p >= 50) return 'Upper half';
+    if (p >= 25) return 'Lower half';
+    return 'Lower quartile';
+  };
 
   const getComparisonData = (type: 'tracker' | 'cookie') => {
     const comparison = type === 'tracker' ? trackerComparison : cookieComparison;
@@ -125,7 +119,7 @@ export default function BenchmarkSection({ meta, domain, score }: BenchmarkSecti
 
   return (
     <section
-      className={`relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-br ${theme.bg} p-6 transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+      className={`relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-br ${theme.bg} p-6 transition-all duration-500 h-full ${mounted ? 'opacity-100' : 'opacity-0'}`}
       aria-labelledby="benchmark-heading"
     >
       {/* Subtle pattern overlay */}
@@ -146,84 +140,107 @@ export default function BenchmarkSection({ meta, domain, score }: BenchmarkSecti
               Market Comparison
             </h3>
             <p className="text-xs text-zinc-500">
-              Based on {totalDomains.toLocaleString()} analyzed sites
+              {hasEnoughData
+                ? `Based on ${totalDomains.toLocaleString()} analyzed sites`
+                : `Building data (${totalDomains} sites analyzed)`}
             </p>
           </div>
         </div>
 
         {/* Main content grid */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Percentile Ring - Hero Element */}
-          <div className="flex-shrink-0 flex flex-col items-center">
-            <div className="relative">
-              {/* Glow effect */}
-              <div
-                className="absolute inset-0 rounded-full blur-xl transition-opacity duration-700"
-                style={{
-                  backgroundColor: theme.ringGlow,
-                  opacity: mounted ? 0.6 : 0,
-                  transform: 'scale(1.1)'
-                }}
-              />
-
-              {/* SVG Ring */}
-              <svg className="w-28 h-28 -rotate-90 relative z-10" viewBox="0 0 100 100">
-                <defs>
-                  <linearGradient id={`percentile-grad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={theme.ring} />
-                    <stop offset="100%" stopColor={theme.ring} stopOpacity="0.6" />
-                  </linearGradient>
-                </defs>
-
-                {/* Background track */}
-                <circle
-                  cx="50" cy="50" r={radius}
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="8"
+          {/* Percentile Ring - Hero Element (only show when enough data) */}
+          {hasEnoughData ? (
+            <div className="flex-shrink-0 flex flex-col items-center">
+              <div className="relative">
+                {/* Glow effect */}
+                <div
+                  className="absolute inset-0 rounded-full blur-xl transition-opacity duration-700"
+                  style={{
+                    backgroundColor: theme.ringGlow,
+                    opacity: mounted ? 0.6 : 0,
+                    transform: 'scale(1.1)'
+                  }}
                 />
 
-                {/* Progress ring */}
-                <circle
-                  cx="50" cy="50" r={radius}
-                  fill="none"
-                  stroke={`url(#percentile-grad-${uniqueId})`}
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={mounted ? strokeDashoffset : circumference}
-                  className="transition-all duration-1000 ease-out"
-                  style={{ transitionDelay: '200ms' }}
-                />
-              </svg>
+                {/* SVG Ring - smaller to de-emphasize */}
+                <svg className="w-20 h-20 -rotate-90 relative z-10" viewBox="0 0 100 100">
+                  <defs>
+                    <linearGradient id={`percentile-grad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={theme.ring} />
+                      <stop offset="100%" stopColor={theme.ring} stopOpacity="0.6" />
+                    </linearGradient>
+                  </defs>
 
-              {/* Center content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-3xl font-bold tabular-nums tracking-tight ${theme.text}`}>
-                  {animatedPercentile}%
-                </span>
-                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium mt-0.5">
-                  Percentile
-                </span>
+                  {/* Background track */}
+                  <circle
+                    cx="50" cy="50" r={radius}
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="8"
+                  />
+
+                  {/* Progress ring */}
+                  <circle
+                    cx="50" cy="50" r={radius}
+                    fill="none"
+                    stroke={`url(#percentile-grad-${uniqueId})`}
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={mounted ? strokeDashoffset : circumference}
+                    className="transition-all duration-1000 ease-out"
+                    style={{ transitionDelay: '200ms' }}
+                  />
+                </svg>
+
+                {/* Center content - smaller text for de-emphasis */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className={`text-xl font-bold tabular-nums tracking-tight ${theme.text}`}>
+                    {animatedPercentile}%
+                  </span>
+                  <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-medium mt-0.5">
+                    Percentile
+                  </span>
+                </div>
+              </div>
+
+              {/* Position indicator - neutral framing */}
+              <div className={`mt-3 px-3 py-1 rounded-full text-xs font-semibold border ${theme.badge}`}>
+                {getPositionLabel(percentile)}
               </div>
             </div>
-
-            {/* Status badge */}
-            <div className={`mt-3 px-3 py-1 rounded-full text-xs font-semibold border ${theme.badge}`}>
-              {theme.label}
+          ) : (
+            /* Placeholder when sample size is too small */
+            <div className="flex-shrink-0 flex flex-col items-center justify-center w-28 h-28 bg-stone-100 rounded-full border-2 border-dashed border-stone-300">
+              <svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="text-[10px] text-stone-500 font-medium mt-1 text-center px-2">
+                Building<br />Data
+              </span>
             </div>
-          </div>
+          )}
 
           {/* Details section */}
           <div className="flex-1 space-y-4">
-            {/* SEO-optimized headline */}
-            <p className="text-sm text-zinc-700 leading-relaxed">
-              <span className="font-semibold text-zinc-900">{domain}</span> scores better than{' '}
-              <span className={`font-bold ${theme.text}`}>{percentile}%</span> of websites.
-              {comparedToAverage >= 0
-                ? ` That's ${comparedToAverage} points above average.`
-                : ` That's ${Math.abs(comparedToAverage)} points below average.`}
-            </p>
+            {/* Neutral headline - no judgment, just facts */}
+            {hasEnoughData ? (
+              <p className="text-sm text-zinc-700 leading-relaxed">
+                <span className="font-semibold text-zinc-900">{domain}</span> is at the{' '}
+                <span className={`font-medium ${theme.text}`}>{percentile}th percentile</span> among {totalDomains.toLocaleString()} scanned sites.
+                {comparedToAverage >= 0
+                  ? ` Score is ${comparedToAverage} points above the dataset average of ${averageScore}.`
+                  : ` Score is ${Math.abs(comparedToAverage)} points below the dataset average of ${averageScore}.`}
+              </p>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800">
+                  <strong>Limited data:</strong> Market comparison will become more accurate as we analyze more websites.
+                  Currently tracking {totalDomains} sites.
+                </p>
+              </div>
+            )}
 
             {/* Score comparison bar */}
             <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-stone-200/60">
@@ -316,11 +333,21 @@ export default function BenchmarkSection({ meta, domain, score }: BenchmarkSecti
           </div>
         </div>
 
-        {/* SEO content - visible and crawlable */}
+        {/* SEO content - neutral facts, no ranking claims */}
         <div className="mt-6 pt-4 border-t border-stone-200/60">
           <p className="text-xs text-zinc-600 leading-relaxed">
-            {domain} has a privacy score of {score}/100, ranking in the top {100 - percentile}% of {totalDomains.toLocaleString()} websites analyzed by Gecko Advisor.
-            This site uses {meta?.trackerCount ?? 0} trackers (average: {averageTrackerCount.toFixed(1)}) and sets {meta?.cookieCount ?? 0} cookies (average: {averageCookieCount.toFixed(1)}).
+            {hasEnoughData ? (
+              <>
+                {domain} has a privacy score of {score}/100 based on {totalDomains.toLocaleString()} sites in the Gecko Advisor dataset.
+                This site uses {meta?.trackerCount ?? 0} trackers (dataset average: {averageTrackerCount.toFixed(1)}) and sets {meta?.cookieCount ?? 0} cookies (dataset average: {averageCookieCount.toFixed(1)}).
+              </>
+            ) : (
+              <>
+                {domain} has a privacy score of {score}/100.
+                This site uses {meta?.trackerCount ?? 0} trackers and sets {meta?.cookieCount ?? 0} cookies.
+                Market comparison data is still being collected.
+              </>
+            )}
           </p>
         </div>
       </div>

@@ -18,6 +18,8 @@ import type { IndexTier, ScanDataForMetadata } from '@gecko-advisor/shared';
 import { getScanFreshnessText } from '@gecko-advisor/shared';
 import type { ReportData } from '@/lib/api';
 
+type TopFix = NonNullable<ReportData['topFixes']>[number];
+
 interface Props {
   scanData: ScanDataForMetadata;
   domain: string;
@@ -25,15 +27,40 @@ interface Props {
   heading: string;
   /** Optional benchmark data for market comparison SEO content */
   benchmarks?: ReportData['meta'];
+  /** Optional remediation recommendations for SEO content */
+  topFixes?: TopFix[];
 }
 
-export function SEOSummary({ scanData, domain, tier, heading, benchmarks }: Props) {
+export function SEOSummary({ scanData, domain, tier, heading, benchmarks, topFixes }: Props) {
   const freshnessText = getScanFreshnessText(scanData.finishedAt);
 
-  // Extract benchmark data if available
-  const hasBenchmarks = benchmarks?.benchmarks && benchmarks?.globalBenchmarks;
+  // Helper to get human-readable category name
+  const getCategoryLabel = (category: string): string => {
+    switch (category) {
+      case 'tracking': return 'tracking concern';
+      case 'security': return 'security issue';
+      case 'compliance': return 'compliance gap';
+      default: return 'privacy issue';
+    }
+  };
+
+  // Helper to get priority text based on severity
+  const getPriorityText = (severity: string): string => {
+    switch (severity) {
+      case 'critical': return 'critical priority';
+      case 'high': return 'high priority';
+      case 'medium': return 'medium priority';
+      default: return 'recommended';
+    }
+  };
+
+  // Minimum sample size for showing market comparison - below this, hide entirely
+  const MIN_SAMPLE_FOR_COMPARISON = 50;
+
+  // Extract benchmark data if available - ONLY show comparisons when N >= 50
+  const totalDomains = benchmarks?.globalBenchmarks?.totalDomains ?? 0;
+  const showComparisons = benchmarks?.benchmarks && benchmarks?.globalBenchmarks && totalDomains >= MIN_SAMPLE_FOR_COMPARISON;
   const percentile = benchmarks?.benchmarks?.percentile;
-  const totalDomains = benchmarks?.globalBenchmarks?.totalDomains;
   const averageScore = benchmarks?.globalBenchmarks?.averageScore;
   const averageTrackerCount = benchmarks?.globalBenchmarks?.averageTrackerCount;
 
@@ -71,9 +98,11 @@ export function SEOSummary({ scanData, domain, tier, heading, benchmarks }: Prop
         <p className="text-gecko-700 mb-2">
           Gecko Advisor&apos;s automated analysis of <strong>{domain}</strong> resulted in a privacy
           score of <strong>{scanData.score}/100</strong>.
-          {typeof scanData.score === 'number' && scanData.score >= 70
-            ? ' This score indicates lower tracking activity was detected during this scan.'
-            : ' This score indicates tracking activity was detected during this scan. Review the detailed findings below.'}
+          {typeof scanData.trackerCount === 'number' && scanData.trackerCount === 0
+            ? ' No tracking scripts were detected during this scan.'
+            : typeof scanData.trackerCount === 'number'
+            ? ` ${scanData.trackerCount} tracking ${scanData.trackerCount === 1 ? 'script was' : 'scripts were'} detected during this scan.`
+            : ''}
         </p>
         <p className="text-gecko-600 text-sm">
           Privacy scores are calculated based on detected tracking scripts, third-party
@@ -82,8 +111,8 @@ export function SEOSummary({ scanData, domain, tier, heading, benchmarks }: Prop
         </p>
       </section>
 
-      {/* Market Comparison Section - SEO enrichment (~80 words) */}
-      {hasBenchmarks && typeof percentile === 'number' && (
+      {/* Market Comparison Section - SEO enrichment (~80 words) - ONLY when N >= 50 */}
+      {showComparisons && typeof percentile === 'number' && (
         <section className="mb-6">
           <h3 className="text-lg font-semibold text-gecko-800 mb-2 flex items-center gap-2">
             <span className="text-indigo-500">📈</span>
@@ -166,6 +195,64 @@ export function SEOSummary({ scanData, domain, tier, heading, benchmarks }: Prop
           <p className="text-gecko-600 text-sm">
             TLS (Transport Layer Security) encrypts data transmitted between your browser and the
             website. A higher grade indicates stronger encryption and better security configuration.
+          </p>
+        </section>
+      )}
+
+      {/* Remediation Recommendations Section - SEO enrichment (~100-200 words depending on issues) */}
+      {topFixes && topFixes.length > 0 && (
+        <section className="mb-6">
+          <h3 className="text-lg font-semibold text-gecko-800 mb-2 flex items-center gap-2">
+            <span className="text-amber-500">🛠️</span>
+            How to improve {domain}&apos;s privacy
+          </h3>
+          <p className="text-gecko-700 mb-3">
+            Based on Gecko Advisor&apos;s analysis, here are the top {topFixes.length} actionable{' '}
+            {topFixes.length === 1 ? 'recommendation' : 'recommendations'} to improve {domain}&apos;s
+            privacy score and protect user data:
+          </p>
+          <ol className="list-decimal list-inside space-y-4 text-gecko-700">
+            {topFixes.map((fix, index) => (
+              <li key={fix.id} className="leading-relaxed">
+                <strong className="text-gecko-800">{fix.title}</strong>
+                <span className="text-gecko-500 text-sm ml-2">
+                  ({getPriorityText(fix.severity)} {getCategoryLabel(fix.category)})
+                </span>
+                {fix.whyItMatters && (
+                  <p className="text-gecko-600 text-sm mt-1 ml-5">
+                    <em>Why it matters:</em> {fix.whyItMatters}
+                  </p>
+                )}
+                {fix.howToFix && (
+                  <p className="text-gecko-700 text-sm mt-1 ml-5">
+                    <em>Recommended action:</em> {fix.howToFix}
+                  </p>
+                )}
+                {fix.references && fix.references.length > 0 && (
+                  <p className="text-gecko-500 text-sm mt-1 ml-5">
+                    Learn more:{' '}
+                    {fix.references.map((ref, refIndex) => (
+                      <span key={refIndex}>
+                        {refIndex > 0 && ', '}
+                        <a
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-advisor-600 hover:text-advisor-700 underline"
+                        >
+                          {ref.label || 'Documentation'}
+                        </a>
+                      </span>
+                    ))}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+          <p className="text-gecko-600 text-sm mt-4">
+            Implementing these {topFixes.length === 1 ? 'change' : 'changes'} can significantly
+            improve {domain}&apos;s privacy posture and user trust. Prioritize based on the severity
+            level indicated for each recommendation.
           </p>
         </section>
       )}

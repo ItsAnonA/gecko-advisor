@@ -24,9 +24,19 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-gecko-500">
+      <ol
+        className="flex flex-wrap items-center gap-2 text-sm text-gecko-500"
+        itemScope
+        itemType="https://schema.org/BreadcrumbList"
+      >
         {items.map((item, index) => (
-          <li key={index} className="flex items-center gap-2">
+          <li
+            key={index}
+            className="flex items-center gap-2"
+            itemProp="itemListElement"
+            itemScope
+            itemType="https://schema.org/ListItem"
+          >
             {index > 0 && (
               <span className="text-gecko-300" aria-hidden="true">
                 /
@@ -36,12 +46,16 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
               <Link
                 href={item.href}
                 className="hover:text-advisor-600 transition-colors"
+                itemProp="item"
               >
-                {item.label}
+                <span itemProp="name">{item.label}</span>
               </Link>
             ) : (
-              <span className="text-gecko-700 font-medium">{item.label}</span>
+              <span className="text-gecko-700 font-medium" itemProp="name">
+                {item.label}
+              </span>
             )}
+            <meta itemProp="position" content={String(index + 1)} />
           </li>
         ))}
       </ol>
