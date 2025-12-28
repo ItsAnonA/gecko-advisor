@@ -63,6 +63,18 @@ export interface ReportData {
     title: string;
     summary?: string | null;
     howToFix?: string | null;
+    whyItMatters?: string | null;
+    references?: Array<{ label?: string; url: string }>;
+  }>;
+  topFixes?: Array<{
+    id: string;
+    key: string;
+    title: string;
+    category: string;
+    severity: string;
+    whyItMatters: string | null;
+    howToFix: string | null;
+    references: Array<{ label?: string; url: string }>;
   }>;
   meta?: {
     dataSharing?: string;
@@ -90,6 +102,16 @@ export interface ReportData {
       averageTrackerCount: number;
       averageCookieCount: number;
     };
+    // Scoring algorithm penalty breakdown
+    penalties?: {
+      tracking: number;
+      security: number;
+      thirdParty: number;
+      cookies: number;
+      compliance: number;
+    };
+    // TLS bonus points
+    bonuses?: number;
   };
 }
 
