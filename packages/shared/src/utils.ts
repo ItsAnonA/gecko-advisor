@@ -123,8 +123,9 @@ export function etldPlusOne(hostname: string): string {
 
 export function labelForScore(score: number): ScoreLabel {
   if (score >= 80) return 'Low Privacy Risk';
-  if (score >= 50) return 'Moderate Privacy Risk';
-  return 'High Privacy Risk';
+  if (score >= 60) return 'Moderate Privacy Risk';
+  if (score >= 40) return 'High Privacy Risk';
+  return 'Critical Privacy Risk';
 }
 
 export function issueSeverityWeight(severity: 'info' | 'low' | 'medium' | 'high' | 'critical'): number {

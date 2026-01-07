@@ -39,9 +39,9 @@ describe('computeScore', () => {
   it('returns baseline score and issues when no evidence present', async () => {
     const prisma = createPrisma([]) as unknown as PrismaClient;
     const result = await computeScore(prisma, 'scan');
-    // With no evidence and bonuses for no trackers (+5) and missing policy penalty (-5),
-    // base score should be 100 + 5 (no trackers) - 5 (no policy) = 100
-    expect(result.score).toBe(100);
+    // New algorithm: No bonuses for "no trackers" or "policy found"
+    // Score: 100 - 5 (no policy penalty) = 95
+    expect(result.score).toBe(95);
     expect(result.label).toBe('Low Privacy Risk');
     expect(result.issues.find((issue) => issue.key === 'compliance.policy')).toBeTruthy();
   });
@@ -69,8 +69,8 @@ describe('computeScore', () => {
     const result = await computeScore(prisma, 'scan');
 
     // Should only count once (-3 points), not 10 times (-30 points)
-    // Score: 100 - 3 (header) - 5 (no policy) + 5 (no trackers) = 97
-    expect(result.score).toBe(97);
+    // New algorithm: 100 - 3 (header) - 5 (no policy) = 92
+    expect(result.score).toBe(92);
     expect(result.explanations.filter(e => e.reason === 'Missing security header').length).toBe(1);
   });
 
@@ -85,8 +85,8 @@ describe('computeScore', () => {
     const result = await computeScore(prisma, 'scan');
 
     // Should only penalize google-analytics.com (-2 points), not GitHub's own CDNs
-    // Score: 100 - 2 (third-party) - 5 (no policy) + 5 (no trackers) = 98
-    expect(result.score).toBe(98);
+    // New algorithm: 100 - 2 (third-party) - 5 (no policy) = 93
+    expect(result.score).toBe(93);
   });
 
   it('rewards sites with strong security (FIX #3)', async () => {
@@ -97,10 +97,11 @@ describe('computeScore', () => {
 
     const result = await computeScore(prisma, 'scan');
 
-    // Score: 100 + 5 (A+ TLS) + 3 (policy found) + 5 (no trackers) = 113 → capped at 100
+    // New algorithm: 100 + 3 (A+ TLS bonus) - 0 (has policy, no penalty) = 103 → capped at 100
+    // No "policy found" bonus in new algorithm - policy just avoids -5 penalty
     expect(result.score).toBe(100);
     expect(result.explanations.some(e => e.reason === 'TLS Grade A+ (excellent)')).toBe(true);
-    expect(result.explanations.some(e => e.reason === 'Privacy policy found')).toBe(true);
+    // Note: "Privacy policy found" bonus removed in new algorithm
   });
 
   it('filters out mixed content false positives (FIX #4)', async () => {
@@ -113,8 +114,8 @@ describe('computeScore', () => {
     const result = await computeScore(prisma, 'scan');
 
     // Should only count the actual HTTP resource (-10 points)
-    // Score: 100 - 10 (insecure) - 5 (no policy) + 5 (no trackers) = 90
-    expect(result.score).toBe(90);
+    // New algorithm: 100 - 10 (insecure) - 5 (no policy) = 85
+    expect(result.score).toBe(85);
     expect(result.issues.some(issue => issue.key === 'security.mixed-content')).toBe(true);
   });
 
@@ -126,8 +127,8 @@ describe('computeScore', () => {
     ]) as unknown as PrismaClient;
 
     const resultWith2 = await computeScore(prismaWith2Signals, 'scan');
-    // Score: 100 - 5 (no policy) + 5 (no trackers) = 100
-    expect(resultWith2.score).toBe(100);
+    // New algorithm: 100 - 5 (no policy) = 95 (no fingerprint penalty with < 3 signals)
+    expect(resultWith2.score).toBe(95);
     expect(resultWith2.issues.some(issue => issue.key === 'tracking.fingerprinting')).toBe(false);
 
     // Test with 3 signals (should penalize - actual fingerprinting)
@@ -138,8 +139,8 @@ describe('computeScore', () => {
     ]) as unknown as PrismaClient;
 
     const resultWith3 = await computeScore(prismaWith3Signals, 'scan');
-    // Score: 100 - 5 (fingerprinting) - 5 (no policy) + 5 (no trackers) = 95
-    expect(resultWith3.score).toBe(95);
+    // New algorithm: 100 - 5 (fingerprinting) - 5 (no policy) = 90
+    expect(resultWith3.score).toBe(90);
     expect(resultWith3.issues.some(issue => issue.key === 'tracking.fingerprinting')).toBe(true);
   });
 });

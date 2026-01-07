@@ -15,7 +15,7 @@ interface FirstPartyPattern {
  */
 const KNOWN_FIRST_PARTY_PATTERNS: FirstPartyPattern[] = [
   // GitHub
-  { root: 'github.com', firstParty: ['githubusercontent.com', 'githubassets.com', 'github.io'] },
+  { root: 'github.com', firstParty: ['githubusercontent.com', 'githubassets.com', 'github.io', 'github-cloud.s3.amazonaws.com'] },
 
   // Google
   { root: 'google.com', firstParty: ['gstatic.com', 'googleusercontent.com', 'ggpht.com'] },
@@ -128,6 +128,7 @@ export function isKnownCDN(domain: string): boolean {
     'typekit.net',
     'fonts.googleapis.com',
     'fonts.gstatic.com',
+    'ctfassets.net',  // Contentful CDN
   ];
 
   const normalizedDomain = domain.toLowerCase();

@@ -119,6 +119,26 @@ export interface GlobalBenchmarkSummary {
   averageCookieCount: number;
 }
 
+/**
+ * Category-based penalty breakdown for scoring transparency
+ * Each category has a maximum cap to prevent single issues from tanking scores
+ */
+export interface PenaltyBreakdown {
+  tracking: number;      // Max 50 - actual privacy abuse (trackers, fingerprinting)
+  security: number;      // Max 45 - TLS, headers, mixed content
+  thirdParty: number;    // Max 15 - architecture complexity (NOT tracking)
+  cookies: number;       // Max 10 - insecure cookie flags
+  compliance: number;    // Max 5  - missing privacy policy
+}
+
+/**
+ * Scan confidence indicator - helps users understand score reliability
+ */
+export interface ScanConfidence {
+  level: 'high' | 'medium' | 'low';
+  reasons: string[];
+}
+
 export interface ReportPayload {
   scan: ScanEntity;
   issues: ReportIssue[];
@@ -136,6 +156,11 @@ export interface ReportPayload {
     benchmarks?: BenchmarkComparison;
     trackerInsights?: TrackerInsights;
     globalBenchmarks?: GlobalBenchmarkSummary;
+    // Scoring Transparency Fields
+    penalties?: PenaltyBreakdown;
+    bonuses?: number; // TLS bonus points (up to 10 for A+ grade)
+    confidence?: ScanConfidence;
+    isHttpOnly?: boolean; // Site serves HTTP only (no HTTPS support)
   };
 }
 
@@ -240,6 +265,13 @@ export function buildReportPayload(scan: ScanEntity, options: BuildReportPayload
     }
   })();
 
+  // Extract penalties, bonuses, and confidence from scan.meta (set by worker)
+  const scanMeta = (scan.meta && typeof scan.meta === 'object') ? scan.meta as Record<string, unknown> : {};
+  const penalties = scanMeta.penalties as PenaltyBreakdown | undefined;
+  const bonuses = typeof scanMeta.bonuses === 'number' ? scanMeta.bonuses : undefined;
+  const confidence = scanMeta.confidence as ScanConfidence | undefined;
+  const isHttpOnly = typeof scanMeta.isHttpOnly === 'boolean' ? scanMeta.isHttpOnly : undefined;
+
   return {
     scan,
     evidence: formattedEvidence,
@@ -253,6 +285,11 @@ export function buildReportPayload(scan: ScanEntity, options: BuildReportPayload
       thirdPartyCount: thirdpartyDomains.size,
       cookieCount,
       tlsGrade,
+      // Scoring Transparency Fields - from worker
+      penalties,
+      bonuses,
+      confidence,
+      isHttpOnly,
     },
   };
 }

@@ -163,13 +163,14 @@ describe('isIndexable', () => {
     ).toBe(true);
   });
 
-  it('returns true for limited tier', () => {
+  it('returns false for limited tier (thin content)', () => {
+    // Limited tier has incomplete analysis data (~200 words) - should not be indexed
     expect(
       isIndexable({
         status: 'done',
         score: 75,
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('returns false for noindex tier', () => {
@@ -184,8 +185,9 @@ describe('getRobotsDirective', () => {
     expect(getRobotsDirective('full')).toEqual({ index: true, follow: true });
   });
 
-  it('returns index: true for limited tier', () => {
-    expect(getRobotsDirective('limited')).toEqual({ index: true, follow: true });
+  it('returns index: false for limited tier (thin content)', () => {
+    // Limited tier has thin content - should not be indexed
+    expect(getRobotsDirective('limited')).toEqual({ index: false, follow: true });
   });
 
   it('returns index: false for noindex tier', () => {
