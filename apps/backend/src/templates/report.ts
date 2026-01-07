@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { escapeHtml } from '../utils/escape.js';
+import { minifyHtml } from '../utils/minifyHtml.js';
 
 export interface ReportSummary {
   domain: string;
@@ -32,6 +33,7 @@ export interface ReportSummary {
   summary?: string | null;
   createdAt: string;
   updatedAt: string;
+  relatedDomains?: Array<{ domain: string; score: number }>;
 }
 
 /**
@@ -57,14 +59,15 @@ export function generateReportHTML(
     report.summary ||
     `Privacy analysis for ${escapedDomain}. Score: ${report.score}/100 with ${report.trackerCount} trackers, ${report.cookieCount} cookies detected.`;
 
-  // Structured data
-  const structuredData = {
+  // Structured data - Article
+  const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: `Privacy Report for ${escapedDomain}`,
     description: escapeHtml(description),
     datePublished: report.createdAt,
     dateModified: report.updatedAt,
+    mainEntityOfPage: canonicalUrl,
     author: {
       '@type': 'Organization',
       name: 'Gecko Advisor',
@@ -80,7 +83,56 @@ export function generateReportHTML(
     },
   };
 
-  return `<!DOCTYPE html>
+  // Structured data - Review/Rating
+  const reviewSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: {
+      '@type': 'WebSite',
+      name: escapedDomain,
+      url: `https://${escapedDomain}`,
+    },
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: report.score,
+      bestRating: 100,
+      worstRating: 0,
+    },
+    author: {
+      '@type': 'Organization',
+      name: 'Gecko Advisor',
+    },
+    reviewBody: escapeHtml(description),
+    datePublished: report.createdAt,
+  };
+
+  // Structured data - Breadcrumbs
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://geckoadvisor.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Privacy Reports',
+        item: 'https://geckoadvisor.com/reports',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: escapedDomain,
+        item: canonicalUrl,
+      },
+    ],
+  };
+
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -88,6 +140,13 @@ export function generateReportHTML(
   <title>${escapeHtml(title)}</title>
 
   <meta name="description" content="${escapeHtml(description)}">
+${
+    report.score < 40
+      ? `
+  <!-- Low-quality score: prevent indexing -->
+  <meta name="robots" content="noindex, follow">`
+      : ''
+  }
 
   <!-- CRITICAL: Self-referencing canonical for SEO -->
   <link rel="canonical" href="${canonicalUrl}">
@@ -104,9 +163,19 @@ export function generateReportHTML(
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
 
-  <!-- Structured Data (JSON-LD) -->
+  <!-- Structured Data (JSON-LD) - Article -->
   <script type="application/ld+json">
-${JSON.stringify(structuredData, null, 2)}
+${JSON.stringify(articleSchema, null, 2)}
+  </script>
+
+  <!-- Structured Data (JSON-LD) - Review -->
+  <script type="application/ld+json">
+${JSON.stringify(reviewSchema, null, 2)}
+  </script>
+
+  <!-- Structured Data (JSON-LD) - Breadcrumbs -->
+  <script type="application/ld+json">
+${JSON.stringify(breadcrumbSchema, null, 2)}
   </script>
 
   <style>
@@ -285,6 +354,27 @@ ${JSON.stringify(structuredData, null, 2)}
       <a href="/privacy-report/${encodeURIComponent(domain)}">View Full Report →</a>
     </div>
 
+    ${
+      report.relatedDomains && report.relatedDomains.length > 0
+        ? `
+    <div style="margin-top: 32px; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">Similar Privacy Reports</h2>
+      <div style="display: grid; gap: 12px;">
+        ${report.relatedDomains
+          .map(
+            (related) => `
+        <a href="/privacy-report/${encodeURIComponent(related.domain)}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px; text-decoration: none; color: inherit; border: 1px solid #e2e8f0;">
+          <span style="color: #0284c7; font-weight: 500;">${escapeHtml(related.domain)}</span>
+          <span style="color: ${getScoreColor(related.score)}; font-weight: 600;">${related.score}/100</span>
+        </a>`
+          )
+          .join('')}
+      </div>
+    </div>
+    `
+        : ''
+    }
+
     <div class="footer">
       <p><strong>Gecko Advisor</strong> - Free, Open-Source Privacy Scanner</p>
       <p>No tracking • No signup required • 100% transparent</p>
@@ -295,6 +385,9 @@ ${JSON.stringify(structuredData, null, 2)}
        Visit /privacy-report/${encodeURIComponent(domain)} for the full interactive report. -->
 </body>
 </html>`;
+
+  // Minify HTML for faster page loads (gzip will further compress)
+  return minifyHtml(html);
 }
 
 /**

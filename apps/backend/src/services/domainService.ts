@@ -135,6 +135,8 @@ const INDEX_GATING = {
   MAX_SCAN_AGE_DAYS: 90,
   // Require valid score
   REQUIRE_SCORE: true,
+  // Minimum privacy score for indexing (excludes "Poor" and "Very Poor" reports)
+  MIN_SCORE: 40,
 };
 
 /**
@@ -142,7 +144,7 @@ const INDEX_GATING = {
  * Only includes domains that meet quality criteria:
  * - Has at least MIN_EVIDENCE_COUNT findings
  * - Scanned within MAX_SCAN_AGE_DAYS
- * - Has a valid privacy score
+ * - Has a valid privacy score >= MIN_SCORE (excludes "Poor" and "Very Poor" reports)
  */
 export async function getIndexedDomains(
   prisma: PrismaClient,
@@ -150,7 +152,7 @@ export async function getIndexedDomains(
     limit?: number;
     offset?: number;
   } = {}
-): Promise<Array<{ domain: string; lastScanned: Date | null }>> {
+): Promise<Array<{ domain: string; lastScanned: Date | null; score: number | null }>> {
   const { limit = 5000, offset = 0 } = options;
 
   // Calculate cutoff date for recency filter
@@ -166,7 +168,9 @@ export async function getIndexedDomains(
       },
       latestScan: {
         status: 'done',
-        score: INDEX_GATING.REQUIRE_SCORE ? { not: null } : undefined,
+        score: INDEX_GATING.REQUIRE_SCORE
+          ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 40 (Fair or better)
+          : undefined,
         evidence: {
           // Has at least MIN_EVIDENCE_COUNT evidence items
           some: {},
@@ -178,6 +182,7 @@ export async function getIndexedDomains(
       lastScanned: true,
       latestScan: {
         select: {
+          score: true,
           _count: {
             select: { evidence: true },
           },
@@ -195,7 +200,11 @@ export async function getIndexedDomains(
   const qualityDomains = domains
     .filter((d) => (d.latestScan?._count?.evidence ?? 0) >= INDEX_GATING.MIN_EVIDENCE_COUNT)
     .filter((d) => !isBlockedDomain(d.domain)) // Exclude adult/blocked content from sitemap
-    .map(({ domain, lastScanned }) => ({ domain, lastScanned }));
+    .map(({ domain, lastScanned, latestScan }) => ({
+      domain,
+      lastScanned,
+      score: latestScan?.score ?? null,
+    }));
 
   return qualityDomains;
 }
@@ -219,7 +228,9 @@ export async function countIndexedDomains(prisma: PrismaClient): Promise<number>
       },
       latestScan: {
         status: 'done',
-        score: INDEX_GATING.REQUIRE_SCORE ? { not: null } : undefined,
+        score: INDEX_GATING.REQUIRE_SCORE
+          ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 40 (Fair or better)
+          : undefined,
         evidence: {
           some: {},
         },
@@ -234,6 +245,53 @@ export async function countIndexedDomains(prisma: PrismaClient): Promise<number>
  * Export index gating config for transparency/monitoring
  */
 export { INDEX_GATING };
+
+/**
+ * Get related/similar domains for internal linking.
+ * Returns domains with similar privacy scores (within ±15 points).
+ */
+export async function getRelatedDomains(
+  prisma: PrismaClient,
+  currentDomain: string,
+  currentScore: number,
+  limit = 5
+): Promise<Array<{ domain: string; score: number }>> {
+  const scoreMin = Math.max(40, currentScore - 15); // Don't go below minimum index threshold
+  const scoreMax = Math.min(100, currentScore + 15);
+
+  const related = await prisma.domain.findMany({
+    where: {
+      domain: { not: currentDomain },
+      isIndexed: true,
+      latestScan: {
+        status: 'done',
+        score: {
+          gte: scoreMin,
+          lte: scoreMax,
+        },
+      },
+    },
+    select: {
+      domain: true,
+      latestScan: {
+        select: {
+          score: true,
+        },
+      },
+    },
+    orderBy: {
+      lastScanned: 'desc', // Most recent first
+    },
+    take: limit,
+  });
+
+  return related
+    .filter((d) => d.latestScan?.score !== null)
+    .map((d) => ({
+      domain: d.domain,
+      score: d.latestScan!.score!,
+    }));
+}
 
 /**
  * Mark a domain as not indexed (exclude from sitemap).

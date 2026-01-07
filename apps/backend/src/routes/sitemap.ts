@@ -64,6 +64,32 @@ function formatDate(date: Date): string {
 }
 
 /**
+ * Calculate sitemap priority based on privacy score.
+ * Higher scores get higher priority for search engines.
+ */
+function getPriorityFromScore(score: number | null): string {
+  if (score === null) return '0.5';
+  if (score >= 80) return '0.9'; // Excellent
+  if (score >= 60) return '0.8'; // Good
+  if (score >= 40) return '0.7'; // Fair
+  return '0.5'; // Poor/Very Poor (shouldn't appear due to index gating, but defensive)
+}
+
+/**
+ * Calculate change frequency based on scan recency.
+ * More recent scans are more likely to be updated frequently.
+ */
+function getChangeFreqFromRecency(lastScanned: Date | null): string {
+  if (!lastScanned) return 'monthly';
+
+  const daysSinceScanned = Math.floor((Date.now() - lastScanned.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysSinceScanned <= 7) return 'daily';   // Scanned within last week
+  if (daysSinceScanned <= 30) return 'weekly'; // Scanned within last month
+  return 'monthly'; // Older scans
+}
+
+/**
  * Main sitemap index - references all sub-sitemaps
  * GET /sitemap.xml
  */
@@ -177,14 +203,18 @@ sitemapRouter.get('/sitemap-domains-:page.xml', async (req, res) => {
         ? formatDate(domain.lastScanned)
         : formatDate(new Date());
 
+      // Calculate dynamic priority and changefreq based on score and recency
+      const priority = getPriorityFromScore(domain.score);
+      const changefreq = getChangeFreqFromRecency(domain.lastScanned);
+
       // Use canonical /privacy-report/:domain URLs for SEO
       // These are the user-facing URLs that should be indexed
       xml += `
   <url>
     <loc>${BASE_URL}/privacy-report/${encodeURIComponent(domain.domain)}</loc>
     <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
   </url>`;
     }
 

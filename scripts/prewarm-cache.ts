@@ -21,6 +21,7 @@ import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
 import { generateReportHTML, type ReportSummary } from '../apps/backend/src/templates/report.js';
 import { buildReportPayload } from '@gecko-advisor/shared';
+import { getRelatedDomains } from '../apps/backend/src/services/domainService.js';
 
 /**
  * Simple concurrency limiter without external dependencies
@@ -176,6 +177,14 @@ async function prewarmDomain(domain: string): Promise<void> {
       }
     }
 
+    // Fetch related domains for internal linking (SEO improvement)
+    const relatedDomains = await getRelatedDomains(
+      prisma,
+      domain,
+      scan.score ?? 50, // Use 50 as default if score is null
+      5 // Limit to 5 related domains
+    );
+
     // Create report summary
     const reportSummary: ReportSummary = {
       domain,
@@ -190,6 +199,7 @@ async function prewarmDomain(domain: string): Promise<void> {
         : null,
       createdAt: scan.createdAt.toISOString(),
       updatedAt: (scan.finishedAt ?? scan.createdAt).toISOString(),
+      relatedDomains: relatedDomains.length > 0 ? relatedDomains : undefined,
     };
 
     // Generate HTML

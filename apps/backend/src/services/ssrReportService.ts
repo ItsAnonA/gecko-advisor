@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 import { buildReportPayload } from '@gecko-advisor/shared';
 import { prisma } from '../prisma.js';
 import { logger } from '../logger.js';
-import { findLatestScanForDomain } from './domainService.js';
+import { findLatestScanForDomain, getRelatedDomains } from './domainService.js';
 import { generateReportHTML, type ReportSummary } from '../templates/report.js';
 
 /**
@@ -78,6 +78,14 @@ export async function generateSSRReportHTML(domain: string): Promise<string | nu
     }
   }
 
+  // Fetch related domains for internal linking (SEO improvement)
+  const relatedDomains = await getRelatedDomains(
+    prisma,
+    domain,
+    scan.score ?? 50, // Use 50 as default if score is null
+    5 // Limit to 5 related domains
+  );
+
   // Create report summary
   const reportSummary: ReportSummary = {
     domain,
@@ -92,6 +100,7 @@ export async function generateSSRReportHTML(domain: string): Promise<string | nu
       : null,
     createdAt: scan.createdAt.toISOString(),
     updatedAt: (scan.finishedAt ?? scan.createdAt).toISOString(),
+    relatedDomains: relatedDomains.length > 0 ? relatedDomains : undefined,
   };
 
   // Generate HTML
