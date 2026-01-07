@@ -77,3 +77,7 @@ scripts/scan-logs/
 
 # Local data files
 data/
+
+# Google Search Console credentials (NEVER commit!)
+scripts/gsc-service-account.json
+**/gsc-service-account*.json
