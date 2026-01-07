@@ -27,7 +27,7 @@ import { join } from 'path';
 
 // SEO routes that should have minimal JS
 const SEO_ROUTES = [
-  '/privacy-policy/[domain]',
+  '/privacy-report/[domain]',
   '/reports',
   '/r/[slug]',
   '/sitemap.xml',
@@ -163,7 +163,7 @@ function parseBuildLog(log: string): RouteInfo[] {
   const results: RouteInfo[] = [];
 
   // Pattern: Route (pages)                              Size     First Load JS
-  // Pattern: ○ /privacy-policy/[domain]                 1.5 kB         89.2 kB
+  // Pattern: ○ /privacy-report/[domain]                 1.5 kB         89.2 kB
   const routePattern =
     /^[○●◐]\s+(\/[^\s]+)\s+(\d+(?:\.\d+)?)\s*(?:kB|KB|B)\s+(\d+(?:\.\d+)?)\s*(?:kB|KB)/gm;
 

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     // Build canonical URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://geckoadvisor.com';
-    const canonicalUrl = `${baseUrl}/privacy-policy/${report.domain}`;
+    const canonicalUrl = `${baseUrl}/privacy-report/${report.domain}`;
 
     // 301 Permanent Redirect with X-Robots-Tag (standard SEO practice)
     const response = NextResponse.redirect(canonicalUrl, 301);

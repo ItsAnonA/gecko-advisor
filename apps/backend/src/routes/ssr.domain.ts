@@ -95,7 +95,7 @@ function generate404Html(domain: string): string {
  *    b. FAIL: Queue job + return placeholder (200 + noindex)
  * 3. NEVER return 5xx to bots
  */
-ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain'], async (req, res) => {
+ssrDomainRouter.get(['/privacy-report/:domain', '/api/ssr/privacy-report/:domain'], async (req, res) => {
   const rawDomain = req.params.domain;
   const userAgent = req.get('User-Agent') || 'unknown';
   const isBot = isSearchBot(userAgent);

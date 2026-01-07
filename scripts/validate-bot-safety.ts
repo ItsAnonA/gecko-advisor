@@ -96,7 +96,7 @@ const failures: ValidationResult[] = [];
  * Fetch a URL with Googlebot user-agent and validate response
  */
 async function validateDomain(domain: string): Promise<ValidationResult> {
-  const url = `${config.endpoint}/privacy-policy/${encodeURIComponent(domain)}`;
+  const url = `${config.endpoint}/privacy-report/${encodeURIComponent(domain)}`;
   const startTime = Date.now();
 
   const result: ValidationResult = {

@@ -10,7 +10,7 @@ import Image from 'next/image';
  * SEO Layout - Layout for SSR pages with consistent branding
  *
  * Matches the main app Header styling while remaining SSR-friendly.
- * Used for /privacy-policy/*, /reports, /r/* routes.
+ * Used for /privacy-report/*, /reports, /r/* routes.
  */
 export default function SEOLayout({ children }: { children: React.ReactNode }) {
   return (

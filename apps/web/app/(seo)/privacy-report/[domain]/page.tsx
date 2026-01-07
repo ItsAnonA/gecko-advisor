@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: heading,
     description,
     alternates: {
-      canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-policy/${domain}`,
+      canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
     },
     robots: {
       index: tier !== 'noindex',
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${domain} Privacy Score & Security Signals | ${SEO_CONSTANTS.SITE_NAME}`,
       description,
-      url: `${SEO_CONSTANTS.BASE_URL}/privacy-policy/${domain}`,
+      url: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
       siteName: SEO_CONSTANTS.SITE_NAME,
       type: 'article',
     },
@@ -86,7 +86,7 @@ export default async function ReportPage({ params }: Props) {
   // Redirect non-canonical URLs
   // Compare decoded rawDomain, not params.domain (which is still encoded)
   if (rawDomain !== normalized) {
-    redirect(`/privacy-policy/${normalized}`);
+    redirect(`/privacy-report/${normalized}`);
   }
 
   // This call reuses cached result from generateMetadata()

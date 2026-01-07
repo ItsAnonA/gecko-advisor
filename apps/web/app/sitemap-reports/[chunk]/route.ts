@@ -63,7 +63,7 @@ export async function GET(_request: Request, { params }: Props) {
 ${entries
   .map(
     (e) => `  <url>
-    <loc>${BASE_URL}/privacy-policy/${e.domain}</loc>
+    <loc>${BASE_URL}/privacy-report/${e.domain}</loc>
 ${e.lastmod ? `    <lastmod>${e.lastmod}</lastmod>\n` : ''}    <changefreq>weekly</changefreq>
   </url>`
   )

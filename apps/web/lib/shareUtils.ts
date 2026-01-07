@@ -77,7 +77,7 @@ export function generateShareCopy({
  * Returns the canonical share URL for a domain
  */
 export function getShareUrl(domain: string): string {
-  return `https://geckoadvisor.com/privacy-policy/${encodeURIComponent(domain)}`;
+  return `https://geckoadvisor.com/privacy-report/${encodeURIComponent(domain)}`;
 }
 
 /**

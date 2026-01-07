@@ -84,7 +84,7 @@ export default async function ReportsPage({ searchParams }: Props) {
             {items.map((item) => (
               <Link
                 key={item.slug}
-                href={`/privacy-policy/${item.domain}`}
+                href={`/privacy-report/${item.domain}`}
                 className="block bg-white rounded-xl shadow-soft p-6 hover:shadow-soft-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-3">

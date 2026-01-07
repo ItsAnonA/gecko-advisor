@@ -69,7 +69,7 @@ function formatDate(date: Date): string {
  */
 sitemapRouter.get('/sitemap.xml', async (_req, res) => {
   try {
-    // Count total indexed domains for /privacy-policy/:domain pages
+    // Count total indexed domains for /privacy-report/:domain pages
     const totalDomains = await countIndexedDomains(prisma);
 
     // Count total blog posts (using status enum instead of isPublished)
@@ -92,7 +92,7 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
     <lastmod>${now}</lastmod>
   </sitemap>`;
 
-    // Domain sitemaps (paginated) - canonical /privacy-policy/:domain URLs
+    // Domain sitemaps (paginated) - canonical /privacy-report/:domain URLs
     for (let i = 0; i < sitemapCount; i++) {
       xml += `
   <sitemap>
@@ -153,7 +153,7 @@ sitemapRouter.get('/sitemap-static.xml', async (_req, res) => {
 });
 
 /**
- * Domains sitemap (paginated) - canonical /privacy-policy/:domain URLs
+ * Domains sitemap (paginated) - canonical /privacy-report/:domain URLs
  * GET /sitemap-domains-:page.xml
  */
 sitemapRouter.get('/sitemap-domains-:page.xml', async (req, res) => {
@@ -177,11 +177,11 @@ sitemapRouter.get('/sitemap-domains-:page.xml', async (req, res) => {
         ? formatDate(domain.lastScanned)
         : formatDate(new Date());
 
-      // Use canonical /privacy-policy/:domain URLs for SEO
+      // Use canonical /privacy-report/:domain URLs for SEO
       // These are the user-facing URLs that should be indexed
       xml += `
   <url>
-    <loc>${BASE_URL}/privacy-policy/${encodeURIComponent(domain.domain)}</loc>
+    <loc>${BASE_URL}/privacy-report/${encodeURIComponent(domain.domain)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

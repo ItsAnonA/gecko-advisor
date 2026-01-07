@@ -19,7 +19,7 @@ export default function robots(): MetadataRoute.Robots {
       // Default rules for all crawlers
       {
         userAgent: '*',
-        allow: ['/', '/privacy-policy/', '/r/', '/blog/', '/reports', '/about'],
+        allow: ['/', '/privacy-report/', '/r/', '/blog/', '/reports', '/about'],
         disallow: [
           '/api/',
           '/admin/',
@@ -30,13 +30,13 @@ export default function robots(): MetadataRoute.Robots {
           '/_next/',
           '/ssr',
           // Block crawler artifacts (reduces 404s)
-          '/privacy-policy/*/_next/',
-          '/privacy-policy/*/api/',
-          '/privacy-policy/*/.well-known/',
-          '/privacy-policy/*/static/',
-          '/privacy-policy/*/*.js',
-          '/privacy-policy/*/*.css',
-          '/privacy-policy/*/*.json',
+          '/privacy-report/*/_next/',
+          '/privacy-report/*/api/',
+          '/privacy-report/*/.well-known/',
+          '/privacy-report/*/static/',
+          '/privacy-report/*/*.js',
+          '/privacy-report/*/*.css',
+          '/privacy-report/*/*.json',
         ],
       },
       // Block AI training crawlers

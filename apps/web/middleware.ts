@@ -58,9 +58,9 @@ export function middleware(request: NextRequest) {
   }
 
   // ==========================================================================
-  // 3. Blocked domain 410 Gone: /privacy-policy/[blocked-domain] → 410
+  // 3. Blocked domain 410 Gone: /privacy-report/[blocked-domain] → 410
   // ==========================================================================
-  const privacyPolicyMatch = pathname.match(/^\/privacy-policy\/(.+)$/);
+  const privacyPolicyMatch = pathname.match(/^\/privacy-report\/(.+)$/);
   if (privacyPolicyMatch) {
     const domain = decodeURIComponent(privacyPolicyMatch[1]);
 
@@ -99,9 +99,9 @@ export const config = {
   matcher: [
     // Match short slugs at root (8 alphanumeric chars)
     '/:path((?:[a-zA-Z0-9]{8}))',
-    // Match /privacy-policy exactly (for redirect to /reports)
-    '/privacy-policy',
-    // Match /privacy-policy/[domain] (for blocked domain 410 check)
-    '/privacy-policy/:domain*',
+    // Match /privacy-report exactly (for redirect to /reports)
+    '/privacy-report',
+    // Match /privacy-report/[domain] (for blocked domain 410 check)
+    '/privacy-report/:domain*',
   ],
 };

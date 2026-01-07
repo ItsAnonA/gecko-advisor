@@ -282,7 +282,7 @@ ${JSON.stringify(structuredData, null, 2)}
 
     <div class="cta">
       <p style="margin-bottom: 16px;">Want to see the full interactive report with detailed analysis?</p>
-      <a href="/privacy-policy/${encodeURIComponent(domain)}">View Full Report →</a>
+      <a href="/privacy-report/${encodeURIComponent(domain)}">View Full Report →</a>
     </div>
 
     <div class="footer">
@@ -292,7 +292,7 @@ ${JSON.stringify(structuredData, null, 2)}
   </div>
 
   <!-- Note: This is a simplified cached version for bots and pre-warming.
-       Visit /privacy-policy/${encodeURIComponent(domain)} for the full interactive report. -->
+       Visit /privacy-report/${encodeURIComponent(domain)} for the full interactive report. -->
 </body>
 </html>`;
 }

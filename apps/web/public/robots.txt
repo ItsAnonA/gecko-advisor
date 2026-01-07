@@ -6,7 +6,7 @@
 
 User-agent: *
 Allow: /
-Allow: /privacy-policy/
+Allow: /privacy-report/
 Allow: /r/
 Allow: /blog/
 Allow: /reports
@@ -26,14 +26,14 @@ Disallow: /settings
 Disallow: /_next/
 Disallow: /ssr
 
-# Block crawler artifacts (reduces 404s from /privacy-policy/ pages)
-Disallow: /privacy-policy/*/_next/
-Disallow: /privacy-policy/*/api/
-Disallow: /privacy-policy/*/.well-known/
-Disallow: /privacy-policy/*/static/
-Disallow: /privacy-policy/*/*.js
-Disallow: /privacy-policy/*/*.css
-Disallow: /privacy-policy/*/*.json
+# Block crawler artifacts (reduces 404s from /privacy-report/ pages)
+Disallow: /privacy-report/*/_next/
+Disallow: /privacy-report/*/api/
+Disallow: /privacy-report/*/.well-known/
+Disallow: /privacy-report/*/static/
+Disallow: /privacy-report/*/*.js
+Disallow: /privacy-report/*/*.css
+Disallow: /privacy-report/*/*.json
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1
