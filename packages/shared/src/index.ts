@@ -10,3 +10,5 @@ export * from './reportPayload.js';
 export * from './reportStorage.js';
 export * from './seo/index.js';
 export * from './blocklist/index.js';
+export * from './cache.js';
+export * from './bot-detection.js';

@@ -26,6 +26,15 @@ Disallow: /settings
 Disallow: /_next/
 Disallow: /ssr
 
+# Block crawler artifacts (reduces 404s from /privacy-policy/ pages)
+Disallow: /privacy-policy/*/_next/
+Disallow: /privacy-policy/*/api/
+Disallow: /privacy-policy/*/.well-known/
+Disallow: /privacy-policy/*/static/
+Disallow: /privacy-policy/*/*.js
+Disallow: /privacy-policy/*/*.css
+Disallow: /privacy-policy/*/*.json
+
 # Crawl-delay for polite crawling
 Crawl-delay: 1
 

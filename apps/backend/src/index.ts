@@ -9,6 +9,7 @@ import { logger } from "./logger.js";
 import { closeQueueConnections, initQueueConnections } from "./queue.js";
 import { connectDatabase, disconnectDatabase } from "./prisma.js";
 import { connectCache, disconnectCache } from "./cache.js";
+import { cacheMetrics } from "./monitoring/cacheMetrics.js";
 
 export const app = createServer();
 
@@ -27,6 +28,9 @@ if (!process.env.VITEST_WORKER_ID) {
       await connectCache();
       await initQueueConnections();
 
+      // 3. Start cache metrics monitoring
+      cacheMetrics.startFlushing();
+
       logger.info('All connections initialized successfully');
 
       server = app.listen(config.port, () => {
@@ -44,6 +48,8 @@ if (!process.env.VITEST_WORKER_ID) {
     if (server) {
       await new Promise<void>((resolve) => server?.close(() => resolve()));
     }
+    // Stop cache metrics flushing (will flush final metrics)
+    cacheMetrics.stopFlushing();
     await Promise.allSettled([
       closeQueueConnections(),
       disconnectDatabase(),

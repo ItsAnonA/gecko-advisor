@@ -41,6 +41,8 @@ export const CACHE_KEYS = {
   SCAN_STATUS: (scanId: string) => `scan_status:${scanId}`,
   REPORT_PAYLOAD: (scanId: string) => `report_payload:${scanId}`,
   EVIDENCE_COUNT: (scanId: string) => `evidence_count:${scanId}`,
+  /** Versioned SSR report HTML cache - increment version to invalidate on schema changes */
+  SSR_REPORT_HTML: (domain: string, version = 1) => `ssr_report:${domain}:v${version}`,
 } as const;
 
 /**
@@ -52,6 +54,8 @@ export const CACHE_TTL = {
   SCAN_STATUS: 60, // 1 minute
   REPORT_PAYLOAD: 900, // 15 minutes (for completed scans)
   EVIDENCE_COUNT: 600, // 10 minutes
+  /** SSR report HTML cache - 24 hours (CDN caches for longer) */
+  SSR_REPORT_HTML: 86400, // 24 hours
 } as const;
 
 /**

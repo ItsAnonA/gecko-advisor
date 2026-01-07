@@ -29,6 +29,14 @@ export default function robots(): MetadataRoute.Robots {
           '/settings',
           '/_next/',
           '/ssr',
+          // Block crawler artifacts (reduces 404s)
+          '/privacy-policy/*/_next/',
+          '/privacy-policy/*/api/',
+          '/privacy-policy/*/.well-known/',
+          '/privacy-policy/*/static/',
+          '/privacy-policy/*/*.js',
+          '/privacy-policy/*/*.css',
+          '/privacy-policy/*/*.json',
         ],
       },
       // Block AI training crawlers
