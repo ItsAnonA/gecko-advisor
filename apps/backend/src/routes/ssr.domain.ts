@@ -78,9 +78,52 @@ function generate404Html(domain: string): string {
 }
 
 /**
- * SSR route for privacy-policy domain pages with cache-first architecture
- * GET /privacy-policy/:domain (primary - for redirects and direct access)
- * GET /api/ssr/privacy-policy/:domain (legacy/explicit SSR endpoint)
+ * 301 Redirect: /privacy-policy/:domain → /privacy-report/:domain
+ *
+ * Preserves SEO equity from:
+ * - External backlinks
+ * - Cached search results
+ * - Browser bookmarks
+ * - Social media shares
+ *
+ * Keep active for at least 1 year after migration.
+ */
+ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain'], (req, res) => {
+  const domain = req.params.domain || '';
+
+  // If domain is empty, redirect to home
+  if (!domain) {
+    res.redirect(301, '/');
+    return;
+  }
+
+  const newPath = `/privacy-report/${encodeURIComponent(domain)}`;
+
+  // Log for monitoring redirect volume
+  logger.info({ oldUrl: req.originalUrl, newPath }, 'Redirecting old URL to new path');
+
+  // 301 = permanent redirect (tells search engines to update their index)
+  res.redirect(301, newPath);
+});
+
+/**
+ * Catch-all for any /privacy-policy sub-paths
+ */
+ssrDomainRouter.get('/privacy-policy/:domain/*', (req, res) => {
+  const domain = req.params.domain || '';
+
+  if (!domain) {
+    res.redirect(301, '/');
+    return;
+  }
+
+  res.redirect(301, `/privacy-report/${encodeURIComponent(domain)}`);
+});
+
+/**
+ * SSR route for privacy-report domain pages with cache-first architecture
+ * GET /privacy-report/:domain (primary canonical URL)
+ * GET /api/ssr/privacy-report/:domain (legacy/explicit SSR endpoint)
  *
  * CRITICAL SEO REQUIREMENTS:
  * - Cache-first for ALL users (no bot-specific paths - avoids cloaking)

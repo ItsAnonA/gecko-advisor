@@ -8,6 +8,8 @@ import { checkDatabaseHealth } from "./prisma.js";
 import { checkRedisConnection, getQueueMetrics } from "./queue.js";
 import { CacheService } from "./cache.js";
 import { logger } from "./logger.js";
+import { cacheMetrics } from "./monitoring/cacheMetrics.js";
+import { reportCircuitBreaker } from "./middleware/circuitBreaker.js";
 
 export const healthRouter = Router();
 
@@ -176,5 +178,91 @@ healthRouter.get('/metrics', async (_req, res) => {
   } catch (error) {
     logger.error({ error }, 'Error generating metrics');
     res.status(500).send('# Error generating metrics\n');
+  }
+});
+
+/**
+ * Cache performance metrics endpoint
+ * GET /cache
+ *
+ * Returns SSR cache metrics and circuit breaker state for Phase 0 monitoring.
+ */
+healthRouter.get('/cache', async (_req, res) => {
+  try {
+    // Get current metrics from cache metrics collector
+    const metrics = cacheMetrics.getMetrics();
+    const circuitState = reportCircuitBreaker.getState();
+
+    res.status(200).json({
+      status: 'healthy',
+      cache: {
+        hits: metrics.hits,
+        misses: metrics.misses,
+        placeholders: metrics.placeholders,
+        errors: metrics.errors,
+        totalRequests: metrics.totalRequests,
+        hitRate: `${metrics.hitRate.toFixed(1)}%`,
+        placeholderRate: `${metrics.placeholderRate.toFixed(1)}%`,
+        errorRate: `${metrics.errorRate.toFixed(1)}%`,
+        botRequests: metrics.botRequests,
+        humanRequests: metrics.humanRequests,
+      },
+      circuitBreaker: {
+        state: circuitState.state,
+        isOpen: circuitState.state === 'OPEN',
+        failures: circuitState.failures,
+        threshold: circuitState.threshold,
+      },
+      thresholds: {
+        hitRateTarget: '>95%',
+        placeholderRateTarget: '<1%',
+        errorRateTarget: '<0.1%',
+      },
+      recommendations: {
+        cacheHitRate:
+          metrics.hitRate < 95
+            ? 'Consider running cache pre-warming script'
+            : 'Cache performance is good',
+        placeholderRate:
+          metrics.placeholderRate > 1
+            ? 'High placeholder rate - check queue processing'
+            : 'Placeholder rate is acceptable',
+        errorRate:
+          metrics.errorRate > 0.1
+            ? 'Elevated error rate - investigate logs'
+            : 'Error rate is acceptable',
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * Redirect monitoring endpoint
+ * GET /redirects
+ *
+ * Shows status of 301 redirects from /privacy-policy/ to /privacy-report/.
+ */
+healthRouter.get('/redirects', async (_req, res) => {
+  try {
+    res.status(200).json({
+      status: 'active',
+      message: '301 redirects from /privacy-policy/ to /privacy-report/ are active',
+      recommendation: 'Keep redirects active for at least 1 year after migration (until Jan 2027)',
+      timestamp: new Date().toISOString(),
+      note: 'Detailed redirect tracking can be implemented via Redis counters if needed',
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
