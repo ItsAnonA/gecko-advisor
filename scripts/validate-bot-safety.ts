@@ -196,7 +196,6 @@ async function main() {
     const domains = await prisma.domain.findMany({
       where: {
         isIndexed: true,
-        isBlocked: false,
       },
       select: {
         domain: true,
