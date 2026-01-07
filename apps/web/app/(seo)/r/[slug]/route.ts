@@ -44,8 +44,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://geckoadvisor.com';
     const canonicalUrl = `${baseUrl}/privacy-policy/${report.domain}`;
 
-    // 308 Permanent Redirect with X-Robots-Tag
-    const response = NextResponse.redirect(canonicalUrl, 308);
+    // 301 Permanent Redirect with X-Robots-Tag (standard SEO practice)
+    const response = NextResponse.redirect(canonicalUrl, 301);
     response.headers.set('X-Robots-Tag', 'noindex');
 
     return response;
