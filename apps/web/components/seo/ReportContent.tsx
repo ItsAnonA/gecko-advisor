@@ -31,7 +31,7 @@ export function ReportContent({ scanData, domain, tier, heading }: Props) {
       <Breadcrumbs
         items={[
           { label: 'Home', href: '/' },
-          { label: 'Privacy Reports', href: '/reports' },
+          { label: 'Website Privacy Reports', href: '/reports' },
           { label: domain },
         ]}
       />
