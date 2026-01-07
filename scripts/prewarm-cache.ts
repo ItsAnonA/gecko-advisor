@@ -233,11 +233,10 @@ async function main() {
   console.log('');
 
   try {
-    // Fetch all indexed, non-blocked domains
+    // Fetch all indexed domains
     const domains = await prisma.domain.findMany({
       where: {
         isIndexed: true,
-        isBlocked: false,
       },
       select: {
         domain: true,
