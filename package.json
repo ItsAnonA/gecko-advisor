@@ -21,6 +21,7 @@
     "gsc:metrics": "tsx scripts/gsc-metrics.ts",
     "gsc:queries": "tsx scripts/gsc-metrics.ts --queries",
     "gsc:pages": "tsx scripts/gsc-metrics.ts --pages",
+    "deindex-orphans": "tsx scripts/deindex-and-queue-orphans.ts",
     "licenses:report": "license-checker-rseidelsohn --json --production --direct > LICENSES.json",
     "licenses:check": "node scripts/check-licenses.js",
     "spdx:check": "node scripts/check-spdx.js",
