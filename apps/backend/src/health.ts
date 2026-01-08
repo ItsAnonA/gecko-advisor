@@ -310,8 +310,9 @@ healthRouter.get('/seo', async (_req, res) => {
     for (const { domain } of sampleDomains) {
       try {
         // Check if cached (should be for indexed domains)
+        // Note: Use raw redis.get() since prewarm stores raw HTML (not JSON)
         const cacheKey = CACHE_KEYS.SSR_REPORT_HTML(domain);
-        const cached = await CacheService.get<string>(cacheKey);
+        const cached = await redis.get(cacheKey);
 
         if (cached) {
           botRequestsPassed++;
