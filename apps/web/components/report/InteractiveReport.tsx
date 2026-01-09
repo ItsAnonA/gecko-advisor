@@ -9,6 +9,7 @@ import Link from 'next/link';
 import PremiumScoreDial from './PremiumScoreDial';
 import BenchmarkSection from './BenchmarkSection';
 import RecommendationsSection from './RecommendationsSection';
+import ComparisonPrompt from './ComparisonPrompt';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import type { ReportData } from '@/lib/api';
 import { generateShareCopy, getShareUrl, getTwitterShareUrl, getLinkedInShareUrl, copyToClipboard } from '@/lib/shareUtils';
@@ -1038,6 +1039,10 @@ function OverviewPanel({
           </div>
         </div>
       </div>
+
+      {/* ===== COMPARISON PROMPT ===== */}
+      {/* Encourages exploration by suggesting domain comparisons */}
+      <ComparisonPrompt currentDomain={domain} currentScore={score} />
 
       {/* ===== SCORE BREAKDOWN ===== */}
       {/* Penalty category breakdown using new scoring algorithm */}
