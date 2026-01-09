@@ -556,3 +556,288 @@ export async function getStats(): Promise<StatsResponse> {
 
   return response.json();
 }
+
+// =============================================================================
+// Context API - Contextual interpretations for reports
+// =============================================================================
+
+/**
+ * Unusual finding from context analysis
+ */
+export interface UnusualFinding {
+  type: string;
+  severity: 'info' | 'warning' | 'critical';
+  title: string;
+  description: string;
+  prevalence: number;
+  prevalenceLabel: string;
+  learnMoreSlug?: string;
+}
+
+/**
+ * Category interpretation
+ */
+export interface Interpretation {
+  category: 'tracking' | 'security' | 'cookies' | 'thirdparty' | 'compliance';
+  label: string;
+  score: number;
+  context: string;
+}
+
+/**
+ * Prevalence statistics
+ */
+export interface PrevalenceStats {
+  fingerprintingRate: number;
+  excessiveTrackerRate: number;
+  highAdRatioRate: number;
+  httpOnlyRate: number;
+}
+
+/**
+ * Context data for a domain report
+ */
+export interface ContextData {
+  percentile: number;
+  percentileLabel: string;
+  positionLabel: string;
+  unusualFindings: UnusualFinding[];
+  interpretations: Interpretation[];
+  prevalenceStats: PrevalenceStats;
+}
+
+/**
+ * Full context response
+ */
+export interface ContextResponse {
+  domain: string;
+  score: number;
+  label: string;
+  context: ContextData;
+}
+
+/**
+ * Fetch contextual data for a domain
+ */
+export async function fetchContext(domain: string): Promise<ContextResponse | null> {
+  try {
+    const response = await fetch(`/api/v2/context/${encodeURIComponent(domain)}`);
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error('Failed to fetch context');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching context:', error);
+    return null;
+  }
+}
+
+// =============================================================================
+// Comparison API - Domain vs domain comparisons
+// =============================================================================
+
+/**
+ * Summary of a domain for comparison
+ */
+export interface DomainSummary {
+  domain: string;
+  score: number;
+  label: string;
+  trackerCount: number;
+  cookieCount: number;
+  thirdPartyCount: number;
+  hasFingerprinting: boolean;
+  percentile: number;
+  percentileLabel: string;
+  lastScanned: string;
+}
+
+/**
+ * Difference between domains
+ */
+export interface ComparisonDiff {
+  metric: string;
+  label: string;
+  valueA: string | number | boolean;
+  valueB: string | number | boolean;
+  winner: 'A' | 'B' | 'tie';
+  significance: 'low' | 'medium' | 'high';
+  explanation: string;
+}
+
+/**
+ * Full comparison response
+ */
+export interface DomainComparison {
+  domainA: DomainSummary;
+  domainB: DomainSummary;
+  differences: ComparisonDiff[];
+  winner: 'A' | 'B' | 'tie';
+  summary: string;
+  commonTrackers: string[];
+  uniqueToA: string[];
+  uniqueToB: string[];
+}
+
+/**
+ * Compare two domains
+ */
+export async function fetchComparison(domainA: string, domainB: string): Promise<DomainComparison | null> {
+  try {
+    const response = await fetch(
+      `/api/v2/compare/${encodeURIComponent(domainA)}/${encodeURIComponent(domainB)}`
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error('Failed to fetch comparison');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching comparison:', error);
+    return null;
+  }
+}
+
+/**
+ * Suggested comparison for a domain
+ */
+export interface SuggestedComparison {
+  domain: string;
+  reason: string;
+  score?: number;
+  label?: string;
+}
+
+/**
+ * Get suggested domains to compare with
+ */
+export async function fetchSuggestions(domain: string): Promise<SuggestedComparison[]> {
+  try {
+    const response = await fetch(`/api/v2/suggestions/${encodeURIComponent(domain)}`);
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.suggestions || [];
+  } catch (error) {
+    console.error('Error fetching suggestions:', error);
+    return [];
+  }
+}
+
+// =============================================================================
+// Benchmarks API - Global statistics
+// =============================================================================
+
+/**
+ * Global benchmarks response
+ */
+export interface BenchmarksResponse {
+  totalDomainsScanned: number;
+  scoreDistribution: Array<{ bucket: string; count: number; percentage: number }>;
+  averageScore: number;
+  averageTrackerCount: number;
+  averageCookieCount: number;
+  prevalence: PrevalenceStats;
+  lastUpdated: string;
+}
+
+/**
+ * Fetch global benchmarks
+ */
+export async function fetchBenchmarks(): Promise<BenchmarksResponse | null> {
+  try {
+    const response = await fetch('/api/v2/benchmarks');
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch benchmarks');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching benchmarks:', error);
+    return null;
+  }
+}
+
+// =============================================================================
+// Journey Tracking API - User engagement analytics
+// =============================================================================
+
+/**
+ * Journey event for tracking
+ */
+export interface JourneyEvent {
+  type: 'page_view' | 'scroll' | 'interaction' | 'search' | 'navigation' | 'tab_switch' | 'expand' | 'share';
+  page: string;
+  sessionId: string;
+  timestamp: number;
+  data?: {
+    scrollDepth?: number;
+    targetPage?: string;
+    timeOnPage?: number;
+    element?: string;
+    searchQuery?: string;
+    referrer?: string;
+  };
+}
+
+/**
+ * Track journey events (fire-and-forget)
+ * Uses sendBeacon for reliability on page unload
+ */
+export function trackJourneyEvent(event: JourneyEvent): void {
+  try {
+    const url = '/api/v2/track/journey';
+    const body = JSON.stringify(event);
+
+    // Use sendBeacon if available (more reliable on page unload)
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon(url, blob);
+    } else {
+      // Fall back to fetch
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true, // Allow request to complete after page unload
+      }).catch(() => {
+        // Silently ignore errors - fire-and-forget
+      });
+    }
+  } catch {
+    // Silently ignore errors - fire-and-forget
+  }
+}
+
+/**
+ * Track multiple journey events (batch)
+ */
+export function trackJourneyEvents(events: JourneyEvent[]): void {
+  try {
+    const url = '/api/v2/track/journey';
+    const body = JSON.stringify({ events });
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon(url, blob);
+    } else {
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch {
+    // Silently ignore
+  }
+}
