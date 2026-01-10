@@ -84,13 +84,16 @@ export function generateReportHTML(
   };
 
   // Structured data - Review/Rating
+  // Note: Google only supports specific types for itemReviewed (Product, SoftwareApplication, etc.)
+  // WebSite is NOT supported - using SoftwareApplication as websites are web applications
   const reviewSchema = {
     '@context': 'https://schema.org',
     '@type': 'Review',
     itemReviewed: {
-      '@type': 'WebSite',
+      '@type': 'SoftwareApplication',
       name: escapedDomain,
       url: `https://${escapedDomain}`,
+      applicationCategory: 'WebApplication',
     },
     reviewRating: {
       '@type': 'Rating',
