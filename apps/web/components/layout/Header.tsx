@@ -35,9 +35,10 @@ const Header = memo(function Header() {
   }, []);
 
   const navLinks = [
-    { href: '/about', label: 'About' },
-    { href: '/blog', label: 'Blog' },
+    { href: '/privacy-scanner', label: 'Scanner' },
     { href: '/reports', label: 'Reports' },
+    { href: '/blog', label: 'Blog' },
+    { href: '/about', label: 'About' },
   ];
 
   return (

@@ -15,12 +15,11 @@ import {
   normalizeDomain,
   isValidDomain,
   getIndexTier,
-  getPageHeading,
-  buildMetaDescription,
   isBlockedDomain,
   type IndexTier,
   type ScanDataForMetadata,
 } from '@gecko-advisor/shared';
+import { buildReportSEO } from './seo';
 
 // API URLs - MUST be set per environment
 // Default to 5001 for local dev (5000 is taken by macOS Control Center on newer Macs)
@@ -164,10 +163,25 @@ export const getReportForDomain = cache(
       tier = 'noindex';
     }
 
-    const heading = getPageHeading(domain, data?.scan.score);
-    const description = buildMetaDescription(scanData, domain);
+    // Phase 2A: Use CTR-optimized title/description variants
+    // Detect fingerprinting from evidence
+    const hasFingerprinting = data?.evidence?.some(
+      (e) =>
+        e.kind === 'fingerprinting' ||
+        e.kind === 'canvas_fingerprinting' ||
+        e.kind === 'webgl_fingerprinting' ||
+        e.kind === 'audio_fingerprinting'
+    ) ?? false;
 
-    return { data, tier, heading, description, domain, scanData };
+    const seo = buildReportSEO(
+      domain,
+      data?.scan.score ?? null,
+      data?.meta?.trackerCount ?? 0,
+      data?.meta?.cookieCount ?? 0,
+      hasFingerprinting
+    );
+
+    return { data, tier, heading: seo.heading, description: seo.description, domain, scanData };
   }
 );
 

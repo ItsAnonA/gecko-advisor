@@ -15,14 +15,17 @@ const DOMAINS_PER_SITEMAP = 5000; // Google's recommended limit is 50,000 URLs p
 /**
  * Static pages for the sitemap
  * Only include pages that actually exist and should be indexed
+ *
+ * Phase 2A: Added /privacy-scanner authority page (highest priority after home)
  */
 const STATIC_PAGES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
+  { path: '/privacy-scanner', changefreq: 'weekly', priority: '1.0' }, // Authority page
   { path: '/reports', changefreq: 'hourly', priority: '0.9' },
   { path: '/blog', changefreq: 'daily', priority: '0.8' },
   { path: '/about', changefreq: 'monthly', priority: '0.7' },
-  // Note: /faq, /roadmap, /security, /legal pages need to be created
-  // before adding them back to the sitemap
+  { path: '/methodology', changefreq: 'monthly', priority: '0.7' },
+  { path: '/benchmarks', changefreq: 'daily', priority: '0.7' },
 ];
 
 /**

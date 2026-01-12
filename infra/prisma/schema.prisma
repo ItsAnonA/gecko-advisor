@@ -264,9 +264,25 @@ model Domain {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  // === SEO Tier System (Phase 2A) ===
+  // Tier A = MUST index (~5-7K), Tier B = eligible (~20-30K), Tier C = discovery only
+  indexTier        String    @default("C") // "A", "B", "C"
+  tierScore        Int       @default(0) // Calculated priority score
+  tierCalculatedAt DateTime? // When tier was last calculated
+  tierRank         Int? // Position in tier score ranking (Tier A only)
+  lastPromotedAt   DateTime? // When domain was promoted to higher tier
+  lastDemotedAt    DateTime? // When domain was demoted to lower tier
+
+  // GSC signals (for tier calculation)
+  gscClicks      Int       @default(0)
+  gscImpressions Int       @default(0)
+  gscLastUpdated DateTime?
+
   // Optimized indexes for domain lookups and sitemap generation
   @@index([domain], map: "Domain_lookup_idx")
   @@index([isIndexed, lastScanned(sort: Desc)], map: "Domain_sitemap_idx")
+  @@index([indexTier, tierScore(sort: Desc)], map: "Domain_tier_idx")
+  @@index([indexTier, tierRank], map: "Domain_tier_rank_idx")
 }
 
 // Scan queue status for bulk scanning operations
@@ -308,4 +324,32 @@ model ScanQueue {
   @@index([status, lastAttempt], map: "ScanQueue_retry_idx")
   @@index([batchId, status], map: "ScanQueue_batch_idx")
   @@index([source, sourceRank], map: "ScanQueue_source_idx")
+}
+
+// === SEO Phase 2A: Indexing Velocity Tracking ===
+// Tracks daily indexing metrics to measure SEO health over time
+model IndexingSnapshot {
+  id String @id @default(cuid())
+
+  // Snapshot date (one per day)
+  date DateTime @db.Date
+
+  // Tier counts
+  tierACount Int @default(0)
+  tierBCount Int @default(0)
+  tierCCount Int @default(0)
+
+  // Sitemap totals
+  sitemapTotal Int @default(0) // tierACount + limited tierBCount
+
+  // GSC data (import from GSC API or manual)
+  gscIndexed    Int?
+  gscNotIndexed Int?
+
+  // Velocity metrics
+  netChange Int @default(0) // vs previous day
+
+  createdAt DateTime @default(now())
+
+  @@unique([date])
 }

@@ -246,6 +246,89 @@ export async function countIndexedDomains(prisma: PrismaClient): Promise<number>
  */
 export { INDEX_GATING };
 
+// ============================================================================
+// Phase 2A: Tier-Based Sitemap Functions
+// ============================================================================
+
+const TIER_B_SITEMAP_LIMIT = 5000; // Only include top 5K of Tier B in sitemap
+
+/**
+ * Get domains for tiered sitemap.
+ * Returns: All Tier A + top 5K of Tier B, ordered by tier then score.
+ */
+export async function getTieredSitemapDomains(
+  prisma: PrismaClient,
+  options: {
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<Array<{ domain: string; lastScanned: Date | null; indexTier: string; tierScore: number }>> {
+  const { limit = 5000, offset = 0 } = options;
+
+  // Get all Tier A domains (must include)
+  const tierA = await prisma.domain.findMany({
+    where: {
+      indexTier: 'A',
+      isIndexed: true,
+    },
+    select: {
+      domain: true,
+      lastScanned: true,
+      indexTier: true,
+      tierScore: true,
+    },
+    orderBy: { tierRank: 'asc' },
+  });
+
+  // Get top Tier B domains (limited)
+  const tierB = await prisma.domain.findMany({
+    where: {
+      indexTier: 'B',
+      isIndexed: true,
+    },
+    select: {
+      domain: true,
+      lastScanned: true,
+      indexTier: true,
+      tierScore: true,
+    },
+    orderBy: { tierScore: 'desc' },
+    take: TIER_B_SITEMAP_LIMIT,
+  });
+
+  // Combine and apply pagination
+  const allDomains = [...tierA, ...tierB];
+  return allDomains.slice(offset, offset + limit);
+}
+
+/**
+ * Count domains for tiered sitemap (Tier A + limited Tier B).
+ */
+export async function countTieredSitemapDomains(prisma: PrismaClient): Promise<{
+  tierA: number;
+  tierB: number;
+  tierBInSitemap: number;
+  total: number;
+}> {
+  const [tierACount, tierBCount] = await Promise.all([
+    prisma.domain.count({
+      where: { indexTier: 'A', isIndexed: true },
+    }),
+    prisma.domain.count({
+      where: { indexTier: 'B', isIndexed: true },
+    }),
+  ]);
+
+  const tierBInSitemap = Math.min(tierBCount, TIER_B_SITEMAP_LIMIT);
+
+  return {
+    tierA: tierACount,
+    tierB: tierBCount,
+    tierBInSitemap,
+    total: tierACount + tierBInSitemap,
+  };
+}
+
 /**
  * Get related/similar domains for internal linking.
  * Returns domains with similar privacy scores (within ±15 points).
