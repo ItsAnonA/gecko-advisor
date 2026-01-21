@@ -21,11 +21,43 @@ import { isBlockedDomain } from '@gecko-advisor/shared';
 // Pattern for legacy short slugs (8 alphanumeric chars at root)
 const SHORT_SLUG_PATTERN = /^\/([a-zA-Z0-9]{8})$/;
 
+// ==========================================================================
+// 410 Gone patterns for garbage URLs (from GSC 5xx drilldown)
+// Only add patterns confirmed in GSC - don't guess
+// ==========================================================================
+const GONE_PATTERNS = [
+  /^\/privacy-policy\/.+/, // legacy spam route with path (not bare /privacy-policy)
+  /^\/news(?:\/|$)/,
+  /^\/methods(?:\/|$)/,
+  /^\/cbfourum(?:\/|$)/,
+  /^\/index(?:\/|$)/,
+  /^\/list(?:\/|$)/,
+  /^\/entry(?:\/|$)/,
+
+  // File extensions that should never exist
+  /\.php$/i,
+  /\.html?$/i,
+  /\.aspx?$/i,
+  /\.asp$/i,
+];
+
 // Static pages that happen to be 8 characters - exclude from short slug redirect
 const STATIC_PAGES_8_CHARS = new Set(['security', 'checkout', 'settings', 'download', 'features', 'contacts', 'products', 'services', 'register', 'messages', 'feedback', 'archives', 'calendar', 'profiles', 'comments', 'articles']);
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ==========================================================================
+  // 0. 410 Gone for garbage URLs (preserves crawl budget)
+  // ==========================================================================
+  for (const pattern of GONE_PATTERNS) {
+    if (pattern.test(pathname)) {
+      const res = new NextResponse(null, { status: 410 });
+      res.headers.set('Cache-Control', 'public, max-age=86400'); // Cache 410 for 1 day
+      res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+      return res;
+    }
+  }
 
   // ==========================================================================
   // 1. Legacy short slug redirect: /ePpVg5Ab → /r/ePpVg5Ab
@@ -97,11 +129,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match short slugs at root (8 alphanumeric chars)
-    '/:path((?:[a-zA-Z0-9]{8}))',
-    // Match /privacy-report exactly (for redirect to /reports)
-    '/privacy-report',
-    // Match /privacy-report/[domain] (for blocked domain 410 check)
-    '/privacy-report/:domain*',
+    // Run on all routes EXCEPT static assets, api, sitemap, robots
+    '/((?!api/|_next/|favicon|robots\\.txt|sitemap|images/|fonts/).*)',
   ],
 };
