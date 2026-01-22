@@ -51,7 +51,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const comparison = await getComparison(domainA, domainB);
 
   if (!comparison) {
-    return { title: 'Comparison Not Available' };
+    return {
+      title: 'Comparison Not Available',
+      robots: { index: false, follow: true },
+    };
   }
 
   const title = `${domainA} vs ${domainB} Privacy Comparison | ${SEO_CONSTANTS.SITE_NAME}`;
@@ -60,6 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    robots: { index: false, follow: true },
     alternates: {
       canonical: `${SEO_CONSTANTS.BASE_URL}/compare/${domainA}/${domainB}`,
     },
