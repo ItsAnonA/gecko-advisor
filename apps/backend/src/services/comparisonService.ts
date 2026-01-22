@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import type { PrismaClient } from "@prisma/client";
+import { isValidComparableDomain } from "@gecko-advisor/shared";
 import { CacheService, redis } from "../cache.js";
 import { logger } from "../logger.js";
 import type { AnalyticsService } from "./analyticsService.js";
@@ -417,6 +418,7 @@ export class ComparisonService {
       const currentScore = currentDomain?.latestScan?.score ?? 50;
 
       // Strategy 1: Similar score range
+      // Fetch more than needed to account for filtering out invalid domains
       const similarScoreDomains = await this.prisma.domain.findMany({
         where: {
           domain: { not: domain },
@@ -430,11 +432,15 @@ export class ComparisonService {
           },
         },
         include: { latestScan: { select: { score: true } } },
-        take: 3,
+        take: 10, // Fetch more to filter
         orderBy: { scanCount: 'desc' },
       });
 
       for (const d of similarScoreDomains) {
+        // Skip invalid domains (TLDs, public suffixes)
+        if (!isValidComparableDomain(d.domain)) continue;
+        if (suggestions.length >= 3) break;
+
         suggestions.push({
           domain: d.domain,
           score: d.latestScan?.score ?? 0,
@@ -452,11 +458,15 @@ export class ComparisonService {
             latestScan: { status: 'done' },
           },
           include: { latestScan: { select: { score: true } } },
-          take: 5 - suggestions.length,
+          take: 15, // Fetch more to filter
           orderBy: { scanCount: 'desc' },
         });
 
         for (const d of popularDomains) {
+          // Skip invalid domains (TLDs, public suffixes)
+          if (!isValidComparableDomain(d.domain)) continue;
+          if (suggestions.length >= 5) break;
+
           suggestions.push({
             domain: d.domain,
             score: d.latestScan?.score ?? 0,
@@ -477,11 +487,15 @@ export class ComparisonService {
             },
           },
           include: { latestScan: { select: { score: true } } },
-          take: 2,
+          take: 10, // Fetch more to filter
           orderBy: { latestScan: { score: 'desc' } },
         });
 
         for (const d of highScoreDomains) {
+          // Skip invalid domains (TLDs, public suffixes)
+          if (!isValidComparableDomain(d.domain)) continue;
+          if (suggestions.length >= 5) break;
+
           suggestions.push({
             domain: d.domain,
             score: d.latestScan?.score ?? 0,
@@ -490,10 +504,21 @@ export class ComparisonService {
         }
       }
 
-      // Cache the result
-      await CacheService.set(cacheKey, suggestions, SUGGESTIONS_CACHE_TTL);
+      // Filter out any invalid domains (TLDs, public suffixes, etc.)
+      // This is a safety net in case bad data exists in the Domain table
+      const validSuggestions = suggestions.filter(s => isValidComparableDomain(s.domain));
 
-      return suggestions;
+      if (validSuggestions.length !== suggestions.length) {
+        const invalidDomains = suggestions
+          .filter(s => !isValidComparableDomain(s.domain))
+          .map(s => s.domain);
+        logger.warn({ domain, invalidDomains }, 'Filtered out invalid comparison suggestions (TLDs/public suffixes)');
+      }
+
+      // Cache the result
+      await CacheService.set(cacheKey, validSuggestions, SUGGESTIONS_CACHE_TTL);
+
+      return validSuggestions;
     } catch (error) {
       logger.error({ error, domain }, 'Failed to get comparison suggestions');
       return [];
