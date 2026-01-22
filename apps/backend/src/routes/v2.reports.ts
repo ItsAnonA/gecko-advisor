@@ -7,6 +7,7 @@ import { logger } from "../logger.js";
 import { CacheService, CACHE_KEYS, CACHE_TTL } from "../cache.js";
 import { getReportDownloadUrl, getReportFromStorage } from "../services/reportArchive.js";
 import { createAnalyticsService } from "../services/analyticsService.js";
+import { findLatestScanForDomain, normalizeDomain } from "../services/domainService.js";
 
 // Create analytics service instance
 const analyticsService = createAnalyticsService(prisma);
@@ -414,17 +415,12 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
   try {
     const rawDomain = decodeURIComponent(req.params.domain);
 
-    // Normalize domain (remove protocol, www, trailing slash)
-    let domain = rawDomain.toLowerCase().trim();
-    if (domain.startsWith('http://') || domain.startsWith('https://')) {
-      try {
-        const url = new URL(domain);
-        domain = url.hostname;
-      } catch {
-        // Keep as-is if URL parsing fails
-      }
+    // Normalize domain using shared function (handles protocol, www, trailing slash, eTLD+1)
+    const domain = normalizeDomain(rawDomain);
+
+    if (!domain || domain.length < 3) {
+      return problem(res, 400, 'Invalid domain', 'Please provide a valid domain name');
     }
-    domain = domain.replace(/^www\./, '').replace(/\/$/, '');
 
     // Return 410 Gone for blocked domains (adult content)
     if (isBlockedDomain(domain)) {
@@ -438,33 +434,17 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
       return;
     }
 
-    // Find the most recent completed scan for this domain (exact match only)
-    const scan = await prisma.scan.findFirst({
-      where: {
-        status: 'done',
-        OR: [
-          { normalizedInput: { equals: domain, mode: 'insensitive' } },
-          { input: { equals: domain, mode: 'insensitive' } },
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        evidence: {
-          orderBy: { createdAt: 'asc' },
-        },
-        issues: {
-          orderBy: [{ sortWeight: 'asc' }, { createdAt: 'asc' }],
-        },
-      },
-    });
+    // Find the most recent completed scan for this domain
+    // Uses Domain table first (fast), falls back to Scan table query
+    const scan = await findLatestScanForDomain(prisma, domain);
 
     if (!scan) {
       return problem(res, 404, 'No report found for this domain');
     }
 
     const basePayload = buildReportPayload(scan, {
-      evidence: scan.evidence ?? [],
-      issues: scan.issues ?? [],
+      evidence: (scan.evidence ?? []) as Parameters<typeof buildReportPayload>[1]['evidence'],
+      issues: (scan.issues ?? []) as Parameters<typeof buildReportPayload>[1]['issues'],
     });
 
     // Enrich with benchmark data for SEO
