@@ -438,13 +438,13 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
       return;
     }
 
-    // Find the most recent completed scan for this domain
+    // Find the most recent completed scan for this domain (exact match only)
     const scan = await prisma.scan.findFirst({
       where: {
         status: 'done',
         OR: [
-          { normalizedInput: { contains: domain, mode: 'insensitive' } },
-          { input: { contains: domain, mode: 'insensitive' } },
+          { normalizedInput: { equals: domain, mode: 'insensitive' } },
+          { input: { equals: domain, mode: 'insensitive' } },
         ],
       },
       orderBy: { createdAt: 'desc' },
