@@ -278,11 +278,27 @@ model Domain {
   gscImpressions Int       @default(0)
   gscLastUpdated DateTime?
 
+  // === Phase 2B: Category Classification ===
+  category           Category? @relation(fields: [categoryId], references: [id])
+  categoryId         String?
+  categoryConfidence Float? // 0.0 - 1.0 confidence score
+  classifiedAt       DateTime?
+  classifiedBy       String? // "brand_match" | "pattern_match" | "manual"
+
+  // === Phase 2B: Freshness/Rescan ===
+  lastScannedAt    DateTime? // When domain was last successfully scanned
+  scanScheduledAt  DateTime? // When next rescan is scheduled
+  rescanPriority   Int       @default(0) // Higher = sooner
+
+  // Relations
+  tierPromotions TierPromotion[]
+
   // Optimized indexes for domain lookups and sitemap generation
   @@index([domain], map: "Domain_lookup_idx")
   @@index([isIndexed, lastScanned(sort: Desc)], map: "Domain_sitemap_idx")
   @@index([indexTier, tierScore(sort: Desc)], map: "Domain_tier_idx")
   @@index([indexTier, tierRank], map: "Domain_tier_rank_idx")
+  @@index([categoryId], map: "Domain_category_idx")
 }
 
 // Scan queue status for bulk scanning operations
@@ -352,4 +368,43 @@ model IndexingSnapshot {
   createdAt DateTime @default(now())
 
   @@unique([date])
+}
+
+// === Phase 2B: Category Classification ===
+// Industry categories for domain grouping and benchmark pages
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique // "streaming", "ecommerce", "saas", "news"
+  name        String // "Streaming & Media"
+  description String?
+
+  // Benchmarks (calculated weekly)
+  // { avgScore, medianScore, avgTrackers, avgCookies, fingerprintingRate, sampleSize, scorePercentiles }
+  benchmarks             Json?
+  benchmarksCalculatedAt DateTime?
+
+  // Relations
+  domains Domain[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+// === Phase 2B: Tier Promotion Tracking ===
+// Audit log for tier changes (B→A, A→B promotions/demotions)
+model TierPromotion {
+  id       String @id @default(cuid())
+  domainId String
+  domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  fromTier String // "B" or "C"
+  toTier   String // "A" or "B"
+  reason   String // "gsc_clicks", "gsc_impressions", "high_score", "no_impressions"
+
+  createdAt DateTime @default(now())
+
+  @@index([domainId])
+  @@index([createdAt(sort: Desc)])
 }

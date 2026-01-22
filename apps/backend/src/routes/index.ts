@@ -10,6 +10,7 @@ import { reportV2Router } from "./v2.reports.js";
 import { blogV2Router } from "./v2.blog.js";
 import { domainV2Router } from "./v2.domain.js";
 import { contextV2Router } from "./v2.context.js";
+import { categoriesV2Router } from "./v2.categories.js";
 
 export const apiV1Router = Router();
 apiV1Router.use('/scan', scanV1Router);
@@ -23,3 +24,4 @@ apiV2Router.use('/', reportV2Router);
 apiV2Router.use('/', blogV2Router);
 apiV2Router.use('/', domainV2Router);
 apiV2Router.use('/', contextV2Router);
+apiV2Router.use('/', categoriesV2Router);

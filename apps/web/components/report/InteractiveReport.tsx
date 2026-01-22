@@ -11,7 +11,8 @@ import BenchmarkSection from './BenchmarkSection';
 import RecommendationsSection from './RecommendationsSection';
 import ComparisonPrompt from './ComparisonPrompt';
 import { GradeBadge } from '@/components/ui/GradeBadge';
-import type { ReportData } from '@/lib/api';
+import { CategoryBadge } from '@/components/ui/CategoryBadge';
+import type { ReportData, CategoryInfo } from '@/lib/api';
 import { generateShareCopy, getShareUrl, getTwitterShareUrl, getLinkedInShareUrl, copyToClipboard } from '@/lib/shareUtils';
 
 // ============================================================================
@@ -397,6 +398,8 @@ interface InteractiveReportProps {
   seoContent?: React.ReactNode;
   /** Heading to display (from SEO metadata) */
   heading?: string;
+  /** Category classification for internal linking to hub pages */
+  category?: CategoryInfo | null;
 }
 
 type TabId = 'overview' | 'tracking' | 'security' | 'cookies' | 'details';
@@ -411,7 +414,7 @@ type TabId = 'overview' | 'tracking' | 'security' | 'cookies' | 'details';
  * - Share functionality
  * - Print/Export options
  */
-export default function InteractiveReport({ data, domain, seoContent, heading }: InteractiveReportProps) {
+export default function InteractiveReport({ data, domain, seoContent, heading, category }: InteractiveReportProps) {
   const { scan, evidence, meta, topFixes } = data;
   const [activeTab, setActiveTab] = React.useState<TabId>('overview');
   const score = scan.score ?? 0;
@@ -528,8 +531,11 @@ export default function InteractiveReport({ data, domain, seoContent, heading }:
               <p className="text-zinc-600 break-all font-mono text-sm mt-1">{scan.input}</p>
             </div>
 
-            <div className="flex justify-center md:justify-start">
+            <div className="flex flex-wrap justify-center md:justify-start gap-2">
               <GradeBadge score={score} size="lg" showLabel={true} />
+              {category && (
+                <CategoryBadge slug={category.slug} name={category.name} size="md" />
+              )}
             </div>
 
             {/* THE DIFFERENTIATOR - identical everywhere, above the fold */}

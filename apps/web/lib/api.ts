@@ -30,6 +30,14 @@ function getApiInternalUrl(): string {
 }
 
 /**
+ * Category info returned with report data
+ */
+export interface CategoryInfo {
+  slug: string;
+  name: string;
+}
+
+/**
  * Report data structure returned by getReportForDomain
  */
 export interface ReportData {
@@ -48,6 +56,8 @@ export interface ReportData {
     createdAt?: string;
     updatedAt?: string;
   };
+  // Phase 2B: Category classification
+  category?: CategoryInfo | null;
   evidence: Array<{
     id: string;
     kind: string;

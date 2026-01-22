@@ -47,13 +47,22 @@ export async function findDomainByName(
 }
 
 /**
+ * Category info from domain record
+ */
+export interface DomainCategoryInfo {
+  slug: string;
+  name: string;
+}
+
+/**
  * Find the latest completed scan for a domain.
  * Returns the scan with all evidence and issues if found.
+ * Also returns category info if the domain has been classified.
  */
 export async function findLatestScanForDomain(
   prisma: PrismaClient,
   domain: string
-): Promise<(Scan & { evidence: unknown[]; issues: unknown[] }) | null> {
+): Promise<(Scan & { evidence: unknown[]; issues: unknown[]; category?: DomainCategoryInfo | null }) | null> {
   const normalized = normalizeDomain(domain);
 
   // First, try to find via Domain record (fastest path)
@@ -66,11 +75,21 @@ export async function findLatestScanForDomain(
           issues: true,
         },
       },
+      category: {
+        select: {
+          slug: true,
+          name: true,
+        },
+      },
     },
   });
 
   if (domainRecord?.latestScan) {
-    return domainRecord.latestScan as Scan & { evidence: unknown[]; issues: unknown[] };
+    const scan = domainRecord.latestScan as Scan & { evidence: unknown[]; issues: unknown[] };
+    return {
+      ...scan,
+      category: domainRecord.category || null,
+    };
   }
 
   // Fallback: Query Scan table directly by normalizedInput
@@ -91,7 +110,8 @@ export async function findLatestScanForDomain(
     },
   });
 
-  return scan;
+  // No category info available via fallback path
+  return scan ? { ...scan, category: null } : null;
 }
 
 /**
