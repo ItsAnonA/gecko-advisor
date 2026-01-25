@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { Router } from "express";
-import { buildReportPayload, etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
+import { buildReportPayload, etldPlusOne, isBlockedDomain, isValidDomain } from "@gecko-advisor/shared";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { logger } from "../logger.js";
@@ -410,38 +410,67 @@ reportV2Router.get('/reports', async (req, res) => {
   }
 });
 
-// Get report by domain - finds the most recent completed scan for a domain
+/**
+ * Get report by domain - finds the most recent completed scan for a domain.
+ *
+ * Response codes:
+ * - 200: Report found (GET returns JSON, HEAD returns empty)
+ * - 404: Domain invalid or no scan exists (expected, not an error)
+ * - 410: Domain blocked (adult content)
+ * - 500: Real error (DB failure, code exception)
+ */
 reportV2Router.get('/domain/:domain', async (req, res) => {
+  const rawDomain = decodeURIComponent(req.params.domain);
+
+  // Guard 1: Validate domain format BEFORE any DB query
+  // This rejects garbage like "837fy38r2", unicode noise, bot-invented paths
+  const domain = normalizeDomain(rawDomain);
+  if (!domain || !isValidDomain(domain)) {
+    // Expected state - don't log as error
+    return res.status(404).json({
+      type: 'about:blank',
+      status: 404,
+      title: 'Invalid domain',
+      detail: 'Please provide a valid domain name',
+    });
+  }
+
+  // Guard 2: Return 410 Gone for blocked domains (adult content)
+  // This helps Google de-index these pages faster
+  if (isBlockedDomain(domain)) {
+    logger.debug({ domain }, 'Blocked domain report requested - returning 410 Gone');
+    return res.status(410).json({
+      type: 'gone',
+      status: 410,
+      title: 'Report Removed',
+      detail: 'This report has been removed due to content policy.',
+    });
+  }
+
   try {
-    const rawDomain = decodeURIComponent(req.params.domain);
-
-    // Normalize domain using shared function (handles protocol, www, trailing slash, eTLD+1)
-    const domain = normalizeDomain(rawDomain);
-
-    if (!domain || domain.length < 3) {
-      return problem(res, 400, 'Invalid domain', 'Please provide a valid domain name');
-    }
-
-    // Return 410 Gone for blocked domains (adult content)
-    if (isBlockedDomain(domain)) {
-      logger.info({ domain }, 'Blocked domain report requested - returning 410 Gone');
-      res.status(410).json({
-        type: 'gone',
-        status: 410,
-        title: 'Report Removed',
-        detail: 'This report has been removed due to content policy.',
-      });
-      return;
-    }
-
     // Find the most recent completed scan for this domain
     // Uses Domain table first (fast), falls back to Scan table query
     const scan = await findLatestScanForDomain(prisma, domain);
 
+    // Guard 3: No scan found - return 404 (expected state, not an error)
     if (!scan) {
-      return problem(res, 404, 'No report found for this domain');
+      // Debug level only - this is expected for domains never scanned
+      logger.debug({ domain }, 'No scan found for domain');
+      return res.status(404).json({
+        type: 'about:blank',
+        status: 404,
+        title: 'No report found',
+        detail: `No privacy report exists for ${domain}. You can scan it from the homepage.`,
+      });
     }
 
+    // Guard 4: HEAD requests - return 200 without building expensive response
+    // Bots use HEAD aggressively to check if pages exist
+    if (req.method === 'HEAD') {
+      return res.status(200).end();
+    }
+
+    // Build full response for GET requests
     const basePayload = buildReportPayload(scan, {
       evidence: (scan.evidence ?? []) as Parameters<typeof buildReportPayload>[1]['evidence'],
       issues: (scan.issues ?? []) as Parameters<typeof buildReportPayload>[1]['issues'],
@@ -451,9 +480,10 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
     const payload = await enrichReportWithBenchmarks(basePayload);
 
     const archive = await getReportDownloadUrl(scan.id);
-    res.json(archive ? { ...payload, archive } : payload);
+    return res.json(archive ? { ...payload, archive } : payload);
   } catch (error) {
-    logger.error({ error, domain: req.params.domain }, 'Error fetching report by domain');
+    // Real errors (DB failure, code exception) - log as error
+    logger.error({ error, domain }, 'Error fetching report by domain');
     return problem(res, 500, 'Failed to load report');
   }
 });

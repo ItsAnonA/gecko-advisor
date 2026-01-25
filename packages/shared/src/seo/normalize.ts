@@ -153,6 +153,52 @@ export function isValidDomain(domain: string | null | undefined): domain is stri
 }
 
 /**
+ * Common compound TLDs (public suffixes with 2+ parts)
+ * These are TLDs, not registrable domains
+ */
+const COMPOUND_TLDS = [
+  'co.uk',
+  'org.uk',
+  'me.uk',
+  'ac.uk',
+  'gov.uk',
+  'co.jp',
+  'co.nz',
+  'co.za',
+  'com.au',
+  'org.au',
+  'net.au',
+  'com.br',
+  'org.br',
+  'net.br',
+  'com.mx',
+  'org.mx',
+  'co.in',
+  'com.sg',
+  'com.hk',
+  'co.kr',
+  'co.il',
+  'com.ar',
+  'com.tw',
+  'com.cn',
+  'co.th',
+];
+
+/**
+ * Common single-part TLDs
+ */
+const SINGLE_TLDS = [
+  'com', 'net', 'org', 'edu', 'gov', 'mil', 'int',
+  'uk', 'jp', 'de', 'fr', 'it', 'es', 'nl', 'be', 'at', 'ch',
+  'au', 'nz', 'ca', 'br', 'mx', 'ar', 'cl', 'co', 'pe', 've',
+  'in', 'cn', 'hk', 'tw', 'sg', 'my', 'id', 'ph', 'th', 'vn',
+  'kr', 'jp', 'ru', 'ua', 'pl', 'cz', 'sk', 'hu', 'ro', 'bg',
+  'gr', 'tr', 'il', 'ae', 'sa', 'za', 'ng', 'ke', 'eg', 'ma',
+  'io', 'ai', 'app', 'dev', 'xyz', 'tech', 'online', 'site',
+  'info', 'biz', 'pro', 'name', 'mobi', 'tv', 'cc', 'ws', 'me',
+];
+
+/**
  * Extracts the registrable domain (eTLD+1) from a hostname.
  * Handles common compound TLDs like .co.uk
  *
@@ -165,23 +211,101 @@ export function getRegistrableDomain(hostname: string): string {
 
   // Handle common compound TLDs
   const lastTwo = parts.slice(-2).join('.');
-  const compoundTLDs = [
-    'co.uk',
-    'org.uk',
-    'me.uk',
-    'ac.uk',
-    'gov.uk',
-    'co.jp',
-    'co.nz',
-    'co.za',
-    'com.au',
-    'org.au',
-    'com.br',
-  ];
 
-  if (compoundTLDs.includes(lastTwo)) {
+  if (COMPOUND_TLDS.includes(lastTwo)) {
     return parts.slice(-3).join('.');
   }
 
   return parts.slice(-2).join('.');
+}
+
+/**
+ * Checks if a string is a public suffix (TLD) rather than a registrable domain.
+ * Public suffixes like "com", "co.uk", "com.au" are TLDs that cannot be registered.
+ *
+ * Examples:
+ *   - "com" → true (single TLD)
+ *   - "co.uk" → true (compound TLD)
+ *   - "com.br" → true (compound TLD)
+ *   - "example.com" → false (registrable domain)
+ *   - "google.co.uk" → false (registrable domain)
+ *
+ * @param domain - Domain string to check
+ * @returns true if domain is a public suffix, false if it's a registrable domain
+ */
+export function isPublicSuffix(domain: string): boolean {
+  if (!domain || typeof domain !== 'string') {
+    return true; // Invalid input treated as public suffix
+  }
+
+  const normalized = domain.toLowerCase().trim();
+  const parts = normalized.split('.').filter(Boolean);
+
+  if (parts.length === 0) {
+    return true;
+  }
+
+  // Single part - definitely a TLD
+  if (parts.length === 1) {
+    return true;
+  }
+
+  // Two parts - check if it's a compound TLD
+  if (parts.length === 2) {
+    // Check if this is a compound TLD like "co.uk", "com.au"
+    if (COMPOUND_TLDS.includes(normalized)) {
+      return true;
+    }
+
+    // Check if first part is too short (likely TLD pattern)
+    // Real domains have meaningful first labels (e.g., "google.com")
+    // TLD patterns have short first parts (e.g., "co.uk", "com.br")
+    const firstPart = parts[0];
+    if (firstPart && firstPart.length <= 3 && SINGLE_TLDS.includes(parts[1] ?? '')) {
+      // Pattern like "co.uk", "com.au", "org.br"
+      return true;
+    }
+  }
+
+  // Three+ parts - likely a real domain, but verify the last parts aren't a compound TLD
+  // Check that it has something before the public suffix
+  const lastTwo = parts.slice(-2).join('.');
+  if (COMPOUND_TLDS.includes(lastTwo)) {
+    // Has compound TLD, must have at least one part before it
+    return parts.length < 3;
+  }
+
+  // Has single TLD, must have at least one part before it
+  return parts.length < 2;
+}
+
+/**
+ * Validates a domain is a proper registrable domain suitable for comparison.
+ * Must be a real FQDN, not a TLD or public suffix.
+ *
+ * @param domain - Domain to validate
+ * @returns true if valid for comparison, false otherwise
+ */
+export function isValidComparableDomain(domain: string): boolean {
+  // Must pass basic domain validation
+  if (!isValidDomain(domain)) {
+    return false;
+  }
+
+  // Must not be a public suffix
+  if (isPublicSuffix(domain)) {
+    return false;
+  }
+
+  // Additional checks for meaningful domains
+  const parts = domain.split('.');
+  const firstPart = parts[0];
+
+  // First label (before TLD) must be at least 2 characters
+  // This filters out patterns like "a.com" which are technically valid but suspicious
+  if (!firstPart || firstPart.length < 2) {
+    return false;
+  }
+
+  return true;
 }

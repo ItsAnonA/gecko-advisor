@@ -4,7 +4,7 @@ SPDX-License-Identifier: MIT
 */
 import { Router } from 'express';
 import { z } from 'zod';
-import { buildReportPayload, isBlockedDomain } from '@gecko-advisor/shared';
+import { buildReportPayload, isBlockedDomain, isValidComparableDomain, isPublicSuffix } from '@gecko-advisor/shared';
 import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
@@ -131,11 +131,28 @@ contextV2Router.get('/v2/compare/:domainA/:domainB', async (req, res) => {
     const domainA = normalizeDomain(req.params.domainA);
     const domainB = normalizeDomain(req.params.domainB);
 
-    if (!domainA || domainA.length < 3) {
-      return problem(res, 400, 'Invalid domain A', 'Please provide a valid domain name');
+    // Validate both domains are real registrable domains, not TLDs or public suffixes
+    if (!domainA || !isValidComparableDomain(domainA)) {
+      const isTLD = domainA && isPublicSuffix(domainA);
+      return problem(
+        res,
+        404,
+        'Invalid comparison',
+        isTLD
+          ? `"${domainA}" is a TLD or public suffix, not a scannable domain`
+          : 'Please provide a valid domain name for domain A'
+      );
     }
-    if (!domainB || domainB.length < 3) {
-      return problem(res, 400, 'Invalid domain B', 'Please provide a valid domain name');
+    if (!domainB || !isValidComparableDomain(domainB)) {
+      const isTLD = domainB && isPublicSuffix(domainB);
+      return problem(
+        res,
+        404,
+        'Invalid comparison',
+        isTLD
+          ? `"${domainB}" is a TLD or public suffix, not a scannable domain`
+          : 'Please provide a valid domain name for domain B'
+      );
     }
 
     // Normalize order for consistent caching
