@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
  * Generates sitemap index pointing to:
  * - Static sitemap (homepage, reports index)
  * - Chunked report sitemaps (10k URLs each)
+ * - Categories sitemap (Phase 2B hub pages)
  *
  * Uses route handler to avoid collision with native sitemap.ts
  */
@@ -42,6 +43,10 @@ ${Array.from(
     <lastmod>${now}</lastmod>
   </sitemap>`
 ).join('\n')}
+  <sitemap>
+    <loc>${BASE_URL}/sitemap-categories.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>
 </sitemapindex>`;
 
   return new Response(xml, {
