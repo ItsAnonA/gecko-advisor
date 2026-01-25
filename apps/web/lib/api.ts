@@ -115,15 +115,16 @@ export interface ReportData {
 }
 
 /**
- * Processed report data for SSR pages
+ * Processed report data for SSR pages.
+ * If no scan exists for a domain, getReportForDomain() returns null (not this object).
  */
 export interface ProcessedReportData {
-  data: ReportData | null;
+  data: ReportData;
   tier: IndexTier;
   heading: string;
   description: string;
   domain: string;
-  scanData: ScanDataForMetadata | null;
+  scanData: ScanDataForMetadata;
 }
 
 /**
@@ -142,20 +143,23 @@ export const getReportForDomain = cache(
 
     const data = await fetchReportByDomain(domain);
 
-    // Build scan data for SEO utilities
-    const scanData: ScanDataForMetadata | null = data
-      ? {
-          status: data.scan.status,
-          score: data.scan.score,
-          progress: data.scan.progress,
-          finishedAt: data.scan.finishedAt,
-          trackerCount: data.meta?.trackerCount,
-          thirdPartyCount: data.meta?.thirdPartyCount,
-          cookieCount: data.meta?.cookieCount,
-          tlsGrade: data.meta?.tlsGrade,
-          domain, // Include domain for blocklist checking
-        }
-      : null;
+    // No scan found - return null to trigger notFound() in page component
+    if (!data) {
+      return null;
+    }
+
+    // Build scan data for SEO utilities (data is guaranteed non-null here)
+    const scanData: ScanDataForMetadata = {
+      status: data.scan.status,
+      score: data.scan.score,
+      progress: data.scan.progress,
+      finishedAt: data.scan.finishedAt,
+      trackerCount: data.meta?.trackerCount,
+      thirdPartyCount: data.meta?.thirdPartyCount,
+      cookieCount: data.meta?.cookieCount,
+      tlsGrade: data.meta?.tlsGrade,
+      domain, // Include domain for blocklist checking
+    };
 
     // Determine index tier - force noindex for blocked domains even without scan data
     let tier = getIndexTier(scanData);

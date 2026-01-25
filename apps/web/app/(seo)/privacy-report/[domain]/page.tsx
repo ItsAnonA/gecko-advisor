@@ -96,25 +96,8 @@ export default async function ReportPage({ params }: Props) {
     notFound();
   }
 
+  // data and scanData are guaranteed non-null when report is non-null
   const { data, tier, heading, domain, scanData } = report;
-
-  // Handle noindex tier or missing data
-  if (tier === 'noindex' || !data || !scanData) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-display font-bold text-gecko-800 mb-4">{heading}</h1>
-        <p className="text-gecko-600">
-          This report is not available or the scan is incomplete.
-        </p>
-        <p className="text-gecko-500 mt-4">
-          <Link href="/" className="text-advisor-600 hover:text-advisor-700 underline">
-            Scan this website
-          </Link>{' '}
-          to generate a privacy report.
-        </p>
-      </div>
-    );
-  }
 
   // Build schemas - cast to Record for JSON.stringify in JsonLd component
   const schemas: Record<string, unknown>[] = [
