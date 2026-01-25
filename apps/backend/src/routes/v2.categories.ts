@@ -4,6 +4,7 @@
  * Provides category data for hub pages:
  * - List all categories with benchmarks
  * - Get single category with top/worst domains
+ * - Sample comparisons (UX only, NOT for SEO)
  */
 
 import { Router } from 'express';
@@ -11,6 +12,10 @@ import type { Category, Domain, Scan } from '@prisma/client';
 import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
+
+// HARD LIMIT: Never return more than 3 samples per category
+// This is UX scaffolding, NOT SEO content
+const MAX_SAMPLES_PER_CATEGORY = 3;
 
 // Type for category with selected fields
 type CategoryWithBenchmarks = Pick<Category, 'slug' | 'name' | 'description' | 'benchmarks' | 'benchmarksCalculatedAt'>;
@@ -82,6 +87,19 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
         description: true,
         benchmarks: true,
         benchmarksCalculatedAt: true,
+        // Include sample comparisons (UX only, NOT for SEO)
+        sampleComparisons: {
+          where: { active: true },
+          orderBy: { sortOrder: 'asc' },
+          take: MAX_SAMPLES_PER_CATEGORY, // Hard limit enforced at query level
+          select: {
+            id: true,
+            domainA: true,
+            domainB: true,
+            label: true,
+            description: true,
+          },
+        },
       },
     });
 
@@ -165,6 +183,8 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
       benchmarks: category.benchmarks,
       topDomains: transformDomains(topDomains),
       worstDomains: transformDomains(worstDomains),
+      // Sample comparisons (UX only, NOT for SEO)
+      sampleComparisons: category.sampleComparisons || [],
     });
   } catch (error) {
     logger.error({ error, slug: req.params.slug }, 'Error fetching category');

@@ -384,12 +384,42 @@ model Category {
   benchmarksCalculatedAt DateTime?
 
   // Relations
-  domains Domain[]
+  domains           Domain[]
+  sampleComparisons SampleComparison[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([slug])
+}
+
+// === Sample Comparisons (UX only, NOT for SEO) ===
+// Curated comparison pairs to help users understand the compare feature
+// IMPORTANT: Never index, never add to sitemap, max 3 per category
+model SampleComparison {
+  id String @id @default(cuid())
+
+  // Category relation
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Comparison pair
+  domainA String // e.g., "bunnings.com.au"
+  domainB String // e.g., "mitre10.com.au"
+
+  // Display
+  label       String  // e.g., "Hardware Stores (AU)"
+  description String? // Optional: "Compare two Australian hardware retailers"
+
+  // Ordering & visibility
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([active])
 }
 
 // === Phase 2B: Tier Promotion Tracking ===

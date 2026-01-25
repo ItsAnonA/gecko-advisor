@@ -18,6 +18,11 @@ const DOMAINS_PER_SITEMAP = 5000; // Google's recommended limit is 50,000 URLs p
  *
  * Phase 2A: Added /privacy-scanner authority page (highest priority after home)
  * Phase 2B: Added /privacy-benchmarks category hub pages
+ *
+ * ⚠️ NEVER add /compare/* URLs to sitemap
+ * These are user tools, not SEO content (noindex on pages)
+ * Sample comparisons are UX scaffolding only
+ * See: assets/prompts/samples.md for implementation rules
  */
 const STATIC_PAGES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },

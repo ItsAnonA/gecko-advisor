@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
  * - Score distribution
  * - Best in class (top 10)
  * - Worst in class (bottom 10)
+ * - Sample comparisons (UX only, NOT SEO)
  * - Links to individual reports
  */
 
@@ -18,6 +19,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
+import { SampleComparisonsSection } from '@/components/ui/SampleComparisonsSection';
 
 interface Props {
   params: Promise<{ category: string }>;
@@ -41,6 +43,14 @@ interface Benchmarks {
   worstDomains?: string[];
 }
 
+interface SampleComparison {
+  id: string;
+  domainA: string;
+  domainB: string;
+  label: string;
+  description?: string;
+}
+
 interface CategoryData {
   slug: string;
   name: string;
@@ -56,6 +66,8 @@ interface CategoryData {
     score: number;
     trackers: number;
   }>;
+  // Sample comparisons (UX only, NOT SEO)
+  sampleComparisons?: SampleComparison[];
 }
 
 // Revalidate every hour
@@ -186,6 +198,14 @@ export default async function CategoryHubPage({ params }: Props) {
         </h2>
         <DomainList domains={data.worstDomains} />
       </section>
+
+      {/* Sample Comparisons (UX only, NOT SEO) */}
+      {data.sampleComparisons && data.sampleComparisons.length > 0 && (
+        <SampleComparisonsSection
+          samples={data.sampleComparisons}
+          categoryName={data.name}
+        />
+      )}
 
       {/* CTA */}
       <section className="bg-sky-50 rounded-xl p-8 text-center">
