@@ -53,7 +53,7 @@ async function calculateBenchmarks() {
     console.log(`Processing: ${category.name}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-    // Get all Tier A/B domains in this category with their latest scan
+    // Get all Tier A/B domains in this category with their latest scan and evidence
     const domains = await prisma.domain.findMany({
       where: {
         categoryId: category.id,
@@ -66,6 +66,11 @@ async function calculateBenchmarks() {
           select: {
             score: true,
             meta: true,
+            evidence: {
+              select: {
+                kind: true,
+              },
+            },
           },
         },
       },
@@ -91,17 +96,16 @@ async function calculateBenchmarks() {
       const scan = d.latestScan!;
       scores.push(scan.score!);
 
-      // Extract tracker/cookie counts from meta
-      const meta = scan.meta as Record<string, unknown> | null;
-      if (meta) {
-        trackers.push((meta.trackerCount as number) || 0);
-        cookies.push((meta.cookieCount as number) || 0);
-        if (meta.fingerprintingDetected) {
-          fingerprintingCount++;
-        }
-      } else {
-        trackers.push(0);
-        cookies.push(0);
+      // Count from evidence (more accurate than meta)
+      const evidence = scan.evidence || [];
+      const trackerCount = evidence.filter((e) => e.kind === 'tracker').length;
+      const cookieCount = evidence.filter((e) => e.kind === 'cookie').length;
+      const hasFingerprinting = evidence.some((e) => e.kind === 'fingerprint');
+
+      trackers.push(trackerCount);
+      cookies.push(cookieCount);
+      if (hasFingerprinting) {
+        fingerprintingCount++;
       }
     }
 

@@ -8,7 +8,7 @@
  */
 
 import { Router } from 'express';
-import type { Category, Domain, Scan } from '@prisma/client';
+import type { Category, Domain, Scan, Evidence } from '@prisma/client';
 import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
@@ -20,9 +20,11 @@ const MAX_SAMPLES_PER_CATEGORY = 3;
 // Type for category with selected fields
 type CategoryWithBenchmarks = Pick<Category, 'slug' | 'name' | 'description' | 'benchmarks' | 'benchmarksCalculatedAt'>;
 
-// Type for domain with latest scan
+// Type for domain with latest scan and evidence
 type DomainWithScan = Pick<Domain, 'domain'> & {
-  latestScan: Pick<Scan, 'score' | 'meta'> | null;
+  latestScan: (Pick<Scan, 'score' | 'meta'> & {
+    evidence: Pick<Evidence, 'kind'>[];
+  }) | null;
 };
 
 export const categoriesV2Router = Router();
@@ -127,6 +129,9 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
           select: {
             score: true,
             meta: true,
+            evidence: {
+              select: { kind: true },
+            },
           },
         },
       },
@@ -154,6 +159,9 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
           select: {
             score: true,
             meta: true,
+            evidence: {
+              select: { kind: true },
+            },
           },
         },
       },
@@ -165,14 +173,14 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
       take: 10,
     });
 
-    // Transform domain data
+    // Transform domain data - count trackers from evidence
     const transformDomains = (domains: DomainWithScan[]) =>
       domains
         .filter((d): d is DomainWithScan & { latestScan: NonNullable<DomainWithScan['latestScan']> } => d.latestScan !== null)
         .map((d) => ({
           domain: d.domain,
           score: d.latestScan.score || 0,
-          trackers: ((d.latestScan.meta as Record<string, unknown>)?.trackerCount as number) || 0,
+          trackers: d.latestScan.evidence.filter((e) => e.kind === 'tracker').length,
         }));
 
     res.set('Cache-Control', 'public, max-age=3600'); // 1 hour cache
