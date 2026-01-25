@@ -17,11 +17,13 @@ const DOMAINS_PER_SITEMAP = 5000; // Google's recommended limit is 50,000 URLs p
  * Only include pages that actually exist and should be indexed
  *
  * Phase 2A: Added /privacy-scanner authority page (highest priority after home)
+ * Phase 2B: Added /privacy-benchmarks category hub pages
  */
 const STATIC_PAGES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/privacy-scanner', changefreq: 'weekly', priority: '1.0' }, // Authority page
   { path: '/reports', changefreq: 'hourly', priority: '0.9' },
+  { path: '/privacy-benchmarks', changefreq: 'weekly', priority: '0.9' }, // Phase 2B: Category index
   { path: '/blog', changefreq: 'daily', priority: '0.8' },
   { path: '/about', changefreq: 'monthly', priority: '0.7' },
   { path: '/methodology', changefreq: 'monthly', priority: '0.7' },
@@ -138,6 +140,13 @@ sitemapRouter.get('/sitemap.xml', async (_req, res) => {
     <lastmod>${now}</lastmod>
   </sitemap>`;
     }
+
+    // Phase 2B: Categories sitemap (hub pages)
+    xml += `
+  <sitemap>
+    <loc>${BASE_URL}/sitemap-categories.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>`;
 
     xml += `\n${xmlIndexFooter()}`;
 
@@ -293,6 +302,57 @@ sitemapRouter.get('/sitemap-blog.xml', async (_req, res) => {
     res.send(xml);
   } catch (error) {
     logger.error({ error }, 'Error generating blog sitemap');
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
+/**
+ * Phase 2B: Categories sitemap (hub pages)
+ * GET /sitemap-categories.xml
+ */
+sitemapRouter.get('/sitemap-categories.xml', async (_req, res) => {
+  try {
+    // Fetch all categories with benchmarks
+    const categories = await prisma.category.findMany({
+      where: {
+        benchmarksCalculatedAt: { not: null },
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    let xml = xmlHeader();
+
+    // Category index page
+    xml += `
+  <url>
+    <loc>${BASE_URL}/privacy-benchmarks</loc>
+    <lastmod>${formatDate(new Date())}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`;
+
+    // Individual category hub pages
+    for (const category of categories) {
+      xml += `
+  <url>
+    <loc>${BASE_URL}/privacy-benchmarks/${category.slug}</loc>
+    <lastmod>${formatDate(category.updatedAt)}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    }
+
+    xml += `\n${xmlFooter()}`;
+
+    res.set('Content-Type', 'application/xml');
+    res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(xml);
+  } catch (error) {
+    logger.error({ error }, 'Error generating categories sitemap');
     res.status(500).send('Error generating sitemap');
   }
 });

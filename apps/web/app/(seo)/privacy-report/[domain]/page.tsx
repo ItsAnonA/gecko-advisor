@@ -165,6 +165,7 @@ export default async function ReportPage({ params }: Props) {
           domain={domain}
           heading={heading}
           seoContent={seoContent}
+          category={data.category}
         />
       </div>
     </>

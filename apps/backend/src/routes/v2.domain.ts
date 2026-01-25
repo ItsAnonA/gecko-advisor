@@ -89,6 +89,8 @@ domainV2Router.get('/domain/:domain', async (req, res) => {
         slug: scan.slug,
         slugUrl: `https://geckoadvisor.com/r/${scan.slug}`,
       },
+      // Phase 2B: Include category if domain has been classified
+      category: scan.category || null,
     };
 
     return res.json(response);
