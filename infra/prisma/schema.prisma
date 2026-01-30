@@ -103,6 +103,10 @@ model Scan {
   isProScan Boolean @default(false) // Track if scan was performed with Pro features
   scannerIp String? // Track anonymous scans for rate limiting
 
+  // Domain Intelligence Engine: Direct domain link for volatility queries
+  domainId String?
+  domain   Domain? @relation("DomainScans", fields: [domainId], references: [id], onDelete: SetNull)
+
   evidence  Evidence[]
   issues    Issue[]
   createdAt DateTime   @default(now())
@@ -121,6 +125,8 @@ model Scan {
   @@index([userId, createdAt(sort: Desc)], map: "Scan_user_history_idx")
   @@index([isPublic, createdAt(sort: Desc)], map: "Scan_public_reports_idx")
   @@index([scannerIp, createdAt(sort: Desc)], map: "Scan_ip_ratelimit_idx")
+  // Domain Intelligence Engine: Index for volatility queries
+  @@index([domainId, status, finishedAt(sort: Desc)], map: "Scan_domain_volatility_idx")
 }
 
 model Evidence {
@@ -290,8 +296,43 @@ model Domain {
   scanScheduledAt  DateTime? // When next rescan is scheduled
   rescanPriority   Int       @default(0) // Higher = sooner
 
+  // === Domain Intelligence Engine (Phase 3) ===
+  // Scan eligibility (reversible - deprioritize, not exclude)
+  eligibleForScan     Boolean   @default(true)
+  eligibilityReason   String?   // e.g., "low_priority_tld:.xyz"
+  eligibilityTaggedAt DateTime?
+
+  // Tranco seeding for initial tier assignment
+  trancoRank          Int?
+  trancoLastUpdated   DateTime?
+
+  // Historical peak (for conservative demotion protection)
+  historicalPeakScore Int?
+  historicalPeakDate  DateTime?
+
+  // === Anti-Thrash Tracking (Week 1 Hardening) ===
+  lastTierChangedAt   DateTime?         // When tier last changed
+  tierChangeCount30d  Int       @default(0) // Tier changes in last 30 days
+  tierChangeCount90d  Int       @default(0) // Tier changes in last 90 days
+  promotionConfidence Float?              // 0-1, based on sustained signals
+  lastPromotionCheck  DateTime?           // When confidence was last calculated
+
+  // GSC signal stability (weekly breakdown for confidence)
+  gscClicksWeek1      Int       @default(0) // Most recent week
+  gscClicksWeek2      Int       @default(0)
+  gscClicksWeek3      Int       @default(0)
+  gscClicksWeek4      Int       @default(0) // 4 weeks ago
+
+  // GSC impressions for anti-spike guards (Fix 1: DIE Final Hardening)
+  gscImpressionsWeek1 Int       @default(0)
+  gscImpressionsWeek2 Int       @default(0)
+  gscImpressionsWeek3 Int       @default(0)
+  gscImpressionsWeek4 Int       @default(0)
+  gscTopQueryShare    Float?    // % of clicks from top query (0-1)
+
   // Relations
   tierPromotions TierPromotion[]
+  scans          Scan[]          @relation("DomainScans") // All scans for volatility analysis
 
   // Optimized indexes for domain lookups and sitemap generation
   @@index([domain], map: "Domain_lookup_idx")
@@ -299,6 +340,14 @@ model Domain {
   @@index([indexTier, tierScore(sort: Desc)], map: "Domain_tier_idx")
   @@index([indexTier, tierRank], map: "Domain_tier_rank_idx")
   @@index([categoryId], map: "Domain_category_idx")
+  // Domain Intelligence Engine indexes
+  @@index([eligibleForScan], map: "Domain_eligible_idx")
+  @@index([trancoRank], map: "Domain_tranco_idx")
+  @@index([historicalPeakScore], map: "Domain_peak_score_idx")
+  @@index([lastScannedAt, indexTier], map: "Domain_rescan_idx")
+  // Anti-thrash indexes
+  @@index([lastTierChangedAt], map: "Domain_tier_changed_idx")
+  @@index([tierChangeCount90d], map: "Domain_thrash_idx")
 }
 
 // Scan queue status for bulk scanning operations
@@ -429,12 +478,57 @@ model TierPromotion {
   domainId String
   domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
 
-  fromTier String // "B" or "C"
-  toTier   String // "A" or "B"
-  reason   String // "gsc_clicks", "gsc_impressions", "high_score", "no_impressions"
+  fromTier   String  // "B" or "C"
+  toTier     String  // "A" or "B"
+  reason     String  // "gsc_clicks", "gsc_impressions", "high_score", "demotion"
+  confidence Float?  // Promotion confidence score at time of change
 
   createdAt DateTime @default(now())
 
   @@index([domainId])
   @@index([createdAt(sort: Desc)])
+  @@index([toTier, createdAt(sort: Desc)])
+}
+
+// === Daily Operational Reports ===
+model DailyReport {
+  id        String   @id @default(cuid())
+  date      String   @unique // YYYY-MM-DD
+  report    Json     // Full report JSON
+  createdAt DateTime @default(now())
+}
+
+// === Phase 3: System State (Circuit Breaker, Scheduler State) ===
+// Persistent key-value store for system state that survives restarts
+model SystemState {
+  key       String   @id // e.g., "circuit_breaker", "scheduler_lock"
+  value     Json     // Arbitrary JSON value
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+// === Phase 3: Scheduler Batch Tracking ===
+// Ensures scheduling idempotency at DB level (not just lock files)
+model SchedulerBatch {
+  id            String   @id @default(cuid())
+  batchDate     String   // YYYY-MM-DD - only one batch per day
+  batchType     String   // "rescan" | "new_domains" | "promotion"
+
+  // Execution tracking
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  status        String   @default("running") // "running" | "completed" | "failed"
+
+  // Results
+  scheduled     Int      @default(0)
+  skipped       Int      @default(0)
+  errors        Int      @default(0)
+
+  // Metadata
+  budgetUsed    Json?    // Budget allocation snapshot
+  notes         String?
+
+  @@unique([batchDate, batchType])
+  @@index([batchDate])
+  @@index([status])
 }

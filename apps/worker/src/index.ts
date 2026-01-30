@@ -30,6 +30,7 @@ function normalizeDomain(input: string): string {
 /**
  * Upsert a Domain record when a scan completes.
  * This ensures the domain appears in the dynamic sitemap.
+ * Also links the Scan to the Domain for volatility tracking.
  */
 async function upsertDomainOnScanComplete(
   scanId: string,
@@ -50,7 +51,7 @@ async function upsertDomainOnScanComplete(
 
     const scan = await prisma.scan.findUnique({
       where: { id: scanId },
-      select: { id: true, finishedAt: true, createdAt: true },
+      select: { id: true, finishedAt: true, createdAt: true, score: true },
     });
 
     if (!scan) {
@@ -58,24 +59,51 @@ async function upsertDomainOnScanComplete(
       return;
     }
 
-    await prisma.domain.upsert({
+    // Upsert the domain record
+    const domainRecord = await prisma.domain.upsert({
       where: { domain },
       create: {
         domain,
         latestScanId: scan.id,
         firstScanned: scan.finishedAt ?? new Date(),
         lastScanned: scan.finishedAt ?? new Date(),
+        lastScannedAt: scan.finishedAt ?? new Date(),
         scanCount: 1,
         isIndexed: true,
+        // Set historical peak score from first scan
+        historicalPeakScore: scan.score ?? undefined,
+        historicalPeakDate: scan.score ? (scan.finishedAt ?? new Date()) : undefined,
       },
       update: {
         latestScanId: scan.id,
         lastScanned: scan.finishedAt ?? new Date(),
+        lastScannedAt: scan.finishedAt ?? new Date(),
         scanCount: { increment: 1 },
       },
     });
 
-    logger.debug({ domain, scanId }, 'Domain record upserted for sitemap');
+    // Link scan to domain for volatility tracking
+    await prisma.scan.update({
+      where: { id: scanId },
+      data: { domainId: domainRecord.id },
+    });
+
+    // Update historical peak score if this scan has a higher score
+    if (
+      scan.score !== null &&
+      (domainRecord.historicalPeakScore === null ||
+        scan.score > domainRecord.historicalPeakScore)
+    ) {
+      await prisma.domain.update({
+        where: { id: domainRecord.id },
+        data: {
+          historicalPeakScore: scan.score,
+          historicalPeakDate: scan.finishedAt ?? new Date(),
+        },
+      });
+    }
+
+    logger.debug({ domain, scanId, domainId: domainRecord.id }, 'Domain record upserted for sitemap');
   } catch (error) {
     // Non-fatal error - log but don't fail the scan
     logger.warn({ error, scanId, url }, 'Failed to upsert domain record');
