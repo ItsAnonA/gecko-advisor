@@ -20,6 +20,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { SampleComparisonsSection } from '@/components/ui/SampleComparisonsSection';
+import { getCategoryContent } from '@/content/category-content';
 
 interface Props {
   params: Promise<{ category: string }>;
@@ -127,6 +128,7 @@ export default async function CategoryHubPage({ params }: Props) {
   }
 
   const benchmarks = data.benchmarks;
+  const categoryContent = getCategoryContent(slug);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
@@ -155,6 +157,15 @@ export default async function CategoryHubPage({ params }: Props) {
         </p>
       </header>
 
+      {/* Intro Paragraph - Editorial content */}
+      {categoryContent && (
+        <section className="mb-10">
+          <p className="text-gray-700 leading-relaxed">
+            {categoryContent.intro}
+          </p>
+        </section>
+      )}
+
       {/* Stats Grid */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <StatCard label="Average Score" value={`${benchmarks.avgScore}/100`} />
@@ -165,6 +176,21 @@ export default async function CategoryHubPage({ params }: Props) {
           value={`${benchmarks.fingerprintingRate}%`}
         />
       </section>
+
+      {/* Why Privacy Matters */}
+      {categoryContent && (
+        <section className="bg-sky-50 rounded-xl p-6 mb-10 border border-sky-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            Why Privacy Matters in {data.name}
+          </h2>
+          <p className="text-gray-700 leading-relaxed">
+            {categoryContent.whyItMatters}
+          </p>
+        </section>
+      )}
 
       {/* Score Distribution */}
       <section className="bg-gray-50 rounded-xl p-6 mb-10">
@@ -180,6 +206,28 @@ export default async function CategoryHubPage({ params }: Props) {
           <span>Top 10%: {benchmarks.scorePercentiles.p90}</span>
         </div>
       </section>
+
+      {/* Key Findings */}
+      {categoryContent && categoryContent.keyFindings.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            Key Findings
+          </h2>
+          <ul className="space-y-3">
+            {categoryContent.keyFindings.map((finding, index) => (
+              <li key={index} className="flex items-start gap-3 text-gray-700">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-semibold">
+                  {index + 1}
+                </span>
+                <span>{finding}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Best in Class */}
       <section className="mb-10">
@@ -206,6 +254,36 @@ export default async function CategoryHubPage({ params }: Props) {
           categoryName={data.name}
         />
       )}
+
+      {/* What to Look For */}
+      {categoryContent && categoryContent.whatToLookFor.length > 0 && (
+        <section className="bg-emerald-50 rounded-xl p-6 mb-10 border border-emerald-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            What to Look For
+          </h2>
+          <ul className="space-y-2">
+            {categoryContent.whatToLookFor.map((item, index) => (
+              <li key={index} className="flex items-start gap-2 text-gray-700">
+                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Benchmark Freshness Note */}
+      <section className="text-center text-sm text-gray-500 mb-6">
+        <p>
+          Benchmarks calculated from {benchmarks.sampleSize.toLocaleString()} scans.
+          Data updated continuously as new sites are scanned.
+        </p>
+      </section>
 
       {/* CTA */}
       <section className="bg-sky-50 rounded-xl p-8 text-center">

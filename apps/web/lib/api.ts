@@ -121,6 +121,23 @@ export interface ReportData {
     };
     // TLS bonus points
     bonuses?: number;
+    // Category context for SEO (Phase 4)
+    categoryContext?: {
+      categorySlug: string;
+      categoryName: string;
+      categoryPercentile: number;
+      categoryAvgScore: number;
+      categoryAvgTrackers: number;
+      positionLabel: string;
+      comparisonText: string;
+      sampleSize: number;
+    };
+    // Related domains for internal linking (Phase 5)
+    relatedDomains?: Array<{
+      domain: string;
+      score: number;
+      categoryName?: string;
+    }>;
   };
 }
 

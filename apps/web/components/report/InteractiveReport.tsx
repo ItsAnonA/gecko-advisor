@@ -9,11 +9,15 @@ import Link from 'next/link';
 import PremiumScoreDial from './PremiumScoreDial';
 import BenchmarkSection from './BenchmarkSection';
 import RecommendationsSection from './RecommendationsSection';
+import WhatThisMeansSection from './WhatThisMeansSection';
+import CategoryContextBlock from './CategoryContextBlock';
+import RelatedDomainsSection from './RelatedDomainsSection';
 import ComparisonPrompt from './ComparisonPrompt';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { CategoryBadge } from '@/components/ui/CategoryBadge';
 import type { ReportData, CategoryInfo } from '@/lib/api';
 import { generateShareCopy, getShareUrl, getTwitterShareUrl, getLinkedInShareUrl, copyToClipboard } from '@/lib/shareUtils';
+import { formatRelativeTime, getFreshnessLabel } from '@/lib/dates';
 
 // ============================================================================
 // SVG Icons for evidence types
@@ -738,6 +742,14 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
         </div>
       </details>
 
+      {/* Related Domains Section - internal linking for SEO */}
+      {meta?.relatedDomains && meta.relatedDomains.length > 0 && (
+        <RelatedDomainsSection
+          domains={meta.relatedDomains}
+          categoryName={meta.categoryContext?.categoryName}
+        />
+      )}
+
       {/* Share Section - with pre-written copy */}
       <ShareSection
         domain={domain}
@@ -745,6 +757,11 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
         trackerCount={trackerCount}
         tlsGrade={tlsGrade}
       />
+
+      {/* Freshness Footer - shows scan timestamp with freshness indicator */}
+      {scan.finishedAt && (
+        <FreshnessFooter scannedAt={scan.finishedAt} domain={domain} />
+      )}
 
       {/* Footer Links */}
       <footer className="text-xs text-zinc-500 space-y-2">
@@ -982,6 +999,12 @@ function OverviewPanel({
         )}
       </div>
 
+      {/* ===== CATEGORY CONTEXT ===== */}
+      {/* Shows how this domain compares within its category */}
+      {meta?.categoryContext && (
+        <CategoryContextBlock context={meta.categoryContext} domain={domain} />
+      )}
+
       {/* ===== QUICK STATS BAR ===== */}
       {/* Compact horizontal stats strip */}
       <div className="bg-gradient-to-r from-slate-50 to-stone-50 rounded-xl border border-slate-200/80 p-4">
@@ -1053,6 +1076,19 @@ function OverviewPanel({
       {/* ===== SCORE BREAKDOWN ===== */}
       {/* Penalty category breakdown using new scoring algorithm */}
       <ScoreBreakdownSection meta={meta} score={score} />
+
+      {/* ===== WHAT THIS MEANS ===== */}
+      {/* Practical tips based on scan findings */}
+      <WhatThisMeansSection
+        domain={domain}
+        trackerCount={trackerCount}
+        hasFingerprinting={evidence.some(e => e.kind === 'fingerprint')}
+        hasAdsTrackers={evidence.some(e => {
+          const details = e.details as { category?: string } | null;
+          return details?.category === 'advertising';
+        })}
+        cookieCount={evidence.filter(e => e.kind === 'cookie').length}
+      />
 
       {/* ===== SEO CONTENT ===== */}
       {/* Native details/summary - semantic, accessible, and crawlable */}
@@ -1340,6 +1376,66 @@ function EvidencePanel({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * FreshnessFooter - Displays scan timestamp with freshness indicator
+ *
+ * Shows when the scan was performed with visual freshness cues:
+ * - Fresh (< 7 days): Green
+ * - Recent (< 30 days): Blue
+ * - May be outdated (< 90 days): Amber with rescan CTA
+ * - Outdated (> 90 days): Red with rescan CTA
+ */
+function FreshnessFooter({
+  scannedAt,
+  domain,
+}: {
+  scannedAt: string;
+  domain: string;
+}) {
+  const freshness = getFreshnessLabel(scannedAt);
+  const relativeTime = formatRelativeTime(scannedAt);
+
+  const colorStyles = {
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    sky: 'bg-sky-50 border-sky-200 text-sky-700',
+    amber: 'bg-amber-50 border-amber-200 text-amber-700',
+    red: 'bg-red-50 border-red-200 text-red-700',
+  };
+
+  const badgeStyles = {
+    emerald: 'bg-emerald-100 text-emerald-700',
+    sky: 'bg-sky-100 text-sky-700',
+    amber: 'bg-amber-100 text-amber-700',
+    red: 'bg-red-100 text-red-700',
+  };
+
+  return (
+    <div className={`rounded-lg border p-3 ${colorStyles[freshness.color]}`}>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm">
+            Scanned <strong>{relativeTime}</strong>
+          </span>
+          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${badgeStyles[freshness.color]}`}>
+            {freshness.label}
+          </span>
+        </div>
+        {freshness.showRescanCTA && (
+          <Link
+            href={`/?url=${encodeURIComponent(domain)}`}
+            className="text-xs font-medium underline hover:no-underline"
+          >
+            Rescan for latest data
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

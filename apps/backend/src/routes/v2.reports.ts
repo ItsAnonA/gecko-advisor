@@ -7,7 +7,7 @@ import { logger } from "../logger.js";
 import { CacheService, CACHE_KEYS, CACHE_TTL } from "../cache.js";
 import { getReportDownloadUrl, getReportFromStorage } from "../services/reportArchive.js";
 import { createAnalyticsService } from "../services/analyticsService.js";
-import { findLatestScanForDomain, normalizeDomain } from "../services/domainService.js";
+import { findLatestScanForDomain, normalizeDomain, buildCategoryContext, getRelatedDomains } from "../services/domainService.js";
 
 // Create analytics service instance
 const analyticsService = createAnalyticsService(prisma);
@@ -20,14 +20,15 @@ async function enrichReportWithBenchmarks(payload: ReturnType<typeof buildReport
     const score = payload.scan.score;
     const trackerCount = payload.meta.trackerCount;
     const cookieCount = payload.meta.cookieCount;
+    const domain = payload.meta.domain;
 
     // Skip enrichment if no score (incomplete scan)
     if (score === null || score === undefined) {
       return payload;
     }
 
-    // Get benchmark comparison and insights in parallel
-    const [benchmarks, globalBenchmarks, trackerInsights] = await Promise.all([
+    // Get benchmark comparison, insights, category context, and related domains in parallel
+    const [benchmarks, globalBenchmarks, trackerInsights, categoryContext, relatedDomains] = await Promise.all([
       analyticsService.compareToBenchmarks(score, trackerCount, cookieCount),
       analyticsService.getGlobalBenchmarks(),
       analyticsService.getTrackerInsights(
@@ -39,6 +40,8 @@ async function enrichReportWithBenchmarks(payload: ReturnType<typeof buildReport
           })
           .filter(Boolean)
       ),
+      domain ? buildCategoryContext(prisma, domain, score) : null,
+      domain && score ? getRelatedDomainsForReport(prisma, domain, score) : [],
     ]);
 
     // Add benchmark data to meta
@@ -55,12 +58,79 @@ async function enrichReportWithBenchmarks(payload: ReturnType<typeof buildReport
           averageTrackerCount: globalBenchmarks.averageTrackerCount,
           averageCookieCount: globalBenchmarks.averageCookieCount,
         },
+        categoryContext: categoryContext ?? undefined,
+        relatedDomains: relatedDomains.length > 0 ? relatedDomains : undefined,
       },
     };
   } catch (error) {
     // Log but don't fail - benchmarks are optional enhancement
     logger.warn({ error }, 'Failed to enrich report with benchmarks');
     return payload;
+  }
+}
+
+/**
+ * Get related domains for report, filtered by category and tier
+ */
+async function getRelatedDomainsForReport(
+  prismaClient: typeof prisma,
+  domain: string,
+  score: number
+): Promise<Array<{ domain: string; score: number; categoryName?: string }>> {
+  try {
+    // Get domain record to check for category
+    const domainRecord = await prismaClient.domain.findUnique({
+      where: { domain: normalizeDomain(domain) },
+      include: { category: true },
+    });
+
+    if (!domainRecord?.category) {
+      // No category - use global related domains
+      return getRelatedDomains(prismaClient, domain, score, 5);
+    }
+
+    // Get related domains in same category
+    const scoreMin = Math.max(40, score - 15);
+    const scoreMax = Math.min(100, score + 15);
+
+    const related = await prismaClient.domain.findMany({
+      where: {
+        domain: { not: normalizeDomain(domain) },
+        categoryId: domainRecord.category.id,
+        isIndexed: true,
+        // Prefer Tier A/B domains
+        indexTier: { in: ['A', 'B'] },
+        latestScan: {
+          status: 'done',
+          score: {
+            gte: scoreMin,
+            lte: scoreMax,
+          },
+        },
+      },
+      select: {
+        domain: true,
+        category: {
+          select: { name: true },
+        },
+        latestScan: {
+          select: { score: true },
+        },
+      },
+      orderBy: { latestScan: { score: 'desc' } },
+      take: 5,
+    });
+
+    return related
+      .filter(d => d.latestScan?.score !== null)
+      .map(d => ({
+        domain: d.domain,
+        score: d.latestScan!.score!,
+        categoryName: d.category?.name,
+      }));
+  } catch (error) {
+    logger.warn({ error, domain }, 'Failed to get related domains for report');
+    return [];
   }
 }
 

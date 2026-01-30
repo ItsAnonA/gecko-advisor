@@ -418,6 +418,128 @@ export async function setDomainIndexed(
   }
 }
 
+// ============================================================================
+// Phase 4: Category Context for Reports
+// ============================================================================
+
+/**
+ * Category context data for report enrichment
+ */
+export interface CategoryContext {
+  categorySlug: string;
+  categoryName: string;
+  categoryPercentile: number;    // 0-100 percentile within category
+  categoryAvgScore: number;
+  categoryAvgTrackers: number;
+  positionLabel: string;         // "Top 10%", "Upper half", etc.
+  comparisonText: string;        // "5 points above category average"
+  sampleSize: number;
+}
+
+/**
+ * Build category context for a domain's report.
+ *
+ * Returns null if:
+ * - Domain has no category assigned
+ * - Category has no benchmarks calculated
+ * - Score is not available
+ */
+export async function buildCategoryContext(
+  prisma: PrismaClient,
+  domain: string,
+  score: number | null
+): Promise<CategoryContext | null> {
+  if (score === null) return null;
+
+  const normalized = normalizeDomain(domain);
+
+  // Get domain with category and benchmarks
+  const domainRecord = await prisma.domain.findUnique({
+    where: { domain: normalized },
+    include: {
+      category: true,
+    },
+  });
+
+  if (!domainRecord?.category) return null;
+
+  const category = domainRecord.category;
+  const benchmarks = category.benchmarks as {
+    avgScore?: number;
+    avgTrackers?: number;
+    sampleSize?: number;
+    scorePercentiles?: {
+      p10?: number;
+      p25?: number;
+      p50?: number;
+      p75?: number;
+      p90?: number;
+    };
+  } | null;
+
+  if (!benchmarks?.avgScore || !benchmarks?.sampleSize) return null;
+
+  // Calculate percentile position within category
+  // Count domains in category with lower scores
+  const lowerCount = await prisma.domain.count({
+    where: {
+      categoryId: category.id,
+      latestScan: {
+        status: 'done',
+        score: { lt: score },
+      },
+    },
+  });
+
+  const totalInCategory = await prisma.domain.count({
+    where: {
+      categoryId: category.id,
+      latestScan: {
+        status: 'done',
+        score: { not: null },
+      },
+    },
+  });
+
+  const percentile = totalInCategory > 0
+    ? Math.round((lowerCount / totalInCategory) * 100)
+    : 50;
+
+  // Generate position label
+  const positionLabel = getPositionLabel(percentile);
+
+  // Generate comparison text
+  const avgScore = benchmarks.avgScore;
+  const diff = score - avgScore;
+  const comparisonText = diff === 0
+    ? 'Equal to category average'
+    : diff > 0
+    ? `${Math.abs(diff)} points above category average`
+    : `${Math.abs(diff)} points below category average`;
+
+  return {
+    categorySlug: category.slug,
+    categoryName: category.name,
+    categoryPercentile: percentile,
+    categoryAvgScore: avgScore,
+    categoryAvgTrackers: benchmarks.avgTrackers ?? 0,
+    positionLabel,
+    comparisonText,
+    sampleSize: benchmarks.sampleSize,
+  };
+}
+
+/**
+ * Get human-readable position label from percentile
+ */
+function getPositionLabel(percentile: number): string {
+  if (percentile >= 90) return 'Top 10%';
+  if (percentile >= 75) return 'Top 25%';
+  if (percentile >= 50) return 'Upper half';
+  if (percentile >= 25) return 'Lower half';
+  return 'Bottom 25%';
+}
+
 /**
  * Backfill Domain table from existing completed scans.
  * This function:
