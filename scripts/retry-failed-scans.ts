@@ -21,8 +21,13 @@
 import { PrismaClient } from '@prisma/client';
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
+import { customAlphabet } from 'nanoid';
 
 const prisma = new PrismaClient();
+
+// Slug generation (same as backend)
+const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const generateSlug = customAlphabet(alphabet, 8);
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -33,10 +38,12 @@ const minAgeArg = args.find((a) => a.startsWith('--min-age-days='));
 const MAX_RETRIES = limitArg ? parseInt(limitArg.split('=')[1], 10) : 500;
 const MIN_AGE_DAYS = minAgeArg ? parseInt(minAgeArg.split('=')[1], 10) : 7;
 
-// Redis connection for BullMQ
-const redisHost = process.env.REDIS_HOST || 'localhost';
-const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
-const redisPassword = process.env.REDIS_PASSWORD || undefined;
+// Redis connection for BullMQ - parse REDIS_URL or use defaults
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const parsedRedis = new URL(redisUrl);
+const redisHost = parsedRedis.hostname;
+const redisPort = parseInt(parsedRedis.port || '6379', 10);
+const redisPassword = parsedRedis.password || undefined;
 
 async function retryFailedScans() {
   console.log('╔════════════════════════════════════════════════════════════╗');
@@ -142,14 +149,17 @@ async function retryFailedScans() {
 
   for (const domain of failedDomains) {
     try {
-      // Create new scan record
+      // Create new scan record with unique slug
       const scan = await prisma.scan.create({
         data: {
+          targetType: 'url',
           input: domain.domain,
           normalizedInput: domain.domain,
+          slug: generateSlug(),
           status: 'queued',
           isPublic: true,
           scannerIp: 'retry-script',
+          source: 'retry-failed',
         },
       });
 
