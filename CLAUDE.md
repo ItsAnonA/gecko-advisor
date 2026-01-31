@@ -1,20 +1,182 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Overview
-
-Gecko Advisor is a privacy-first website scanner built as a **TypeScript monorepo** using pnpm workspaces and Turbo. It provides deterministic privacy scores (0-100) with explainable evidence by analyzing cookies, trackers, security headers, and third-party resources.
-
-**Mission**: 100% free, open-source privacy assessment tool with no user tracking or authentication.
-
-**Live Site**: https://geckoadvisor.com
+This file provides guidance for working with the Gecko Advisor codebase.
 
 ---
 
-## System Architecture
+# Part 1: Product Overview
 
-### High-Level Architecture Diagram
+## What is Gecko Advisor?
+
+Gecko Advisor is a **free, open-source website privacy scanner** that analyzes any website and provides:
+- **Privacy Score** (0-100) - Deterministic, explainable rating
+- **Evidence-Based Findings** - Cookies, trackers, fingerprinting, security headers
+- **Recommendations** - Actionable steps to improve privacy
+- **Historical Tracking** - How privacy practices change over time
+
+**Live Site**: https://geckoadvisor.com
+
+**Mission**: 100% free privacy assessment with no user tracking or authentication required.
+
+---
+
+# Part 2: Functional Overview
+
+## Core Features
+
+### 1. Privacy Scanning
+Users enter a URL and receive a comprehensive privacy analysis including:
+- **Privacy Score**: 0-100 grade (A-F letter grade)
+- **Tracker Detection**: Third-party trackers identified
+- **Cookie Analysis**: First-party vs third-party, purposes
+- **Fingerprinting Detection**: Canvas, WebGL, audio fingerprinting
+- **Security Headers**: HTTPS, CSP, HSTS validation
+
+### 2. Privacy Reports
+Each scanned domain gets a shareable report page (`/privacy-report/[domain]`) showing:
+- Overall score with visual dial
+- Issue breakdown by severity (critical, high, medium, low, info)
+- Evidence list with explanations
+- Category benchmark comparison
+- Recommendations for improvement
+- Change history (if rescanned)
+
+### 3. Domain Comparison
+Compare two domains side-by-side (`/compare/[domainA]/[domainB]`) to see:
+- Score differences
+- Tracker differences
+- Which domain is more privacy-friendly
+
+### 4. Industry Benchmarks
+View privacy benchmarks by industry category (`/privacy-benchmarks/[category]`):
+- Streaming, eCommerce, Social Media, News, Banking, etc.
+- Average scores per category
+- Best and worst performers
+- Trend analysis
+
+### 5. Change Feed
+Track privacy changes across all scanned domains (`/changes`):
+- Score improvements and regressions
+- Tracker additions and removals
+- Fingerprinting status changes
+
+### 6. Weekly Insights
+Automated intelligence reports with:
+- Breaking news (major privacy changes)
+- Notable trends (category-wide shifts)
+- Tracker adoption patterns
+
+---
+
+## User Journeys
+
+### Journey 1: Scan a Website
+```
+Homepage → Enter URL → Click "Scan" → Progress Page → Report Page
+```
+- User lands on homepage with scan form
+- Enters URL (e.g., "example.com")
+- Sees real-time progress (0-100%)
+- Redirected to report page when complete
+
+### Journey 2: Compare Domains
+```
+Report Page → "Compare with..." → Select Domain → Comparison Page
+```
+- From any report, user can initiate comparison
+- Select another domain to compare
+- View side-by-side analysis
+
+### Journey 3: Browse Benchmarks
+```
+Benchmarks Page → Select Category → Category Report → Domain Detail
+```
+- User browses industry categories
+- Views category-wide statistics
+- Drills into specific domain reports
+
+---
+
+## Frontend Pages
+
+### Main User Flow
+| Page | Route | Purpose |
+|------|-------|---------|
+| Homepage | `/` | URL input form, start scanning |
+| Scan Progress | `/scan/[id]` | Real-time progress display |
+| Privacy Report | `/privacy-report/[domain]` | Full privacy analysis |
+| Domain Comparison | `/compare/[a]/[b]` | Side-by-side comparison |
+
+### Discovery & Content
+| Page | Route | Purpose |
+|------|-------|---------|
+| Reports List | `/reports` | Browse all scanned domains |
+| Industry Benchmarks | `/privacy-benchmarks` | Category overview |
+| Category Detail | `/privacy-benchmarks/[category]` | Per-category analysis |
+| Changes Feed | `/changes` | Recent privacy changes |
+| Blog | `/blog` | Privacy articles |
+
+### Information
+| Page | Route | Purpose |
+|------|-------|---------|
+| About | `/about` | Project information |
+| Methodology | `/methodology` | How scoring works |
+| FAQ | `/faq` | Common questions |
+| Roadmap | `/roadmap` | Feature plans |
+
+---
+
+## Business Logic
+
+### Privacy Scoring Algorithm
+The privacy score (0-100) is calculated by deducting points for privacy issues:
+
+| Factor | Impact |
+|--------|--------|
+| Third-party trackers | -2 to -5 per tracker |
+| Fingerprinting detected | -15 to -25 |
+| Third-party cookies | -1 to -3 per cookie |
+| Missing security headers | -5 to -10 per header |
+| No HTTPS | -20 |
+
+**Grade Mapping**:
+- A: 90-100 (Excellent)
+- B: 80-89 (Good)
+- C: 70-79 (Fair)
+- D: 60-69 (Poor)
+- F: 0-59 (Failing)
+
+### Change Classification
+When a domain is rescanned, changes are classified:
+
+| Type | Criteria |
+|------|----------|
+| NONE | Score change < 2 points |
+| MINOR | Score change 2-5 points |
+| MODERATE | Score change 6-15 points |
+| MAJOR | Score change 16-25 points |
+| CRITICAL | Score change > 25 OR fingerprinting toggled |
+
+### Insight Generation
+Weekly automated insights are generated with quality thresholds:
+
+| Tier | Requirements | Action |
+|------|--------------|--------|
+| Breaking | Magnitude ≥ 70, Confidence ≥ 0.9 | Publish immediately |
+| Notable | Magnitude ≥ 40, Confidence ≥ 0.75 | Publish in digest |
+| Emerging | Magnitude ≥ 25, Confidence ≥ 0.6 | Track internally |
+
+### Rate Limiting
+Free users are limited to prevent abuse:
+- **Burst**: 1 scan per minute (Redis-enforced)
+- **Daily**: 10 scans per day (Database-enforced)
+- **Pro Users**: No limits
+
+---
+
+# Part 3: Technical Architecture
+
+## System Design
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -32,8 +194,7 @@ Gecko Advisor is a privacy-first website scanner built as a **TypeScript monorep
 │         │             │  PostgreSQL  │     │    Redis     │                │
 │         │             │   (Prisma)   │     │   (Queue)    │                │
 │         │             └──────────────┘     └──────────────┘                │
-│         │                    │                                              │
-│         ▼                    ▼                                              │
+│         ▼                                                                   │
 │  ┌──────────────────────────────────────────────────────────┐              │
 │  │              Shared Package (@gecko-advisor/shared)       │              │
 │  │         Zod Schemas • Types • Utils • Blocklist           │              │
@@ -42,564 +203,256 @@ Gecko Advisor is a privacy-first website scanner built as a **TypeScript monorep
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Monorepo Structure
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 15, React, TailwindCSS, TanStack Query |
+| Backend | Express.js, Zod validation, Prisma ORM |
+| Worker | BullMQ job queue, Puppeteer for crawling |
+| Database | PostgreSQL |
+| Cache/Queue | Redis |
+| Infrastructure | Docker, Nginx, Coolify |
+
+## Monorepo Structure
 
 ```
 /
 ├── apps/
-│   ├── web/              # Next.js 15 frontend (@gecko-advisor/web)
-│   ├── backend/          # Express API + Prisma (@gecko-advisor/backend)
-│   └── worker/           # BullMQ job processor (@gecko-advisor/worker)
+│   ├── web/              # Next.js 15 frontend
+│   ├── backend/          # Express API server
+│   └── worker/           # BullMQ job processor
 │
 ├── packages/
-│   └── shared/           # Shared schemas, types, utilities (@gecko-advisor/shared)
+│   └── shared/           # Shared schemas, types, utilities
 │
 ├── infra/
-│   ├── prisma/           # Database schema, migrations, seeds
-│   ├── docker/           # Docker Compose configs + Nginx
-│   └── openapi.yaml      # OpenAPI specification
+│   ├── prisma/           # Database schema and migrations
+│   └── docker/           # Docker Compose configs
 │
-├── scripts/              # 28+ operational and maintenance scripts
-│
-├── tests/
-│   └── e2e/              # Playwright E2E tests (100+ test cases)
-│
-├── docs/                 # Project documentation
-└── Project-Docs/         # Architecture and context documentation
+├── scripts/              # 28+ operational scripts
+└── tests/e2e/            # Playwright E2E tests
 ```
 
 ---
 
-## Core Data Flow
+## Data Flow
 
-### Privacy Scan Flow
-
+### Scan Request Flow
 ```
-┌─────────┐    POST /api/v2/scan    ┌─────────┐    BullMQ Job    ┌─────────┐
-│ Browser │ ───────────────────────▶│ Backend │ ─────────────────▶│ Worker  │
-└─────────┘                         └─────────┘                   └─────────┘
-     │                                   │                             │
-     │  1. Submit URL                    │  2. Validate + Dedupe       │  3. Crawl Site
-     │                                   │  3. Create Scan Record      │  4. Analyze Privacy
-     │                                   │  4. Queue BullMQ Job        │  5. Calculate Score
-     │                                   │                             │  6. Detect Changes
-     │                                   │                             │
-     │  ◀─────── Poll Status ───────────│◀──── Update Progress ───────│
-     │           GET /api/v2/scan/:id   │                             │
-     │                                   │                             │
-     │  7. Redirect to Report           │  8. Return Results          │
-     │     /privacy-report/:domain      │                             │
-     ▼                                   ▼                             ▼
+1. User submits URL
+   ↓
+2. Backend validates URL (Zod schema)
+   ↓
+3. Check for recent scan (deduplication - 24hr cache)
+   ↓
+4. Create Scan record (status: queued)
+   ↓
+5. Queue BullMQ job
+   ↓
+6. Worker picks up job
+   ↓
+7. Crawl website (Puppeteer)
+   ↓
+8. Analyze: cookies, trackers, headers, fingerprinting
+   ↓
+9. Calculate privacy score
+   ↓
+10. Update Scan record (status: done)
+    ↓
+11. Detect changes (if rescan)
+    ↓
+12. Frontend polls → redirects to report
 ```
 
 ### Scan States
-
 ```
 queued → running → done
                  ↘ error
 ```
 
-**Progress Updates**: Worker updates `progress` (0-100) during scan for real-time UI feedback.
-
 ---
 
 ## Backend Services
 
-### Service Directory (`apps/backend/src/services/`)
+### Core Services (`apps/backend/src/services/`)
 
-#### Core Infrastructure Services
 | Service | Purpose |
 |---------|---------|
-| `slug.ts` | Unique slug generation for public URLs (`example-com-abc123`) |
-| `dedupe.ts` | Scan deduplication (24-hour cache window) |
-| `rateLimitService.ts` | Dual-layer rate limiting (burst + daily) |
-| `turnstileService.ts` | Cloudflare Turnstile bot protection |
-| `reportArchive.ts` | Report archival and retrieval |
-| `ssrReportService.ts` | Server-side rendering for search engines |
+| `slug.ts` | Generate unique slugs for report URLs |
+| `dedupe.ts` | Check for recent scans (24hr deduplication) |
+| `rateLimitService.ts` | Enforce scan limits (burst + daily) |
+| `domainService.ts` | Domain normalization and lookup |
+| `comparisonService.ts` | Compare two domains |
 
-#### Privacy Analysis Services
+### Intelligence Services
+
 | Service | Purpose |
 |---------|---------|
-| `analyticsService.ts` | Analytics aggregation and insights |
-| `domainService.ts` | Domain normalization, lookup (eTLD+1) |
-| `contextService.ts` | Contextual privacy analysis |
-| `comparisonService.ts` | Domain-to-domain privacy comparison |
+| `changeDetectionService.ts` | Detect privacy changes between scans |
+| `stabilityService.ts` | Calculate domain stability scores |
+| `insightGeneratorService.ts` | Generate weekly insights |
+| `predictiveService.ts` | Trend predictions and early warnings |
+| `narrativeService.ts` | Auto-generate report narratives |
+| `credibilityService.ts` | Validate insight language quality |
 
-#### Domain Intelligence Engine (Phase 3)
+### SEO Services
+
 | Service | Purpose |
 |---------|---------|
-| `changeDetectionService.ts` | Detects score/tracker changes between scans |
-| `volatilityService.ts` | Privacy score volatility analysis |
-| `stabilityService.ts` | Stability scoring with tiered confidence |
-| `predictiveService.ts` | Momentum, acceleration, early warnings |
-
-#### SEO & Indexing (Phase 2)
-| Service | Purpose |
-|---------|---------|
-| `budgetService.ts` | Dynamic scan budget with circuit breaker |
-| `eligibilityService.ts` | Domain scan eligibility checking |
-| `antiThrashService.ts` | Prevents rapid tier oscillation |
-| `categoryIntelligenceService.ts` | Category classification intelligence |
-| `journeyTrackingService.ts` | User journey and conversion tracking |
-
-#### Insights & Credibility (Phase 3C)
-| Service | Purpose |
-|---------|---------|
-| `insightGeneratorService.ts` | Tiered insight generation (breaking/notable/emerging) |
-| `insightQualityService.ts` | Quality scoring and filtering |
-| `narrativeService.ts` | Auto-generated narrative templates |
-| `credibilityService.ts` | Hedge language enforcement, retraction validation |
-| `trackerEvolutionService.ts` | Tracker adoption/decline tracking |
-| `weeklyReportService.ts` | Automated weekly privacy reports |
+| `budgetService.ts` | Dynamic scan budget allocation |
+| `eligibilityService.ts` | Domain scan eligibility |
+| `categoryIntelligenceService.ts` | Category classification |
+| `ssrReportService.ts` | Server-side rendering for crawlers |
 
 ---
 
-## API Routes
+## API Endpoints
 
-### Route Directory (`apps/backend/src/routes/`)
+### Scanning API
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v2/scan` | Start a privacy scan |
+| GET | `/api/v2/scan/:id` | Get scan status/results |
+| GET | `/api/v2/report/:slug` | Get report by slug |
 
-#### Current API (v2)
-| Route | Endpoints | Purpose |
-|-------|-----------|---------|
-| `v2.scan.ts` | `POST /api/v2/scan`, `POST /api/v2/url` | Initiate privacy scans |
-| `v2.reports.ts` | `GET /api/v2/scan/:id`, `GET /api/v2/report/:slug` | Retrieve scan results |
-| `v2.domain.ts` | `GET /api/v2/domain/:domain` | Domain lookup and stats |
-| `v2.context.ts` | `GET /api/v2/context/:domain` | Contextual analysis |
-| `v2.categories.ts` | `GET /api/v2/categories` | Industry category data |
-| `v2.changes.ts` | `GET /api/v2/changes` | Privacy change feed |
-| `v2.insights.ts` | `GET /api/v2/insights/*` | Generated privacy insights |
-| `v2.blog.ts` | `GET /api/v2/blog`, `GET /api/v2/blog/:slug` | Blog content |
+### Domain API
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/v2/domain/:domain` | Domain info and stats |
+| GET | `/api/v2/context/:domain` | Contextual analysis |
+| GET | `/api/v2/changes` | Recent privacy changes |
 
-#### Insights API (v2.insights.ts)
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/v2/insights` | List publishable insights |
-| `GET /api/v2/insights/tiered` | Tiered insights (breaking/notable/emerging) |
-| `GET /api/v2/insights/predictions/:domain` | Predictive signals for domain |
-| `GET /api/v2/insights/quality/distribution` | Quality metrics distribution |
-| `GET /api/v2/insights/governance/methodology` | Credibility methodology metrics |
-| `GET /api/v2/insights/narratives/templates` | Available narrative templates |
+### Insights API
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/v2/insights` | List publishable insights |
+| GET | `/api/v2/insights/tiered` | Tiered insights (breaking/notable/emerging) |
+| GET | `/api/v2/insights/predictions/:domain` | Predictions for domain |
 
-#### Infrastructure Routes
-| Route | Purpose |
-|-------|---------|
-| `admin.ts` | Admin operations, bulk scanning, tier management |
-| `auth.ts` | User authentication endpoints |
-| `batch.ts` | Batch scan operations |
-| `sitemap.ts` | Dynamic sitemap generation |
-| `ssr.blog.ts` | Blog SSR for crawlers |
-| `ssr.domain.ts` | Domain report SSR for crawlers |
-| `docs.ts` | OpenAPI documentation |
-
----
-
-## Worker Jobs
-
-### Worker Directory (`apps/worker/src/`)
-
-| File | Purpose |
-|------|---------|
-| `index.ts` | BullMQ queue setup and job processors |
-| `scanner.ts` | Website crawling and data extraction |
-| `scoring.ts` | Privacy score calculation algorithm |
-| `changeDetection.ts` | Privacy change tracking |
-| `lists.ts` | Tracker and blocklist management |
-| `objectStorage.ts` | S3-compatible storage integration |
-| `config.ts` | Configuration and environment |
-| `logger.ts` | Logging configuration |
-| `sentry.ts` | Error tracking integration |
-
-### Job Types
-
-| Job | Trigger | Purpose |
-|-----|---------|---------|
-| `scan-url` | POST /api/v2/scan | Main privacy scanning job |
-| `report-generation` | SSR request | Generate SSR report for bots |
-| `change-detection` | Scan completion | Analyze privacy changes |
-| `domain-upsert` | Scan completion | Update Domain record |
-
----
-
-## Frontend Architecture
-
-### Frontend App (`apps/web/`)
-
-**Framework**: Next.js 15 with App Router
-
-### Page Routes
-
-#### Main Layout (`(main)/`)
-| Route | Page | Purpose |
-|-------|------|---------|
-| `/` | `page.tsx` | Homepage with scanner |
-| `/scan/[id]` | `scan/[id]/page.tsx` | Real-time scan progress |
-
-#### SEO Layout (`(seo)/`)
-| Route | Page | Purpose |
-|-------|------|---------|
-| `/` | `page.tsx` | SEO-optimized homepage |
-| `/about` | `about/page.tsx` | About the project |
-| `/faq` | `faq/page.tsx` | Frequently asked questions |
-| `/methodology` | `methodology/page.tsx` | Privacy assessment methodology |
-| `/security` | `security/page.tsx` | Security features |
-| `/roadmap` | `roadmap/page.tsx` | Product roadmap |
-| `/legal` | `legal/page.tsx` | Legal information |
-| `/privacy-scanner` | `privacy-scanner/page.tsx` | Scanner features |
-| `/privacy-report/[domain]` | `privacy-report/[domain]/page.tsx` | Dynamic privacy reports |
-| `/privacy-benchmarks` | `privacy-benchmarks/page.tsx` | Industry benchmarks |
-| `/privacy-benchmarks/[category]` | `privacy-benchmarks/[category]/page.tsx` | Category benchmarks |
-| `/blog` | `blog/page.tsx` | Blog listing |
-| `/blog/[slug]` | `blog/[slug]/page.tsx` | Individual blog posts |
-| `/compare/[domainA]/[domainB]` | `compare/[domainA]/[domainB]/page.tsx` | Domain comparison |
-| `/reports` | `reports/page.tsx` | Public reports listing |
-| `/changes` | `changes/page.tsx` | Privacy changes feed |
-| `/benchmarks` | `benchmarks/page.tsx` | Benchmark data explorer |
-
-### Key Components (`apps/web/components/`)
-
-#### Scan Components
-| Component | Purpose |
-|-----------|---------|
-| `scan/ScanForm.tsx` | URL input and submission |
-| `scan/ScanProgress.tsx` | Real-time progress display |
-| `scan/ProgressDial.tsx` | Animated progress indicator |
-| `scan/RateLimitIndicator.tsx` | Rate limit status display |
-| `scan/TurnstileWidget.tsx` | CAPTCHA widget |
-
-#### Report Components
-| Component | Purpose |
-|-----------|---------|
-| `report/InteractiveReport.tsx` | Main report view container |
-| `report/EnhancedScoreDial.tsx` | Privacy score visualization |
-| `report/EvidenceList.tsx` | Evidence/finding list |
-| `report/ChangeHistory.tsx` | Historical change visualization |
-| `report/BenchmarkSection.tsx` | Category benchmark context |
-| `report/RecommendationsSection.tsx` | Privacy recommendations |
-| `report/ShareBar.tsx` | Social sharing options |
-| `report/ComparisonPrompt.tsx` | Domain comparison prompt |
-| `report/WhatThisMeansSection.tsx` | Plain English explanation |
-
-#### Conditional Report Components
-| Component | Purpose |
-|-----------|---------|
-| `report/conditionals/CookieBreakdownSummary.tsx` | Cookie analysis |
-| `report/conditionals/FingerprintingExplainer.tsx` | Fingerprinting guide |
-| `report/conditionals/HighTrackerExplainer.tsx` | Tracker analysis |
-| `report/conditionals/CriticalPrivacyConcerns.tsx` | Critical findings |
-| `report/conditionals/BigTechTrackerContext.tsx` | Major tech tracker info |
-
-#### UI Components
-| Component | Purpose |
-|-----------|---------|
-| `ui/Card.tsx` | Reusable card container |
-| `ui/ScoreDial.tsx` | Score visualization |
-| `ui/GradeBadge.tsx` | Grade letter badge (A-F) |
-| `ui/SeverityBadge.tsx` | Issue severity indicator |
-| `ui/CategoryBadge.tsx` | Category label |
-| `ui/Skeleton.tsx` | Loading skeleton |
+### Content API
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/v2/categories` | Industry categories |
+| GET | `/api/v2/blog` | Blog posts |
 
 ---
 
 ## Database Schema
 
-### Core Models (`infra/prisma/schema.prisma`)
+### Core Models
 
-#### User & Authentication
 | Model | Purpose |
 |-------|---------|
-| `User` | User accounts with email, wallet, subscriptions |
-| `PasswordResetToken` | Password reset flow |
-| `WalletLink` | Web3 wallet linking |
+| `Scan` | Privacy scan records (URL, status, score, results) |
+| `Evidence` | Individual findings (cookies, trackers, headers) |
+| `Issue` | Categorized privacy issues with severity |
+| `Domain` | Domain index with tier and category |
 
-#### Scanning
+### Intelligence Models
+
 | Model | Purpose |
 |-------|---------|
-| `Scan` | Privacy scan records (status, score, progress, results) |
-| `Evidence` | Scan findings (cookies, trackers, headers) |
-| `Issue` | Categorized security/privacy issues |
-| `ScanQueue` | Bulk scanning queue |
-
-#### Domain Management
-| Model | Purpose |
-|-------|---------|
-| `Domain` | Domain index with tier system (A/B/C) |
-| `TierPromotion` | Audit log of tier changes |
-| `DomainChange` | Privacy score changes between scans |
-| `DomainStability` | Stability metrics and volatility index |
-
-#### SEO & Indexing
-| Model | Purpose |
-|-------|---------|
-| `IndexingSnapshot` | Daily indexing metrics |
-| `Category` | Industry categories (Streaming, eCommerce, etc.) |
-| `CategoryTrend` | Weekly/monthly category trends |
-| `SampleComparison` | Curated domain pair comparisons |
-
-#### Intelligence & Insights (Phase 3C)
-| Model | Purpose |
-|-------|---------|
-| `Insight` | Generated privacy insights |
-| `WeeklyReport` | Automated weekly privacy reports |
+| `DomainChange` | Score/tracker changes between scans |
+| `DomainStability` | Volatility and trend metrics |
+| `Insight` | Generated insights for publication |
 | `TrackerTrend` | Tracker adoption trends |
-| `WatchedUrl` | Pro user domain monitoring |
+| `CategoryTrend` | Category-wide trend data |
 
-#### System State
+### System Models
+
 | Model | Purpose |
 |-------|---------|
-| `RateLimit` | Daily rate limit tracking |
-| `CachedList` | Cached tracker/blocklist data |
-| `SystemState` | Persistent K/V store |
-| `SchedulerBatch` | Scheduler idempotency |
-| `DailyReport` | Operational metrics |
-
-### Key Enums
-
-```prisma
-enum IssueSeverity    { info, low, medium, high, critical }
-enum ChangeType       { NONE, MINOR, MODERATE, MAJOR, CRITICAL }
-enum DomainTrend      { IMPROVING, STABLE, DECLINING, VOLATILE }
-enum InsightType      { DOMAIN_IMPROVEMENT, DOMAIN_REGRESSION, CATEGORY_TREND,
-                        TRACKER_SURGE, TRACKER_DECLINE, FINGERPRINTING_SHIFT,
-                        ANOMALY, WEEKLY_SUMMARY }
-enum InsightSeverity  { LOW, MEDIUM, HIGH, CRITICAL }
-```
+| `RateLimit` | Per-user/IP daily limits |
+| `SystemState` | K/V store for circuit breaker, etc. |
+| `SchedulerBatch` | Scheduler idempotency tracking |
 
 ---
 
-## Operational Scripts
+## Worker Jobs
 
-### Script Directory (`scripts/`)
-
-#### Daily Operations
-| Script | Schedule | Purpose |
-|--------|----------|---------|
-| `daily-ops-report.ts` | 6 AM UTC | Daily operational metrics |
-| `golden-run-test.ts` | 7 AM UTC | Quality assurance test run |
-| `drift-check.ts` | 1 AM UTC | System consistency validation |
-| `insight-lifecycle.ts` | 5 AM UTC | Insight aging and validation |
-| `detect-retractions.ts` | 6 AM UTC | Retraction candidate detection |
-| `update-stability.ts` | 3 AM UTC | Domain stability recalculation |
-
-#### Weekly Operations
-| Script | Schedule | Purpose |
-|--------|----------|---------|
-| `generate-insights.ts` | Mon 5 AM | Generate tiered insights |
-| `generate-weekly-report.ts` | Mon 6 AM | Weekly privacy report |
-| `update-category-trends.ts` | Mon 4 AM | Category trend metrics |
-| `update-tracker-trends.ts` | Mon 4:30 AM | Tracker adoption trends |
-| `eligibility-decay.ts` | Sun 2 AM | Eligibility status decay |
-
-#### Scheduling & Maintenance
-| Script | Purpose |
-|--------|---------|
-| `schedule-rescans.ts` | Queue domain rescans intelligently |
-| `classify-domains.ts` | Assign domain categories |
-| `classify-tiers-batched.ts` | Tier assignment (A/B/C) |
-| `seed-tranco.ts` | Seed Tranco top 10K domains |
-| `backfill-changes.ts` | Populate change records |
-| `prewarm-cache.ts` | Pre-warm hot data cache |
+| Job | Trigger | Purpose |
+|-----|---------|---------|
+| `scan-url` | POST /api/v2/scan | Main privacy scanning |
+| `change-detection` | Scan completion | Analyze changes |
+| `domain-upsert` | Scan completion | Update domain record |
+| `report-generation` | SSR request | Generate bot-friendly reports |
 
 ---
 
-## Key Architectural Patterns
+## Frontend Components
 
-### Rate Limiting (Two-Layer)
+### Scan Flow
+| Component | Purpose |
+|-----------|---------|
+| `ScanForm.tsx` | URL input and submission |
+| `ScanProgress.tsx` | Real-time progress with polling |
+| `ProgressDial.tsx` | Animated circular progress |
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Rate Limit System                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   Layer 1: Burst Protection (Redis)                         │
-│   ├── 1 scan per minute per IP                              │
-│   └── Immediate rejection with retryAfterSeconds            │
-│                                                              │
-│   Layer 2: Daily Quota (Database)                           │
-│   ├── 10 scans per day per IP/user                          │
-│   ├── Tracks in RateLimit model                             │
-│   └── Resets at midnight UTC                                │
-│                                                              │
-│   Pro Users: Bypass all limits                              │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+### Report Display
+| Component | Purpose |
+|-----------|---------|
+| `InteractiveReport.tsx` | Main report container |
+| `EnhancedScoreDial.tsx` | Score visualization |
+| `EvidenceList.tsx` | Findings with explanations |
+| `ChangeHistory.tsx` | Historical changes |
+| `RecommendationsSection.tsx` | Improvement suggestions |
+| `BenchmarkSection.tsx` | Category comparison |
 
-### Domain Tier System (SEO)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Domain Tier System                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   Tier A: MUST Index (~5-7K domains)                        │
-│   ├── High-authority domains                                 │
-│   ├── GSC clicks > threshold                                │
-│   └── Priority in sitemap                                   │
-│                                                              │
-│   Tier B: Eligible (~20-30K domains)                        │
-│   ├── Mid-authority domains                                 │
-│   ├── Some GSC signals                                      │
-│   └── Included in sitemap                                   │
-│                                                              │
-│   Tier C: Discovery Only (long tail)                        │
-│   ├── Low or no GSC signals                                 │
-│   └── Not in sitemap, accessible via direct URL             │
-│                                                              │
-│   Promotion: Based on sustained GSC signals                 │
-│   Demotion: Anti-thrash protection (30-day cooldown)        │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Change Detection System
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Change Detection Flow                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   1. Scan completes → changeDetectionService.detect()       │
-│                                                              │
-│   2. Compare with previous scan:                            │
-│      ├── Score delta                                        │
-│      ├── Tracker additions/removals                         │
-│      └── Fingerprinting toggle                              │
-│                                                              │
-│   3. Classify change:                                       │
-│      ├── NONE:     |delta| < 2                              │
-│      ├── MINOR:    |delta| 2-5                              │
-│      ├── MODERATE: |delta| 6-15                             │
-│      ├── MAJOR:    |delta| 16-25                            │
-│      └── CRITICAL: |delta| > 25 OR fingerprinting changed   │
-│                                                              │
-│   4. Record in DomainChange model                           │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Insight Generation (Phase 3C)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              Tiered Insight Generation                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   Quality-Only Thresholds (NO volume caps):                 │
-│                                                              │
-│   Breaking Tier:                                            │
-│   ├── Magnitude >= 70                                       │
-│   ├── Confidence >= 0.9                                     │
-│   └── Publish ALL that qualify                              │
-│                                                              │
-│   Notable Tier:                                             │
-│   ├── Magnitude >= 40                                       │
-│   ├── Confidence >= 0.75                                    │
-│   └── Publish ALL that qualify                              │
-│                                                              │
-│   Emerging Tier:                                            │
-│   ├── Magnitude >= 25                                       │
-│   ├── Confidence >= 0.6                                     │
-│   └── Internal tracking only                                │
-│                                                              │
-│   Credibility Governance:                                   │
-│   ├── Mandatory hedge language validation                   │
-│   ├── Forbidden causal language blocking                    │
-│   └── Daily retraction detection                            │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Circuit Breaker Pattern
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Circuit Breaker                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   Monitors:                                                  │
-│   ├── Queue depth                                           │
-│   ├── Error rates                                           │
-│   └── Response times                                        │
-│                                                              │
-│   States:                                                   │
-│   ├── CLOSED:  Normal operation                             │
-│   ├── OPEN:    50% budget reduction                         │
-│   └── HALF:    Gradual recovery                             │
-│                                                              │
-│   Stored in: SystemState model                              │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+### Conditional Content
+| Component | Purpose |
+|-----------|---------|
+| `CookieBreakdownSummary.tsx` | Cookie details |
+| `FingerprintingExplainer.tsx` | Fingerprinting explanation |
+| `HighTrackerExplainer.tsx` | Tracker context |
+| `CriticalPrivacyConcerns.tsx` | Critical issues highlight |
 
 ---
+
+# Part 4: Development Guide
+
+## Quick Start
+
+```bash
+# Start all services with Docker
+make dev
+
+# Access points
+# Frontend: http://localhost:8080
+# API: http://localhost:5000
+# API Docs: http://localhost:5000/docs
+```
 
 ## Common Commands
 
 ### Development
-
 ```bash
-# Start all services with Docker (recommended)
-make dev              # Starts containers + runs migrations + seeds database
-
-# Or start services individually
-pnpm dev              # All services in parallel (requires Postgres + Redis)
-pnpm --filter @gecko-advisor/backend dev
-pnpm --filter @gecko-advisor/web dev
-pnpm --filter @gecko-advisor/worker dev
+pnpm dev                              # Start all services
+pnpm --filter @gecko-advisor/web dev  # Start frontend only
+pnpm --filter @gecko-advisor/backend dev  # Start backend only
 ```
 
-**Access points**:
-- Frontend: http://localhost:8080 (Nginx proxy)
-- API: http://localhost:5000
-- API Docs: http://localhost:5000/docs
-
-### Build & Quality Checks
-
+### Build & Test
 ```bash
-pnpm build            # Build all packages (uses Turbo cache)
-pnpm typecheck        # TypeScript strict mode checking (all packages)
-pnpm lint             # ESLint (all packages)
-pnpm test             # Unit tests (Vitest)
+pnpm build        # Build all packages
+pnpm typecheck    # TypeScript checking
+pnpm lint         # ESLint
+pnpm test:e2e     # E2E tests
 ```
 
 ### Database
-
 ```bash
-pnpm prisma:generate      # Generate Prisma client (required after schema changes)
-pnpm prisma:migrate       # Deploy migrations to database
-pnpm seed                 # Seed database with demo scans
-
-# Development workflow
-npx prisma migrate dev --name description   # Create migration
-npx prisma studio                           # GUI database browser
-```
-
-### E2E Testing
-
-```bash
-pnpm test:e2e             # Run all E2E tests
-pnpm test:e2e:core        # Core scanning journey
-pnpm test:e2e:performance # Performance validation
-pnpm test:e2e:ui          # UI mode (visual debugging)
-```
-
-### Docker Workflows
-
-```bash
-make dev              # Full dev setup: up + migrate + seed
-make up               # Start containers
-make down             # Stop and remove containers (with volumes)
-make logs             # Follow container logs
-make migrate          # Run migrations in container
+pnpm prisma:generate   # Generate client (REQUIRED after schema changes)
+pnpm prisma:migrate    # Run migrations
+npx prisma studio      # Database GUI
 ```
 
 ---
 
-## Key Patterns & Conventions
+## Key Patterns
 
-### Zod Schemas as Source of Truth
-
-All API contracts defined in `packages/shared/src/schemas.ts`:
+### Zod Schema Validation
+All API contracts use Zod schemas from `packages/shared/src/schemas.ts`:
 
 ```typescript
 // Schema definition
@@ -607,42 +460,26 @@ export const ScanRequestSchema = z.object({
   url: z.string().url(),
   force: z.boolean().optional()
 });
-export type ScanRequest = z.infer<typeof ScanRequestSchema>;
 
 // Backend validation
 const parsed = ScanRequestSchema.safeParse(req.body);
 if (!parsed.success) {
-  return problem(res, 400, 'Invalid Request', parsed.error.flatten());
+  return problem(res, 400, 'Invalid Request');
 }
 ```
 
-### RFC 7807 Problem Details
-
-All API errors use RFC 7807 format:
-
+### RFC 7807 Error Responses
 ```typescript
 problem(res, 404, 'Scan not found');
-problem(res, 429, 'Rate limit exceeded', { retryAfterSeconds: 60 });
-
-// Response format
-{
-  "type": "about:blank",
-  "title": "Scan not found",
-  "status": 404,
-  "instance": "/api/v2/scan/abc123"
-}
+// Returns: { type, title, status, instance }
 ```
 
-### Frontend State Management
-
-Uses TanStack Query for server state with polling:
-
+### TanStack Query Polling
 ```typescript
 const { data } = useQuery({
-  queryKey: ['scan', scanId, 'status'],
+  queryKey: ['scan', scanId],
   queryFn: () => fetchScanStatus(scanId),
-  refetchInterval: (data) =>
-    data?.status === 'done' ? false : 2000,
+  refetchInterval: (data) => data?.status === 'done' ? false : 2000,
 });
 ```
 
@@ -651,7 +488,6 @@ const { data } = useQuery({
 ## Environment Variables
 
 ### Required
-
 ```bash
 DATABASE_URL=postgresql://user:pass@localhost:5432/geckoadvisor
 REDIS_HOST=localhost
@@ -660,78 +496,57 @@ PORT=5000
 ```
 
 ### Optional
-
 ```bash
-TURNSTILE_SECRET_KEY=...     # Cloudflare bot protection
-ADMIN_API_KEY=...            # Admin API access
+TURNSTILE_SECRET_KEY=...     # Bot protection
+ADMIN_API_KEY=...            # Admin access
 SENTRY_DSN=...               # Error tracking
-OBJECT_STORAGE_ENABLED=true  # S3-compatible storage
 ```
 
 ---
 
-## Performance Requirements
+## Production Operations
 
+### Cron Jobs
+| Schedule | Script | Purpose |
+|----------|--------|---------|
+| Daily 1 AM | `drift-check.ts` | System consistency |
+| Daily 2 AM | `schedule-rescans.ts` | Queue rescans |
+| Daily 3 AM | `update-stability.ts` | Stability scores |
+| Daily 5 AM | `insight-lifecycle.ts` | Insight aging |
+| Daily 6 AM | `detect-retractions.ts` | Find invalid insights |
+| Daily 6 AM | `daily-ops-report.ts` | Metrics report |
+| Monday 5 AM | `generate-insights.ts` | Weekly insights |
+
+### Performance Targets
 | Metric | Target |
 |--------|--------|
 | Scan completion | < 60 seconds (p90) |
 | API response | < 100ms |
 | Report page load | < 3 seconds |
-| Homepage LCP | < 2.5 seconds |
 
 ---
 
-## Production Cron Jobs
+## Troubleshooting
 
-| Schedule | Script | Purpose |
-|----------|--------|---------|
-| `0 1 * * *` | `drift-check.ts` | Drift monitoring |
-| `0 2 * * *` | `schedule-rescans.ts` | Domain rescanning |
-| `0 3 * * *` | `update-stability.ts --tiered` | Stability scores |
-| `0 4 * * 1` | `update-category-trends.ts` | Category trends |
-| `30 4 * * 1` | `update-tracker-trends.ts` | Tracker trends |
-| `0 5 * * *` | `insight-lifecycle.ts` | Insight aging |
-| `0 5 * * 1` | `generate-insights.ts --tiered` | Weekly insights |
-| `0 6 * * *` | `detect-retractions.ts` | Retraction detection |
-| `0 6 * * *` | `daily-ops-report.ts` | Ops metrics |
-| `0 6 * * 1` | `generate-weekly-report.ts` | Weekly report |
-| `0 7 * * *` | `golden-run-test.ts` | QA tests |
-
----
-
-## Common Pitfalls
-
-### Prisma Client Not Generated
-
+### Prisma Client Error
 ```bash
-# Fix: Run after every schema change
+# Run after any schema change
 pnpm prisma:generate
 ```
 
-### Vite Build Fails with Shared Package
-
-Ensure `apps/web/vite.config.ts` has alias:
-```typescript
-resolve: {
-  alias: {
-    '@gecko-advisor/shared': resolve(__dirname, '../../packages/shared/src/index.ts')
-  }
-}
-```
-
 ### E2E Tests Timeout
-
-Check that all services are running:
 ```bash
+# Verify all services running
 make logs | grep -E "(backend|worker)"
-docker exec privacy-advisor-redis-1 redis-cli ping
 ```
+
+### Shared Package Import Error
+Ensure `apps/web/vite.config.ts` has the alias configured for `@gecko-advisor/shared`.
 
 ---
 
-## Additional Resources
+## Resources
 
-- **API Documentation**: http://localhost:5000/docs
+- **API Docs**: http://localhost:5000/docs
 - **Database Schema**: `infra/prisma/schema.prisma`
-- **Test Documentation**: `docs/TESTING_INFRASTRUCTURE.md`
-- **Architecture Context**: `Project-Docs/Context.md`
+- **Architecture**: `Project-Docs/Context.md`
