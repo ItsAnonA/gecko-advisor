@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
  * Uses ISR with 1-hour revalidation.
  */
 
+import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
@@ -21,10 +22,10 @@ import {
   buildBreadcrumbSchema,
   SEO_CONSTANTS,
 } from '@gecko-advisor/shared';
-import { getReportForDomain } from '@/lib/api';
+import { getReportForDomain, fetchDomainChanges } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SEOSummary } from '@/components/seo/SEOSummary';
-import { InteractiveReport } from '@/components/report';
+import { InteractiveReport, ChangeHistory, ChangeHistorySkeleton } from '@/components/report';
 
 interface Props {
   params: Promise<{ domain: string }>;
@@ -32,6 +33,15 @@ interface Props {
 
 // Revalidate every hour
 export const revalidate = 3600;
+
+// Phase 3: Change History Section (async component for Suspense)
+async function ChangeHistorySection({ domain }: { domain: string }) {
+  const changesData = await fetchDomainChanges(domain, { limit: 10 });
+  if (!changesData || changesData.changes.length === 0) {
+    return null;
+  }
+  return <ChangeHistory domain={domain} changes={changesData.changes} />;
+}
 
 // Generate metadata - uses cached getReportForDomain()
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -167,6 +177,11 @@ export default async function ReportPage({ params }: Props) {
           seoContent={seoContent}
           category={data.category}
         />
+
+        {/* Phase 3: Change History - shows privacy changes over time */}
+        <Suspense fallback={<ChangeHistorySkeleton />}>
+          <ChangeHistorySection domain={domain} />
+        </Suspense>
       </div>
     </>
   );
