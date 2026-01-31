@@ -37,6 +37,7 @@ const Header = memo(function Header() {
   const navLinks = [
     { href: '/privacy-scanner', label: 'Scanner' },
     { href: '/reports', label: 'Reports' },
+    { href: '/changes', label: 'Changes' },
     { href: '/blog', label: 'Blog' },
     { href: '/about', label: 'About' },
   ];

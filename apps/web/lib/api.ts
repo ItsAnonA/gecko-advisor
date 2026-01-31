@@ -269,6 +269,54 @@ export async function fetchReportBySlug(
 }
 
 /**
+ * Domain status for smart 404 handling.
+ * Used to determine redirect target when report doesn't exist.
+ */
+export interface DomainStatus {
+  exists: boolean;
+  hasScan: boolean;
+  domain: string;
+  category?: { slug: string; name: string } | null;
+  slug?: string;
+  score?: number;
+  label?: string;
+  lastScanned?: string;
+}
+
+/**
+ * Check domain status for smart 404 redirects.
+ * Returns info about whether domain exists and its category.
+ *
+ * Use cases:
+ * - exists=true, hasScan=true → Show report
+ * - exists=true, hasScan=false, category set → Redirect to category hub
+ * - exists=false → True 404
+ */
+export const checkDomainStatus = cache(async (rawDomain: string): Promise<DomainStatus> => {
+  const domain = normalizeDomain(rawDomain);
+
+  if (!domain || !isValidDomain(domain)) {
+    return { exists: false, hasScan: false, domain: rawDomain };
+  }
+
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/domain/${encodeURIComponent(domain)}/exists`,
+      { next: { revalidate: 3600 } }
+    );
+
+    if (!res.ok) {
+      return { exists: false, hasScan: false, domain };
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to check domain status for ${domain}:`, error);
+    return { exists: false, hasScan: false, domain };
+  }
+});
+
+/**
  * Fetches paginated list of reports for the index page.
  */
 export async function fetchReports(

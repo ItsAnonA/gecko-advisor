@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { Suspense } from 'react';
-import { notFound, redirect } from 'next/navigation';
+import { notFound, redirect, permanentRedirect } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import {
@@ -22,7 +22,7 @@ import {
   buildBreadcrumbSchema,
   SEO_CONSTANTS,
 } from '@gecko-advisor/shared';
-import { getReportForDomain, fetchDomainChanges } from '@/lib/api';
+import { getReportForDomain, fetchDomainChanges, checkDomainStatus } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SEOSummary } from '@/components/seo/SEOSummary';
 import { InteractiveReport, ChangeHistory, ChangeHistorySkeleton } from '@/components/report';
@@ -102,7 +102,21 @@ export default async function ReportPage({ params }: Props) {
   // This call reuses cached result from generateMetadata()
   const report = await getReportForDomain(rawDomain);
 
+  // Smart 404 handling: redirect if value exists, 404 only for bot noise
   if (!report) {
+    const status = await checkDomainStatus(normalized);
+
+    // Domain exists but scan was pruned → 301 redirect to preserve SEO value
+    if (status.exists && !status.hasScan) {
+      // If domain has category, redirect to category hub (308 permanent)
+      if (status.category?.slug) {
+        permanentRedirect(`/privacy-benchmarks/${status.category.slug}`);
+      }
+      // Otherwise redirect to reports index (308 permanent)
+      permanentRedirect('/reports');
+    }
+
+    // Domain never existed → true 404 (bot noise)
     notFound();
   }
 

@@ -11,6 +11,11 @@ Allow: /r/
 Allow: /blog/
 Allow: /reports
 Allow: /about
+Allow: /privacy-benchmarks/
+Allow: /changes
+Allow: /compare/
+Allow: /privacy-scanner
+Allow: /methodology
 
 # Allow sitemaps (must come before /api/ disallow)
 Allow: /api/sitemap.xml
@@ -26,7 +31,8 @@ Disallow: /settings
 Disallow: /_next/
 Disallow: /ssr
 
-# Block crawler artifacts (reduces 404s from /privacy-report/ pages)
+# Block crawler artifacts (reduces 404s from dynamic pages)
+# Privacy report pages
 Disallow: /privacy-report/*/_next/
 Disallow: /privacy-report/*/api/
 Disallow: /privacy-report/*/.well-known/
@@ -34,6 +40,18 @@ Disallow: /privacy-report/*/static/
 Disallow: /privacy-report/*/*.js
 Disallow: /privacy-report/*/*.css
 Disallow: /privacy-report/*/*.json
+
+# Category hub pages
+Disallow: /privacy-benchmarks/*/_next/
+Disallow: /privacy-benchmarks/*/api/
+Disallow: /privacy-benchmarks/*/*.js
+Disallow: /privacy-benchmarks/*/*.css
+
+# Comparison pages
+Disallow: /compare/*/_next/
+Disallow: /compare/*/api/
+Disallow: /compare/*/*.js
+Disallow: /compare/*/*.css
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

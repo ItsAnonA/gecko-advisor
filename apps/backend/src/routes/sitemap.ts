@@ -29,6 +29,7 @@ const STATIC_PAGES = [
   { path: '/privacy-scanner', changefreq: 'weekly', priority: '1.0' }, // Authority page
   { path: '/reports', changefreq: 'hourly', priority: '0.9' },
   { path: '/privacy-benchmarks', changefreq: 'weekly', priority: '0.9' }, // Phase 2B: Category index
+  { path: '/changes', changefreq: 'daily', priority: '0.8' }, // Phase 3: Change history feed
   { path: '/blog', changefreq: 'daily', priority: '0.8' },
   { path: '/about', changefreq: 'monthly', priority: '0.7' },
   { path: '/methodology', changefreq: 'monthly', priority: '0.7' },

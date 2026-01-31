@@ -105,6 +105,11 @@ domainV2Router.get('/domain/:domain', async (req, res) => {
  * GET /api/domain/:domain/exists
  * Quick check if a domain has been scanned.
  * Returns minimal data for fast lookups.
+ *
+ * Response states for 404 cleanup strategy:
+ * 1. exists=true, hasScan=true → Normal report page
+ * 2. exists=true, hasScan=false, category set → Redirect to category hub
+ * 3. exists=false → True 404 (domain never scanned)
  */
 domainV2Router.get('/domain/:domain/exists', async (req, res) => {
   try {
@@ -112,7 +117,7 @@ domainV2Router.get('/domain/:domain/exists', async (req, res) => {
     const domain = normalizeDomain(rawDomain);
 
     if (!domain || domain.length < 3) {
-      return res.json({ exists: false, domain: rawDomain });
+      return res.json({ exists: false, hasScan: false, domain: rawDomain });
     }
 
     const domainRecord = await prisma.domain.findUnique({
@@ -127,23 +132,45 @@ domainV2Router.get('/domain/:domain/exists', async (req, res) => {
             label: true,
           },
         },
+        // Include category for smart redirects when scan is pruned
+        category: {
+          select: {
+            slug: true,
+            name: true,
+          },
+        },
       },
     });
 
-    if (!domainRecord || !domainRecord.latestScan) {
-      return res.json({ exists: false, domain });
+    // Domain never scanned - true 404
+    if (!domainRecord) {
+      return res.json({ exists: false, hasScan: false, domain });
     }
 
+    // Domain exists but scan was pruned - redirect to category or /reports
+    if (!domainRecord.latestScan) {
+      return res.json({
+        exists: true,
+        hasScan: false,
+        domain,
+        category: domainRecord.category || null,
+        lastScanned: domainRecord.lastScanned,
+      });
+    }
+
+    // Domain and scan both exist - normal report
     res.json({
       exists: true,
+      hasScan: true,
       domain,
       slug: domainRecord.latestScan.slug,
       score: domainRecord.latestScan.score,
       label: domainRecord.latestScan.label,
       lastScanned: domainRecord.lastScanned,
+      category: domainRecord.category || null,
     });
   } catch (error) {
     logger.error({ error, domain: req.params.domain }, 'Error checking domain existence');
-    return res.json({ exists: false, domain: req.params.domain });
+    return res.json({ exists: false, hasScan: false, domain: req.params.domain });
   }
 });
