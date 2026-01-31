@@ -91,6 +91,22 @@ enum InsightSeverity {
   CRITICAL
 }
 
+// Phase 3C Observation: Truth-Centric Metrics
+enum InsightOutcome {
+  PENDING      // Outcome not yet determined
+  CONFIRMED    // Prediction/insight was correct
+  PARTIAL      // Partially correct
+  REVERSED     // Prediction was wrong
+  INCONCLUSIVE // Cannot determine
+  SUPERSEDED   // Replaced by newer insight
+}
+
+enum StabilityConfidenceTier {
+  FULL        // 3+ scans, 30+ days span
+  PARTIAL     // 2 scans, 14+ days span
+  PROVISIONAL // 1 scan only
+}
+
 // New User model for authentication and subscriptions
 model User {
   id            String     @id @default(cuid())
@@ -654,10 +670,25 @@ model DomainStability {
   changesLast90d        Int
   majorChangesLast90d   Int
 
+  // === Confidence Tier Validation (Phase 3C Observation) ===
+
+  // Confidence tier at calculation time
+  confidenceTier        StabilityConfidenceTier @default(PROVISIONAL)
+  scanCount             Int                     @default(1)
+  timeSpanDays          Int                     @default(0)
+
+  // Validation tracking (was our confidence tier prediction correct?)
+  tierAssignedAt        DateTime?               // When tier was assigned
+  tierValidatedAt       DateTime?               // When validation occurred
+  tierValidationResult  Boolean?                // Did tier prediction hold?
+  actualVolatility      Float?                  // Actual volatility after observation
+  tierAccurate          Boolean?                // Was tier classification accurate?
+
   calculatedAt          DateTime    @default(now())
 
   @@index([trend, stabilityScore])
   @@index([volatilityIndex(sort: Desc)])
+  @@index([confidenceTier])
 }
 
 // Category Trend Analysis
@@ -774,12 +805,36 @@ model Insight {
   isPublishable         Boolean         @default(false)
   publishedAt           DateTime?
 
+  // === Truth-Centric Metrics (Phase 3C Observation) ===
+
+  // Outcome tracking (Truth Half-Life)
+  outcome               InsightOutcome  @default(PENDING)
+  outcomeDetails        String?         // Explanation of outcome
+  outcomeValidatedAt    DateTime?       // When outcome was determined
+
+  // Prediction tracking
+  predictedOutcome      String?         // What the insight predicted
+  actualOutcome         String?         // What actually happened
+
+  // Truth half-life metrics
+  confirmedAt           DateTime?       // When insight was confirmed
+  reversedAt            DateTime?       // When insight was reversed
+  supersededAt          DateTime?       // When replaced by newer insight
+  supersededById        String?         // ID of superseding insight
+
+  // Retraction tracking
+  incorrectDetectedAt   DateTime?       // When incorrect outcome detected
+  retractionPublishedAt DateTime?       // When retraction was published
+  retractionLatencyHours Float?         // Hours between detection and retraction
+
   createdAt             DateTime        @default(now())
 
   @@index([insightType, createdAt])
   @@index([severity, createdAt])
   @@index([isPublishable, createdAt])
   @@index([domainId])
+  @@index([outcome, createdAt])
+  @@index([outcomeValidatedAt])
 }
 
 // Weekly Privacy Reports
@@ -817,4 +872,42 @@ model WeeklyReport {
   createdAt             DateTime  @default(now())
 
   @@unique([weekStart])
+}
+
+// === Phase 3C Observation: Governance Enforcement Metrics ===
+model GovernanceMetrics {
+  id                    String    @id @default(cuid())
+
+  // Period
+  date                  DateTime  @unique  // Daily tracking
+
+  // Narrative enforcement
+  narrativesAttempted   Int       @default(0)  // Total narrative generations attempted
+  narrativesBlocked     Int       @default(0)  // Blocked by hedge language rules
+  narrativesApproved    Int       @default(0)  // Passed validation
+  blockRate             Float     @default(0)  // % blocked
+
+  // Hedge language violations
+  forbiddenCausalCount  Int       @default(0)  // "caused by", "due to", etc.
+  missingHedgeCount     Int       @default(0)  // Missing required hedge words
+  overconfidentCount    Int       @default(0)  // Confidence level mismatches
+
+  // Retraction governance
+  retractionsAttempted  Int       @default(0)
+  retractionsPassed     Int       @default(0)  // Passed tone validation
+  retractionsFailed     Int       @default(0)  // Failed tone validation
+
+  // Insight integrity
+  insightsGenerated     Int       @default(0)
+  insightsFailedQuality Int       @default(0)  // Below quality threshold
+  insightsPublished     Int       @default(0)
+
+  // Change detection metrics
+  scansProcessed        Int       @default(0)
+  scansWithNoChange     Int       @default(0)  // % producing no change
+  changesBelow          Int       @default(0)  // Changes below threshold
+
+  createdAt             DateTime  @default(now())
+
+  @@index([date])
 }
