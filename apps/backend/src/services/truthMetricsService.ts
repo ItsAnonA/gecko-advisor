@@ -420,6 +420,86 @@ export async function calculateRetractionLatency(
 }
 
 // ============================================================
+// RETRACTION VISIBILITY LAG
+// ============================================================
+
+interface RetractionVisibilityMetrics {
+  totalWithVisibility: number;
+  avgVisibilityLagHours: number | null;
+  within12Hours: number;
+  exceeds12Hours: number;
+  exceeds24Hours: number;
+  visibilitySla12h: number; // % within 12h
+  status: 'healthy' | 'hidden_corrections' | 'insufficient_data';
+}
+
+/**
+ * Calculate retraction visibility lag.
+ *
+ * Hidden corrections are equivalent to no corrections.
+ * Target: <12 hours from retraction publish to visible in public feeds.
+ */
+export async function calculateRetractionVisibilityLag(
+  prisma: PrismaClient,
+  options: { since?: Date } = {}
+): Promise<RetractionVisibilityMetrics> {
+  const since = options.since || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const retractions = await prisma.insight.findMany({
+    where: {
+      outcome: 'REVERSED',
+      retractionPublishedAt: { not: null },
+      createdAt: { gte: since },
+    },
+    select: {
+      retractionPublishedAt: true,
+      retractionVisibleAt: true,
+      visibilityLagHours: true,
+    },
+  });
+
+  const lags: number[] = [];
+  let within12h = 0;
+  let exceeds12h = 0;
+  let exceeds24h = 0;
+
+  for (const r of retractions) {
+    let hours = r.visibilityLagHours;
+
+    // Calculate if not stored
+    if (hours === null && r.retractionPublishedAt && r.retractionVisibleAt) {
+      hours = (r.retractionVisibleAt.getTime() - r.retractionPublishedAt.getTime()) / (60 * 60 * 1000);
+    }
+
+    if (hours !== null) {
+      lags.push(hours);
+      if (hours <= 12) within12h++;
+      else if (hours <= 24) exceeds12h++;
+      else exceeds24h++;
+    }
+  }
+
+  const avg = lags.length > 0 ? lags.reduce((a, b) => a + b, 0) / lags.length : null;
+  const total = lags.length;
+  const visibilitySla12h = total > 0 ? within12h / total : 0;
+
+  let status: RetractionVisibilityMetrics['status'] = 'insufficient_data';
+  if (total >= 3) {
+    status = visibilitySla12h >= 0.8 ? 'healthy' : 'hidden_corrections';
+  }
+
+  return {
+    totalWithVisibility: total,
+    avgVisibilityLagHours: avg,
+    within12Hours: within12h,
+    exceeds12Hours: exceeds12h,
+    exceeds24Hours: exceeds24h,
+    visibilitySla12h,
+    status,
+  };
+}
+
+// ============================================================
 // GOVERNANCE ENFORCEMENT FREQUENCY
 // ============================================================
 
@@ -567,6 +647,7 @@ export interface TruthMetricsReport {
   stabilityTierValidation: StabilityTierValidation;
   insightOutcomes: InsightOutcomeMetrics;
   retractionLatency: RetractionLatencyMetrics;
+  retractionVisibility: RetractionVisibilityMetrics;
   governanceEnforcement: GovernanceEnforcementMetrics;
   overallStatus: 'HEALTHY' | 'CONCERNS' | 'CRITICAL' | 'INSUFFICIENT_DATA';
   phase4Ready: boolean;
@@ -585,12 +666,13 @@ export async function generateTruthMetricsReport(
   const days = options.days || 30;
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  const [truthHalfLife, stabilityTierValidation, insightOutcomes, retractionLatency, governanceEnforcement] =
+  const [truthHalfLife, stabilityTierValidation, insightOutcomes, retractionLatency, retractionVisibility, governanceEnforcement] =
     await Promise.all([
       calculateTruthHalfLife(prisma, { since }),
       validateStabilityTiers(prisma, { since }),
       calculateInsightOutcomes(prisma, { since }),
       calculateRetractionLatency(prisma, { since }),
+      calculateRetractionVisibilityLag(prisma, { since }),
       calculateGovernanceEnforcement(prisma, { since }),
     ]);
 
@@ -626,6 +708,11 @@ export async function generateTruthMetricsReport(
     blockers.push('Governance never blocks narratives: Rules are fake');
   }
 
+  // Check retraction visibility (hidden corrections = no corrections)
+  if (retractionVisibility.status === 'hidden_corrections') {
+    blockers.push(`Retraction visibility lag > 12h: Hidden corrections (${retractionVisibility.avgVisibilityLagHours?.toFixed(1)}h avg)`);
+  }
+
   // Determine overall status
   let overallStatus: TruthMetricsReport['overallStatus'] = 'HEALTHY';
   const criticalBlockers = blockers.filter(
@@ -651,6 +738,7 @@ export async function generateTruthMetricsReport(
     stabilityTierValidation,
     insightOutcomes,
     retractionLatency,
+    retractionVisibility,
     governanceEnforcement,
     overallStatus,
     phase4Ready: overallStatus === 'HEALTHY' && blockers.length === 0,

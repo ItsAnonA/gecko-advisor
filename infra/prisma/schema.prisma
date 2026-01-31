@@ -827,6 +827,10 @@ model Insight {
   retractionPublishedAt DateTime?       // When retraction was published
   retractionLatencyHours Float?         // Hours between detection and retraction
 
+  // Retraction visibility (hidden corrections = no corrections)
+  retractionVisibleAt   DateTime?       // When retraction became visible in public feeds
+  visibilityLagHours    Float?          // Hours between publish and visible (target: <12h)
+
   createdAt             DateTime        @default(now())
 
   @@index([insightType, createdAt])

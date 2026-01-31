@@ -376,6 +376,75 @@ async function calculateRetractionLatency() {
 }
 
 // ============================================================
+// RETRACTION VISIBILITY LAG
+// ============================================================
+
+async function calculateRetractionVisibility() {
+  console.log('\n📊 RETRACTION VISIBILITY LAG');
+  console.log('─'.repeat(50));
+  console.log('  (Hidden corrections = No corrections)');
+
+  const retractions = await prisma.insight.findMany({
+    where: {
+      outcome: 'REVERSED',
+      retractionPublishedAt: { not: null },
+    },
+    select: {
+      retractionPublishedAt: true,
+      retractionVisibleAt: true,
+      visibilityLagHours: true,
+    },
+  });
+
+  const lags: number[] = [];
+  let within12h = 0;
+  let exceeds12h = 0;
+  let exceeds24h = 0;
+
+  for (const r of retractions) {
+    let hours = r.visibilityLagHours;
+
+    if (hours === null && r.retractionPublishedAt && r.retractionVisibleAt) {
+      hours = (r.retractionVisibleAt.getTime() - r.retractionPublishedAt.getTime()) / (60 * 60 * 1000);
+    }
+
+    if (hours !== null) {
+      lags.push(hours);
+      if (hours <= 12) within12h++;
+      else if (hours <= 24) exceeds12h++;
+      else exceeds24h++;
+    }
+  }
+
+  const avgLag = lags.length > 0 ? lags.reduce((a, b) => a + b, 0) / lags.length : null;
+  const total = lags.length;
+  const slaRate = total > 0 ? (within12h / total) * 100 : 0;
+  const healthy = total >= 3 && slaRate >= 80;
+
+  let status = 'INSUFFICIENT_DATA';
+  if (total >= 3) {
+    status = slaRate >= 80 ? 'HEALTHY' : 'HIDDEN_CORRECTIONS';
+  }
+
+  console.log(`  Average: ${avgLag?.toFixed(1) ?? 'N/A'} hours ${healthy ? '✅' : status === 'INSUFFICIENT_DATA' ? '⚪' : '⚠️'}`);
+  console.log(`  Within 12h: ${within12h}, 12-24h: ${exceeds12h}, Over 24h: ${exceeds24h}`);
+  console.log(`  SLA (12h): ${slaRate.toFixed(1)}%`);
+  console.log(`  Target: <12 hours, >80% compliance`);
+  console.log(`  Status: ${status}`);
+
+  return {
+    avgHours: avgLag,
+    within12h,
+    exceeds12h,
+    exceeds24h,
+    total,
+    slaRate,
+    healthy,
+    status,
+  };
+}
+
+// ============================================================
 // GOVERNANCE ENFORCEMENT FREQUENCY
 // ============================================================
 
@@ -579,11 +648,12 @@ async function generateTruthMetricsReport() {
   const stabilityTier = await calculateStabilityTierFailure();
   const insightAccuracy = await calculateInsightAccuracy();
   const retractionLatency = await calculateRetractionLatency();
+  const retractionVisibility = await calculateRetractionVisibility();
   const governanceBlock = await calculateGovernanceBlockRate();
   const changeSignal = await calculateChangeSignalQuality();
 
   // Check scale-up gates
-  const metrics = { truthHalfLife, stabilityTier, insightAccuracy, retractionLatency, governanceBlock, changeSignal };
+  const metrics = { truthHalfLife, stabilityTier, insightAccuracy, retractionLatency, retractionVisibility, governanceBlock, changeSignal };
   const scaleUpCheck = checkScaleUpGates(metrics);
 
   console.log('\n' + '═'.repeat(60));
@@ -608,6 +678,7 @@ async function generateTruthMetricsReport() {
     { name: 'Stability tier <15%', passed: stabilityTier.healthy || stabilityTier.status === 'INSUFFICIENT_DATA', value: stabilityTier.rate },
     { name: 'Insight accuracy >70%', passed: insightAccuracy.healthy || insightAccuracy.status === 'INSUFFICIENT_DATA', value: insightAccuracy.rate },
     { name: 'Retraction latency <48h', passed: retractionLatency.healthy || retractionLatency.status === 'INSUFFICIENT_DATA', value: retractionLatency.avgHours },
+    { name: 'Retraction visibility <12h', passed: retractionVisibility.healthy || retractionVisibility.status === 'INSUFFICIENT_DATA', value: retractionVisibility.avgHours },
     { name: 'Governance 5-20%', passed: governanceBlock.healthy || governanceBlock.status === 'INSUFFICIENT_DATA', value: governanceBlock.blockRate },
   ];
 
@@ -635,6 +706,7 @@ async function generateTruthMetricsReport() {
       stabilityTier,
       insightAccuracy,
       retractionLatency,
+      retractionVisibility,
       governanceBlock,
       changeSignal,
     },

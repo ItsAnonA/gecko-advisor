@@ -20,6 +20,8 @@ ALTER TABLE "Insight" ADD COLUMN "supersededById" TEXT;
 ALTER TABLE "Insight" ADD COLUMN "incorrectDetectedAt" TIMESTAMP(3);
 ALTER TABLE "Insight" ADD COLUMN "retractionPublishedAt" TIMESTAMP(3);
 ALTER TABLE "Insight" ADD COLUMN "retractionLatencyHours" DOUBLE PRECISION;
+ALTER TABLE "Insight" ADD COLUMN "retractionVisibleAt" TIMESTAMP(3);
+ALTER TABLE "Insight" ADD COLUMN "visibilityLagHours" DOUBLE PRECISION;
 
 -- Add indexes for Insight truth tracking
 CREATE INDEX "Insight_outcome_createdAt_idx" ON "Insight"("outcome", "createdAt");
