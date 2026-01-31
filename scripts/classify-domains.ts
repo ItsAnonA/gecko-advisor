@@ -36,6 +36,30 @@ const CATEGORY_META: Record<string, { name: string; description: string }> = {
     name: 'News & Media',
     description: 'News outlets, journalism, blogs, and media publications',
   },
+  social: {
+    name: 'Social Media',
+    description: 'Social networking platforms, community sites, and content sharing networks',
+  },
+  finance: {
+    name: 'Finance & Banking',
+    description: 'Banks, fintech, investment platforms, and financial services',
+  },
+  healthcare: {
+    name: 'Healthcare',
+    description: 'Hospitals, telehealth, medical resources, and health information sites',
+  },
+  education: {
+    name: 'Education',
+    description: 'Online learning, universities, K-12, and educational resources',
+  },
+  travel: {
+    name: 'Travel & Booking',
+    description: 'Travel booking, airlines, hotels, and vacation planning',
+  },
+  gaming: {
+    name: 'Gaming',
+    description: 'Video games, gaming platforms, esports, and game-related services',
+  },
 };
 
 interface ClassificationResult {
