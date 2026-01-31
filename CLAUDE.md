@@ -13,6 +13,7 @@ Gecko Advisor is a **free, open-source website privacy scanner** that analyzes a
 - **Evidence-Based Findings** - Cookies, trackers, fingerprinting, security headers
 - **Recommendations** - Actionable steps to improve privacy
 - **Historical Tracking** - How privacy practices change over time
+- **Domain Intelligence** - Stability scores, predictions, and trend analysis
 
 **Live Site**: https://geckoadvisor.com
 
@@ -40,6 +41,7 @@ Each scanned domain gets a shareable report page (`/privacy-report/[domain]`) sh
 - Category benchmark comparison
 - Recommendations for improvement
 - Change history (if rescanned)
+- Stability score and trend indicator
 
 ### 3. Domain Comparison
 Compare two domains side-by-side (`/compare/[domainA]/[domainB]`) to see:
@@ -60,11 +62,27 @@ Track privacy changes across all scanned domains (`/changes`):
 - Tracker additions and removals
 - Fingerprinting status changes
 
-### 6. Weekly Insights
-Automated intelligence reports with:
-- Breaking news (major privacy changes)
-- Notable trends (category-wide shifts)
-- Tracker adoption patterns
+### 6. Domain Intelligence (Phase 3C)
+Advanced analytics for each domain:
+- **Stability Scoring**: Tiered confidence (full/partial/provisional) based on scan history
+- **Trend Classification**: IMPROVING, STABLE, DECLINING, VOLATILE
+- **Predictive Signals**: Momentum, acceleration, early warnings
+- **Volatility Index**: How much a domain's score fluctuates
+
+### 7. Automated Insights (Phase 3C)
+Weekly intelligence reports with quality-gated publishing:
+- **Breaking Insights**: Major privacy changes (magnitude ≥70, confidence ≥0.9)
+- **Notable Insights**: Significant trends (magnitude ≥40, confidence ≥0.75)
+- **Emerging Signals**: Early indicators tracked internally
+- **Narrative Generation**: Auto-generated summaries with hedge language
+- **Retraction Detection**: Daily validation of past predictions
+
+### 8. Credibility Governance (Phase 3C)
+Ensures published insights maintain integrity:
+- **Hedge Language Enforcement**: Blocks forbidden causal language ("caused by", "proves that")
+- **Retraction Tone Validation**: Ensures proper acknowledgment of incorrect predictions
+- **Topic Diversity Analysis**: Monitors insight distribution to prevent over-representation
+- **Methodology Transparency**: Tracks accuracy rates and confidence calibration
 
 ---
 
@@ -157,14 +175,56 @@ When a domain is rescanned, changes are classified:
 | MAJOR | Score change 16-25 points |
 | CRITICAL | Score change > 25 OR fingerprinting toggled |
 
-### Insight Generation
-Weekly automated insights are generated with quality thresholds:
+### Stability Scoring (Phase 3C)
+Domains receive tiered stability confidence based on scan history:
+
+| Tier | Requirements | Confidence Multiplier |
+|------|--------------|----------------------|
+| Full | 3+ scans, 30+ days span | 1.0 (100%) |
+| Partial | 2 scans, 14+ days span | 0.7 (70%) |
+| Provisional | 1 scan | 0.4 (40%) |
+
+**Trend Classification**:
+- IMPROVING: Score increased ≥5 points over period
+- DECLINING: Score decreased ≥5 points over period
+- STABLE: Score change < 5 points, low volatility
+- VOLATILE: High score variance regardless of direction
+
+### Insight Generation (Phase 3C)
+Weekly automated insights with quality-only thresholds (NO volume caps):
 
 | Tier | Requirements | Action |
 |------|--------------|--------|
-| Breaking | Magnitude ≥ 70, Confidence ≥ 0.9 | Publish immediately |
-| Notable | Magnitude ≥ 40, Confidence ≥ 0.75 | Publish in digest |
-| Emerging | Magnitude ≥ 25, Confidence ≥ 0.6 | Track internally |
+| Breaking | Magnitude ≥ 70, Confidence ≥ 0.9 | Publish ALL that qualify |
+| Notable | Magnitude ≥ 40, Confidence ≥ 0.75 | Publish ALL that qualify |
+| Emerging | Magnitude ≥ 25, Confidence ≥ 0.6 | Track internally only |
+
+**Insight Types**:
+- `DOMAIN_IMPROVEMENT` - Domain score increased significantly
+- `DOMAIN_REGRESSION` - Domain score decreased significantly
+- `CATEGORY_TREND` - Category-wide privacy shift
+- `TRACKER_SURGE` - Tracker adoption spike
+- `TRACKER_DECLINE` - Tracker removal trend
+- `FINGERPRINTING_SHIFT` - Fingerprinting adoption changes
+- `ANOMALY` - Unusual patterns detected
+
+### Credibility Governance (Phase 3C)
+Ensures epistemic honesty in published content:
+
+**Forbidden Language** (automatically blocked):
+- "caused by", "result of", "due to", "because of"
+- "directly led to", "proves that", "confirms that"
+- "definitely", "certainly", "without doubt"
+
+**Required Hedge Words** (by confidence level):
+- High (≥0.8): "indicates", "suggests strongly", "appears to show"
+- Medium (0.6-0.8): "may indicate", "possibly suggests", "could be related to"
+- Low (<0.6): "might suggest", "early signals indicate", "preliminary data shows"
+
+**Retraction Rules**:
+- Daily detection of predictions that didn't materialize
+- Forbidden: "we weren't wrong", "reality changed", "circumstances evolved"
+- Required: "Our analysis predicted...", "This proved [incorrect]..."
 
 ### Rate Limiting
 Free users are limited to prevent abuse:
@@ -262,7 +322,9 @@ Free users are limited to prevent abuse:
     ↓
 11. Detect changes (if rescan)
     ↓
-12. Frontend polls → redirects to report
+12. Update domain stability metrics
+    ↓
+13. Frontend polls → redirects to report
 ```
 
 ### Scan States
@@ -285,24 +347,34 @@ queued → running → done
 | `domainService.ts` | Domain normalization and lookup |
 | `comparisonService.ts` | Compare two domains |
 
-### Intelligence Services
+### Domain Intelligence Services (Phase 3)
 
 | Service | Purpose |
 |---------|---------|
 | `changeDetectionService.ts` | Detect privacy changes between scans |
-| `stabilityService.ts` | Calculate domain stability scores |
-| `insightGeneratorService.ts` | Generate weekly insights |
-| `predictiveService.ts` | Trend predictions and early warnings |
-| `narrativeService.ts` | Auto-generate report narratives |
-| `credibilityService.ts` | Validate insight language quality |
+| `stabilityService.ts` | Calculate tiered stability scores (full/partial/provisional) |
+| `volatilityService.ts` | Analyze score volatility and variance |
+| `predictiveService.ts` | Momentum, acceleration, early warnings, saturation predictions |
+
+### Insight & Credibility Services (Phase 3C)
+
+| Service | Purpose |
+|---------|---------|
+| `insightGeneratorService.ts` | Generate tiered insights (breaking/notable/emerging) |
+| `insightQualityService.ts` | Quality scoring (novelty, impact, historical rarity) |
+| `narrativeService.ts` | Auto-generate narratives with mandatory hedge validation |
+| `credibilityService.ts` | Hedge language enforcement, retraction tone validation |
+| `trackerEvolutionService.ts` | Track tracker adoption and decline trends |
+| `weeklyReportService.ts` | Generate automated weekly privacy reports |
 
 ### SEO Services
 
 | Service | Purpose |
 |---------|---------|
-| `budgetService.ts` | Dynamic scan budget allocation |
-| `eligibilityService.ts` | Domain scan eligibility |
-| `categoryIntelligenceService.ts` | Category classification |
+| `budgetService.ts` | Dynamic scan budget allocation with circuit breaker |
+| `eligibilityService.ts` | Domain scan eligibility checking |
+| `antiThrashService.ts` | Prevent rapid tier promotion/demotion |
+| `categoryIntelligenceService.ts` | Category classification and trends |
 | `ssrReportService.ts` | Server-side rendering for crawlers |
 
 ---
@@ -323,12 +395,21 @@ queued → running → done
 | GET | `/api/v2/context/:domain` | Contextual analysis |
 | GET | `/api/v2/changes` | Recent privacy changes |
 
-### Insights API
+### Insights API (Phase 3C - 12 endpoints)
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/v2/insights` | List publishable insights |
 | GET | `/api/v2/insights/tiered` | Tiered insights (breaking/notable/emerging) |
-| GET | `/api/v2/insights/predictions/:domain` | Predictions for domain |
+| GET | `/api/v2/insights/domain/:domain` | Insights for specific domain |
+| GET | `/api/v2/insights/category/:category` | Insights for category |
+| GET | `/api/v2/insights/predictions/:domain` | Predictive signals for domain |
+| GET | `/api/v2/insights/stability/:domain` | Stability metrics for domain |
+| GET | `/api/v2/insights/quality/distribution` | Quality score distribution |
+| GET | `/api/v2/insights/quality/top` | Top quality insights |
+| GET | `/api/v2/insights/governance/methodology` | Credibility methodology metrics |
+| GET | `/api/v2/insights/governance/topic-diversity` | Topic distribution analysis |
+| GET | `/api/v2/insights/narratives/templates` | Available narrative templates |
+| GET | `/api/v2/insights/narratives/generate` | Generate narrative from template |
 
 ### Content API
 | Method | Endpoint | Purpose |
@@ -347,25 +428,32 @@ queued → running → done
 | `Scan` | Privacy scan records (URL, status, score, results) |
 | `Evidence` | Individual findings (cookies, trackers, headers) |
 | `Issue` | Categorized privacy issues with severity |
-| `Domain` | Domain index with tier and category |
+| `Domain` | Domain index with tier, category, and stability relation |
 
-### Intelligence Models
+### Intelligence Models (Phase 3)
 
 | Model | Purpose |
 |-------|---------|
 | `DomainChange` | Score/tracker changes between scans |
-| `DomainStability` | Volatility and trend metrics |
-| `Insight` | Generated insights for publication |
-| `TrackerTrend` | Tracker adoption trends |
-| `CategoryTrend` | Category-wide trend data |
+| `DomainStability` | Volatility index, trend, confidence tier, scan count |
+| `TrackerTrend` | Tracker adoption/decline by period |
+| `CategoryTrend` | Category-wide trend metrics |
+
+### Insight Models (Phase 3C)
+
+| Model | Purpose |
+|-------|---------|
+| `Insight` | Generated insights with type, severity, magnitude, confidence |
+| `WeeklyReport` | Automated weekly privacy summaries |
 
 ### System Models
 
 | Model | Purpose |
 |-------|---------|
 | `RateLimit` | Per-user/IP daily limits |
-| `SystemState` | K/V store for circuit breaker, etc. |
+| `SystemState` | K/V store for circuit breaker, drift metrics |
 | `SchedulerBatch` | Scheduler idempotency tracking |
+| `DailyReport` | Operational metrics and health data |
 
 ---
 
@@ -374,7 +462,7 @@ queued → running → done
 | Job | Trigger | Purpose |
 |-----|---------|---------|
 | `scan-url` | POST /api/v2/scan | Main privacy scanning |
-| `change-detection` | Scan completion | Analyze changes |
+| `change-detection` | Scan completion | Analyze changes, update stability |
 | `domain-upsert` | Scan completion | Update domain record |
 | `report-generation` | SSR request | Generate bot-friendly reports |
 
@@ -483,6 +571,16 @@ const { data } = useQuery({
 });
 ```
 
+### Hedge Language Validation (Phase 3C)
+```typescript
+import { validateHedgeLanguage } from './credibilityService';
+
+const validation = validateHedgeLanguage(narrative);
+if (!validation.valid) {
+  throw new Error(`Blocked: ${validation.violations.join(', ')}`);
+}
+```
+
 ---
 
 ## Environment Variables
@@ -506,16 +604,22 @@ SENTRY_DSN=...               # Error tracking
 
 ## Production Operations
 
-### Cron Jobs
+### Cron Jobs (12 Active)
+
 | Schedule | Script | Purpose |
 |----------|--------|---------|
-| Daily 1 AM | `drift-check.ts` | System consistency |
-| Daily 2 AM | `schedule-rescans.ts` | Queue rescans |
-| Daily 3 AM | `update-stability.ts` | Stability scores |
-| Daily 5 AM | `insight-lifecycle.ts` | Insight aging |
-| Daily 6 AM | `detect-retractions.ts` | Find invalid insights |
-| Daily 6 AM | `daily-ops-report.ts` | Metrics report |
-| Monday 5 AM | `generate-insights.ts` | Weekly insights |
+| `0 1 * * *` | `drift-check.ts` | Statistical drift monitoring |
+| `0 2 * * *` | `schedule-rescans.ts` | Queue domain rescans |
+| `0 2 * * 0` | `eligibility-decay.ts` | Eligibility status decay |
+| `0 3 * * *` | `update-stability.ts --tiered` | Tiered stability scores |
+| `0 4 * * 1` | `update-category-trends.ts` | Category trend metrics |
+| `30 4 * * 1` | `update-tracker-trends.ts` | Tracker adoption trends |
+| `0 5 * * *` | `insight-lifecycle.ts` | Insight aging and validation |
+| `0 5 * * 1` | `generate-insights.ts --tiered` | Weekly insight generation |
+| `0 6 * * *` | `detect-retractions.ts` | Retraction candidate detection |
+| `0 6 * * *` | `daily-ops-report.ts` | Daily metrics report |
+| `0 6 * * 1` | `generate-weekly-report.ts` | Weekly privacy report |
+| `0 7 * * *` | `golden-run-test.ts` | QA test run |
 
 ### Performance Targets
 | Metric | Target |
