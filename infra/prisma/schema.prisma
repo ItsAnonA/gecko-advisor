@@ -54,6 +54,43 @@ enum ChangeType {
   CRITICAL // >25 or fingerprinting toggle
 }
 
+// Phase 3C: Insight Engine
+enum DomainTrend {
+  IMPROVING
+  STABLE
+  DECLINING
+  VOLATILE
+}
+
+enum PeriodType {
+  WEEKLY
+  MONTHLY
+}
+
+enum TrendDirection {
+  UP
+  DOWN
+  FLAT
+}
+
+enum InsightType {
+  DOMAIN_IMPROVEMENT
+  DOMAIN_REGRESSION
+  CATEGORY_TREND
+  TRACKER_SURGE
+  TRACKER_DECLINE
+  FINGERPRINTING_SHIFT
+  ANOMALY
+  WEEKLY_SUMMARY
+}
+
+enum InsightSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 // New User model for authentication and subscriptions
 model User {
   id            String     @id @default(cuid())
@@ -347,6 +384,7 @@ model Domain {
   tierPromotions TierPromotion[]
   scans          Scan[]          @relation("DomainScans") // All scans for volatility analysis
   changes        DomainChange[]  // Phase 3: Change history
+  stability      DomainStability? // Phase 3C: Stability scoring
 
   // Optimized indexes for domain lookups and sitemap generation
   @@index([domain], map: "Domain_lookup_idx")
@@ -449,6 +487,7 @@ model Category {
   // Relations
   domains           Domain[]
   sampleComparisons SampleComparison[]
+  trends            CategoryTrend[] // Phase 3C: Category trends
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -585,4 +624,194 @@ model DomainChange {
   @@index([domainId, detectedAt(sort: Desc)])
   @@index([changeType, detectedAt(sort: Desc)])
   @@index([significanceScore(sort: Desc)])
+}
+
+// === Phase 3C: Insight Engine ===
+
+// Domain Stability Scoring
+model DomainStability {
+  id                    String      @id @default(cuid())
+  domainId              String      @unique
+  domain                Domain      @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Stability metrics
+  volatilityIndex       Float       // 0-100, higher = more volatile
+  stabilityScore        Float       // 0-100, higher = more stable
+
+  // Trend classification
+  trend                 DomainTrend
+  trendStrength         Float       // 0-1, how strong is the trend
+
+  // Historical averages
+  avgScoreLast30d       Float
+  avgScoreLast90d       Float
+  scoreStdDev30d        Float
+  scoreStdDev90d        Float
+
+  // Change frequency
+  changesLast30d        Int
+  changesLast90d        Int
+  majorChangesLast90d   Int
+
+  calculatedAt          DateTime    @default(now())
+
+  @@index([trend, stabilityScore])
+  @@index([volatilityIndex(sort: Desc)])
+}
+
+// Category Trend Analysis
+model CategoryTrend {
+  id                    String         @id @default(cuid())
+  categoryId            String
+  category              Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Period
+  periodStart           DateTime
+  periodEnd             DateTime
+  periodType            PeriodType     // WEEKLY, MONTHLY
+
+  // Score trends
+  avgScore              Float
+  avgScorePrevPeriod    Float
+  scoreChange           Float          // Percentage change
+  scoreTrend            TrendDirection
+
+  // Tracker trends
+  avgTrackerCount       Float
+  avgTrackerCountPrev   Float
+  trackerCountChange    Float
+  trackerTrend          TrendDirection
+
+  // Fingerprinting
+  fingerprintingRate    Float          // % of domains using it
+  fingerprintingRatePrev Float
+  fingerprintingTrend   TrendDirection
+
+  // Domain counts
+  domainsImproving      Int
+  domainsDeclining      Int
+  domainsStable         Int
+
+  // Top movers
+  topImprovements       Json           // [{domainId, domain, delta}]
+  topRegressions        Json           // [{domainId, domain, delta}]
+
+  calculatedAt          DateTime       @default(now())
+
+  @@unique([categoryId, periodStart, periodType])
+  @@index([periodType, periodStart])
+}
+
+// Tracker Evolution Tracking
+model TrackerTrend {
+  id                    String         @id @default(cuid())
+
+  // Tracker identifier
+  trackerDomain         String         // e.g., "google-analytics.com"
+  trackerName           String?        // e.g., "Google Analytics"
+  trackerCategory       String?        // e.g., "Analytics", "Advertising"
+
+  // Period
+  periodStart           DateTime
+  periodEnd             DateTime
+  periodType            PeriodType
+
+  // Adoption metrics
+  domainCount           Int            // Domains using this tracker
+  domainCountPrev       Int
+  adoptionChange        Float          // Percentage change
+  adoptionTrend         TrendDirection
+
+  // By tier
+  tierACount            Int
+  tierBCount            Int
+  tierCCount            Int
+
+  // By category (top 5)
+  topCategories         Json           // [{categoryId, count, change}]
+
+  // New adoptions / removals this period
+  newAdoptions          Int
+  removals              Int
+  netChange             Int
+
+  calculatedAt          DateTime       @default(now())
+
+  @@unique([trackerDomain, periodStart, periodType])
+  @@index([adoptionTrend, adoptionChange])
+  @@index([periodType, periodStart])
+}
+
+// Generated Insights
+model Insight {
+  id                    String          @id @default(cuid())
+
+  // Classification
+  insightType           InsightType
+  severity              InsightSeverity
+
+  // Content
+  title                 String
+  summary               String
+  details               Json            // Structured data supporting the insight
+
+  // Entities involved (optional references)
+  domainId              String?
+  categoryId            String?
+  trackerDomain         String?
+
+  // Period
+  periodStart           DateTime
+  periodEnd             DateTime
+
+  // Metrics
+  magnitude             Float           // How significant (0-100)
+  confidence            Float           // How confident (0-1)
+
+  // Publishing
+  isPublishable         Boolean         @default(false)
+  publishedAt           DateTime?
+
+  createdAt             DateTime        @default(now())
+
+  @@index([insightType, createdAt])
+  @@index([severity, createdAt])
+  @@index([isPublishable, createdAt])
+}
+
+// Weekly Privacy Reports
+model WeeklyReport {
+  id                    String    @id @default(cuid())
+
+  weekStart             DateTime
+  weekEnd               DateTime
+
+  // Summary stats
+  domainsScanned        Int
+  changesDetected       Int
+  avgScoreChange        Float
+
+  // Highlights
+  topImprovements       Json      // Top 10 improving domains
+  topRegressions        Json      // Top 10 regressing domains
+
+  // Category summary
+  categorySummary       Json      // Per-category trends
+
+  // Tracker summary
+  trackerSummary        Json      // Top growing/declining trackers
+
+  // Insights
+  keyInsights           Json      // Auto-generated insights
+
+  // Narrative (auto-generated)
+  narrativeSummary      String?   // "This week, privacy improved across..."
+
+  // Publishing
+  isPublished           Boolean   @default(false)
+  publishedAt           DateTime?
+
+  createdAt             DateTime  @default(now())
+
+  @@unique([weekStart])
 }
