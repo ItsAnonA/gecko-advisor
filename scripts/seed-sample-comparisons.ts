@@ -182,6 +182,186 @@ const SAMPLE_COMPARISONS: SamplePair[] = [
     label: 'Business News',
     description: 'Business and finance news',
   },
+
+  // === Social Media ===
+  {
+    categorySlug: 'social',
+    domainA: 'reddit.com',
+    domainB: 'quora.com',
+    label: 'Discussion Platforms',
+    description: 'Community discussion sites',
+  },
+  {
+    categorySlug: 'social',
+    domainA: 'linkedin.com',
+    domainB: 'x.com',
+    label: 'Professional Networks',
+    description: 'Professional and business networking',
+  },
+  {
+    categorySlug: 'social',
+    domainA: 'pinterest.com',
+    domainB: 'tumblr.com',
+    label: 'Visual Sharing',
+    description: 'Image and content sharing platforms',
+  },
+  {
+    categorySlug: 'social',
+    domainA: 'telegram.org',
+    domainB: 'signal.org',
+    label: 'Private Messaging',
+    description: 'Privacy-focused messaging apps',
+  },
+
+  // === Finance & Banking ===
+  {
+    categorySlug: 'finance',
+    domainA: 'robinhood.com',
+    domainB: 'coinbase.com',
+    label: 'Investment Apps',
+    description: 'Modern investment platforms',
+  },
+  {
+    categorySlug: 'finance',
+    domainA: 'ally.com',
+    domainB: 'chime.com',
+    label: 'Digital Banks',
+    description: 'Online-first banking',
+  },
+  {
+    categorySlug: 'finance',
+    domainA: 'creditkarma.com',
+    domainB: 'nerdwallet.com',
+    label: 'Credit Services',
+    description: 'Credit monitoring and advice',
+  },
+  {
+    categorySlug: 'finance',
+    domainA: 'wise.com',
+    domainB: 'revolut.com',
+    label: 'International Transfers',
+    description: 'Cross-border payment services',
+  },
+
+  // === Healthcare ===
+  {
+    categorySlug: 'healthcare',
+    domainA: 'webmd.com',
+    domainB: 'healthline.com',
+    label: 'Health Information',
+    description: 'Medical information sites',
+  },
+  {
+    categorySlug: 'healthcare',
+    domainA: 'teladoc.com',
+    domainB: 'amwell.com',
+    label: 'Telehealth',
+    description: 'Virtual healthcare platforms',
+  },
+  {
+    categorySlug: 'healthcare',
+    domainA: 'goodrx.com',
+    domainB: 'cvs.com',
+    label: 'Pharmacy Services',
+    description: 'Prescription and pharmacy services',
+  },
+  {
+    categorySlug: 'healthcare',
+    domainA: 'myfitnesspal.com',
+    domainB: 'strava.com',
+    label: 'Fitness Tracking',
+    description: 'Health and fitness apps',
+  },
+
+  // === Education ===
+  {
+    categorySlug: 'education',
+    domainA: 'coursera.org',
+    domainB: 'udemy.com',
+    label: 'Online Learning',
+    description: 'MOOC platforms',
+  },
+  {
+    categorySlug: 'education',
+    domainA: 'duolingo.com',
+    domainB: 'babbel.com',
+    label: 'Language Learning',
+    description: 'Language education apps',
+  },
+  {
+    categorySlug: 'education',
+    domainA: 'khanacademy.org',
+    domainB: 'edx.org',
+    label: 'Free Education',
+    description: 'Free educational resources',
+  },
+  {
+    categorySlug: 'education',
+    domainA: 'quizlet.com',
+    domainB: 'brainly.com',
+    label: 'Study Tools',
+    description: 'Student study aids',
+  },
+
+  // === Travel & Booking ===
+  {
+    categorySlug: 'travel',
+    domainA: 'booking.com',
+    domainB: 'expedia.com',
+    label: 'Travel Booking',
+    description: 'Online travel agencies',
+  },
+  {
+    categorySlug: 'travel',
+    domainA: 'airbnb.com',
+    domainB: 'vrbo.com',
+    label: 'Vacation Rentals',
+    description: 'Short-term rental platforms',
+  },
+  {
+    categorySlug: 'travel',
+    domainA: 'tripadvisor.com',
+    domainB: 'kayak.com',
+    label: 'Travel Reviews',
+    description: 'Travel comparison and reviews',
+  },
+  {
+    categorySlug: 'travel',
+    domainA: 'delta.com',
+    domainB: 'united.com',
+    label: 'US Airlines',
+    description: 'Major US carriers',
+  },
+
+  // === Gaming ===
+  {
+    categorySlug: 'gaming',
+    domainA: 'epicgames.com',
+    domainB: 'gog.com',
+    label: 'Game Stores',
+    description: 'PC game storefronts',
+  },
+  {
+    categorySlug: 'gaming',
+    domainA: 'ign.com',
+    domainB: 'gamespot.com',
+    label: 'Gaming News',
+    description: 'Video game journalism',
+  },
+  {
+    categorySlug: 'gaming',
+    domainA: 'xbox.com',
+    domainB: 'playstation.com',
+    label: 'Console Platforms',
+    description: 'Gaming console platforms',
+  },
+  {
+    categorySlug: 'gaming',
+    domainA: 'ea.com',
+    domainB: 'ubisoft.com',
+    label: 'Game Publishers',
+    description: 'Major game publishers',
+  },
 ];
 
 async function seedSampleComparisons(dryRun: boolean = false) {
