@@ -385,6 +385,7 @@ model Domain {
   scans          Scan[]          @relation("DomainScans") // All scans for volatility analysis
   changes        DomainChange[]  // Phase 3: Change history
   stability      DomainStability? // Phase 3C: Stability scoring
+  insights       Insight[]       // Phase 3C: Insights for this domain
 
   // Optimized indexes for domain lookups and sitemap generation
   @@index([domain], map: "Domain_lookup_idx")
@@ -757,6 +758,7 @@ model Insight {
 
   // Entities involved (optional references)
   domainId              String?
+  domain                Domain?   @relation(fields: [domainId], references: [id], onDelete: SetNull)
   categoryId            String?
   trackerDomain         String?
 
@@ -777,6 +779,7 @@ model Insight {
   @@index([insightType, createdAt])
   @@index([severity, createdAt])
   @@index([isPublishable, createdAt])
+  @@index([domainId])
 }
 
 // Weekly Privacy Reports
