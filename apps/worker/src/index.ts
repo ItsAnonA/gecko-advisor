@@ -230,6 +230,18 @@ export const worker = new Worker<ScanJobData | ReportGenerationJobData>(
       // Update Domain table for sitemap indexing
       await upsertDomainOnScanComplete(scanId, url);
 
+      // Phase 3: Change Intelligence - detect and record privacy changes
+      try {
+        const { detectChangesForScan } = await import('./changeDetection.js');
+        const result = await detectChangesForScan(prisma, scanId);
+        if (result.recorded && result.result) {
+          logger.info({ scanId, changeType: result.result.changeType, scoreDelta: result.result.scoreDelta }, 'Privacy change detected');
+        }
+      } catch (changeError) {
+        // Non-blocking - log warning but don't fail the scan
+        logger.warn({ scanId, error: changeError }, 'Change detection failed (non-fatal)');
+      }
+
       // Update ScanQueue if this was a queued scan
       if (scanJob.data.queueItemId) {
         const scan = await prisma.scan.findUnique({

@@ -886,3 +886,190 @@ export function trackJourneyEvents(events: JourneyEvent[]): void {
     // Silently ignore
   }
 }
+
+// =============================================================================
+// Changes API - Domain change history
+// =============================================================================
+
+/**
+ * Type for change type classification
+ */
+export type ChangeType = 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR' | 'CRITICAL';
+
+/**
+ * Domain change record
+ */
+export interface DomainChange {
+  id: string;
+  scoreBefore: number;
+  scoreAfter: number;
+  scoreDelta: number;
+  trackerCountBefore: number;
+  trackerCountAfter: number;
+  trackersAdded: string[];
+  trackersRemoved: string[];
+  fingerprintingBefore: boolean;
+  fingerprintingAfter: boolean;
+  fingerprintingChanged: boolean;
+  changeType: ChangeType;
+  significanceScore: number;
+  changeReasons: string[];
+  detectedAt: string;
+}
+
+/**
+ * Recent change with domain info
+ */
+export interface RecentChange extends DomainChange {
+  domain: string;
+}
+
+/**
+ * Response from domain changes endpoint
+ */
+export interface DomainChangesResponse {
+  domain: string;
+  changes: DomainChange[];
+  pagination: {
+    limit: number;
+    offset: number;
+    count: number;
+  };
+}
+
+/**
+ * Response from recent changes endpoint
+ */
+export interface RecentChangesResponse {
+  changes: RecentChange[];
+  pagination: {
+    limit: number;
+    offset: number;
+    count: number;
+  };
+}
+
+/**
+ * Change statistics
+ */
+export interface ChangeStats {
+  period: {
+    days: number;
+    since: string;
+  };
+  stats: {
+    totalChanges: number;
+    domainsWithChanges: number;
+    avgScoreDelta: number;
+    byType: Record<ChangeType, number>;
+  };
+}
+
+/**
+ * Options for fetching domain changes
+ */
+export interface FetchChangesOptions {
+  limit?: number;
+  offset?: number;
+  types?: ChangeType[];
+  minSignificance?: number;
+  revalidate?: number;
+}
+
+/**
+ * Fetch changes for a specific domain (SSR)
+ */
+export async function fetchDomainChanges(
+  domain: string,
+  options: FetchChangesOptions = {}
+): Promise<DomainChangesResponse | null> {
+  const { limit = 10, offset = 0, types, minSignificance, revalidate = 3600 } = options;
+
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  params.set('offset', String(offset));
+  if (types && types.length > 0) {
+    params.set('types', types.join(','));
+  }
+  if (minSignificance !== undefined) {
+    params.set('minSignificance', String(minSignificance));
+  }
+
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/changes/domain/${encodeURIComponent(domain)}?${params}`,
+      { next: { revalidate } }
+    );
+
+    if (!res.ok) {
+      if (res.status === 404 || res.status === 410) return null;
+      console.error(`Failed to fetch changes for ${domain}: ${res.status}`);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error(`Error fetching changes for ${domain}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch recent changes across all domains (SSR)
+ */
+export async function fetchRecentChanges(
+  options: FetchChangesOptions = {}
+): Promise<RecentChangesResponse | null> {
+  const { limit = 20, offset = 0, types, minSignificance, revalidate = 300 } = options;
+
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  params.set('offset', String(offset));
+  if (types && types.length > 0) {
+    params.set('types', types.join(','));
+  }
+  if (minSignificance !== undefined) {
+    params.set('minSignificance', String(minSignificance));
+  }
+
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/changes/recent?${params}`,
+      { next: { revalidate } }
+    );
+
+    if (!res.ok) {
+      console.error(`Failed to fetch recent changes: ${res.status}`);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Error fetching recent changes:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch change statistics (SSR)
+ */
+export async function fetchChangeStats(
+  days: number = 30
+): Promise<ChangeStats | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/changes/stats?days=${days}`,
+      { next: { revalidate: 3600 } }
+    );
+
+    if (!res.ok) {
+      console.error(`Failed to fetch change stats: ${res.status}`);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Error fetching change stats:', error);
+    return null;
+  }
+}

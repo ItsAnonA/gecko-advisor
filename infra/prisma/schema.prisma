@@ -45,6 +45,15 @@ enum CheckFrequency {
   MONTHLY
 }
 
+// Phase 3: Change Intelligence
+enum ChangeType {
+  NONE     // No significant change
+  MINOR    // 2-5 point delta
+  MODERATE // 6-15 points
+  MAJOR    // 16-25 points
+  CRITICAL // >25 or fingerprinting toggle
+}
+
 // New User model for authentication and subscriptions
 model User {
   id            String     @id @default(cuid())
@@ -117,6 +126,10 @@ model Scan {
 
   // Back-reference for Domain.latestScan relation
   domainLatest Domain? @relation("DomainLatestScan")
+
+  // Phase 3: Change Intelligence relations
+  changesAsCurrent  DomainChange[] @relation("DomainChangeCurrentScan")
+  changesAsPrevious DomainChange[] @relation("DomainChangePreviousScan")
 
   // Optimized indexes for critical performance paths
   @@index([normalizedInput, status, finishedAt(sort: Desc)], map: "Scan_dedupe_lookup_idx")
@@ -333,6 +346,7 @@ model Domain {
   // Relations
   tierPromotions TierPromotion[]
   scans          Scan[]          @relation("DomainScans") // All scans for volatility analysis
+  changes        DomainChange[]  // Phase 3: Change history
 
   // Optimized indexes for domain lookups and sitemap generation
   @@index([domain], map: "Domain_lookup_idx")
@@ -531,4 +545,44 @@ model SchedulerBatch {
   @@unique([batchDate, batchType])
   @@index([batchDate])
   @@index([status])
+}
+
+// === Phase 3: Change Intelligence ===
+// Tracks privacy changes between scans for a domain
+model DomainChange {
+  id                    String     @id @default(cuid())
+  domainId              String
+  domain                Domain     @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  scanId                String
+  scan                  Scan       @relation("DomainChangeCurrentScan", fields: [scanId], references: [id], onDelete: Cascade)
+  previousScanId        String
+  previousScan          Scan       @relation("DomainChangePreviousScan", fields: [previousScanId], references: [id], onDelete: Cascade)
+
+  // Score changes
+  scoreBefore           Int
+  scoreAfter            Int
+  scoreDelta            Int
+
+  // Tracker changes
+  trackerCountBefore    Int
+  trackerCountAfter     Int
+  trackersAdded         String[]   @default([])
+  trackersRemoved       String[]   @default([])
+
+  // Fingerprinting changes
+  fingerprintingBefore  Boolean    @default(false)
+  fingerprintingAfter   Boolean    @default(false)
+  fingerprintingChanged Boolean    @default(false)
+
+  // Classification
+  changeType            ChangeType @default(NONE)
+  significanceScore     Float      @default(0)
+  changeReasons         String[]   @default([])
+
+  detectedAt            DateTime   @default(now())
+
+  @@unique([domainId, scanId])
+  @@index([domainId, detectedAt(sort: Desc)])
+  @@index([changeType, detectedAt(sort: Desc)])
+  @@index([significanceScore(sort: Desc)])
 }
