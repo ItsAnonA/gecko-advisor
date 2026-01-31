@@ -10,18 +10,23 @@
  * - Max 500 retries per run to avoid queue flooding
  * - Skip domains that have been retried recently (within 7 days)
  * - Prioritize domains with higher tier (A > B > C)
+ * - Creates pause lock to prevent batch cron from competing
  *
  * Usage:
  *   npx tsx scripts/retry-failed-scans.ts
  *   npx tsx scripts/retry-failed-scans.ts --dry-run
  *   npx tsx scripts/retry-failed-scans.ts --limit 100
  *   npx tsx scripts/retry-failed-scans.ts --min-age-days 14
+ *
+ * Recommended cron (weekly, Sundays at 3 AM):
+ *   0 3 * * 0 /opt/scan-cron/run-in-backend.sh npx tsx /app/scripts/retry-failed-scans.ts
  */
 
 import { PrismaClient } from '@prisma/client';
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
 import { customAlphabet } from 'nanoid';
+import * as fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -29,11 +34,57 @@ const prisma = new PrismaClient();
 const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const generateSlug = customAlphabet(alphabet, 8);
 
+// Pause lock file - batch cron checks this and skips if present
+const PAUSE_LOCK_FILE = '/tmp/retry-scans-running.lock';
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const noPause = args.includes('--no-pause'); // Skip pause lock (for testing)
 const limitArg = args.find((a) => a.startsWith('--limit='));
 const minAgeArg = args.find((a) => a.startsWith('--min-age-days='));
+
+/**
+ * Create pause lock to prevent batch cron from competing.
+ * The cron-submitter.sh checks for this file and skips if present.
+ */
+function acquirePauseLock(): boolean {
+  try {
+    const lockData = JSON.stringify({
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      script: 'retry-failed-scans',
+    });
+    fs.writeFileSync(PAUSE_LOCK_FILE, lockData);
+    return true;
+  } catch (error) {
+    console.warn('⚠️  Failed to create pause lock:', error);
+    return false;
+  }
+}
+
+/**
+ * Release pause lock to allow batch cron to resume.
+ */
+function releasePauseLock(): void {
+  try {
+    if (fs.existsSync(PAUSE_LOCK_FILE)) {
+      fs.unlinkSync(PAUSE_LOCK_FILE);
+    }
+  } catch (error) {
+    console.warn('⚠️  Failed to release pause lock:', error);
+  }
+}
+
+// Ensure lock is released on exit
+process.on('SIGINT', () => {
+  releasePauseLock();
+  process.exit(130);
+});
+process.on('SIGTERM', () => {
+  releasePauseLock();
+  process.exit(143);
+});
 
 const MAX_RETRIES = limitArg ? parseInt(limitArg.split('=')[1], 10) : 500;
 const MIN_AGE_DAYS = minAgeArg ? parseInt(minAgeArg.split('=')[1], 10) : 7;
@@ -52,6 +103,15 @@ async function retryFailedScans() {
 
   if (dryRun) {
     console.log('🔍 DRY RUN MODE - No scans will be queued\n');
+  }
+
+  // Acquire pause lock to prevent batch cron from competing
+  if (!dryRun && !noPause) {
+    if (acquirePauseLock()) {
+      console.log('⏸️  Paused batch scan cron (lock acquired)\n');
+    } else {
+      console.log('⚠️  Could not pause batch cron - continuing anyway\n');
+    }
   }
 
   console.log(`Settings:`);
@@ -139,7 +199,7 @@ async function retryFailedScans() {
     maxRetriesPerRequest: null,
   });
 
-  const queueName = process.env.QUEUE_NAME || 'scan-jobs';
+  const queueName = process.env.QUEUE_NAME || 'scan.site';
   const queue = new Queue(queueName, { connection });
 
   console.log(`Queueing ${failedDomains.length} scans...\n`);
@@ -163,7 +223,9 @@ async function retryFailedScans() {
         },
       });
 
-      // Add to queue with lower priority (don't compete with user scans)
+      // Add to queue with NORMAL priority (same as batch scans)
+      // Priority 0 = NORMAL (processed in FIFO order with batch scans)
+      // Since batch cron is paused during retry, these will process immediately
       await queue.add(
         'scan-url',
         {
@@ -173,7 +235,7 @@ async function retryFailedScans() {
         },
         {
           jobId: scan.id,
-          priority: 100, // Lower priority than user scans (which are typically 1-10)
+          priority: 0, // NORMAL priority - same as batch scans
           attempts: 3,
           backoff: {
             type: 'exponential',
@@ -203,8 +265,18 @@ async function retryFailedScans() {
   // Cleanup
   await queue.close();
   await connection.quit();
+
+  // Release pause lock to resume batch cron
+  if (!dryRun && !noPause) {
+    releasePauseLock();
+    console.log('\n▶️  Resumed batch scan cron (lock released)');
+  }
 }
 
 retryFailedScans()
-  .catch(console.error)
+  .catch((error) => {
+    console.error(error);
+    // Ensure lock is released even on error
+    releasePauseLock();
+  })
   .finally(() => prisma.$disconnect());
