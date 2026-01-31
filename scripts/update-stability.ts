@@ -15,10 +15,11 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { updateAllDomainStability } from '../apps/backend/src/services/stabilityService';
+import { updateAllDomainStability, updateAllDomainStabilityV2 } from '../apps/backend/src/services/stabilityService';
 
 const prisma = new PrismaClient();
 const outputJson = process.argv.includes('--json');
+const useTiered = process.argv.includes('--tiered') || process.argv.includes('--v2');
 
 interface StabilityReport {
   date: string;
@@ -26,6 +27,10 @@ interface StabilityReport {
   updated: number;
   errors: number;
   duration: number;
+  // V2 tiered fields
+  full?: number;
+  partial?: number;
+  provisional?: number;
 }
 
 async function main(): Promise<void> {
@@ -42,18 +47,35 @@ async function main(): Promise<void> {
 
   try {
     if (!outputJson) {
-      console.log('Processing domains...');
+      console.log(`Processing domains${useTiered ? ' (tiered coverage)' : ''}...`);
     }
 
-    const result = await updateAllDomainStability(prisma);
+    let report: StabilityReport;
 
-    const report: StabilityReport = {
-      date: new Date().toISOString().split('T')[0] || '',
-      processed: result.processed,
-      updated: result.updated,
-      errors: result.errors,
-      duration: Date.now() - startTime,
-    };
+    if (useTiered) {
+      // Use V2 tiered function for higher coverage
+      const result = await updateAllDomainStabilityV2(prisma);
+      report = {
+        date: new Date().toISOString().split('T')[0] || '',
+        processed: result.total + result.skipped,
+        updated: result.total,
+        errors: result.errors,
+        duration: Date.now() - startTime,
+        full: result.full,
+        partial: result.partial,
+        provisional: result.provisional,
+      };
+    } else {
+      // Use original function (high confidence only)
+      const result = await updateAllDomainStability(prisma);
+      report = {
+        date: new Date().toISOString().split('T')[0] || '',
+        processed: result.processed,
+        updated: result.updated,
+        errors: result.errors,
+        duration: Date.now() - startTime,
+      };
+    }
 
     if (!outputJson) {
       console.log('');
@@ -61,6 +83,11 @@ async function main(): Promise<void> {
       console.log('SUMMARY');
       console.log(`  Processed: ${report.processed}`);
       console.log(`  Updated: ${report.updated}`);
+      if (useTiered && report.full !== undefined) {
+        console.log(`    Full confidence: ${report.full}`);
+        console.log(`    Partial confidence: ${report.partial}`);
+        console.log(`    Provisional: ${report.provisional}`);
+      }
       console.log(`  Errors: ${report.errors}`);
       console.log(`  Duration: ${(report.duration / 1000).toFixed(1)}s`);
       console.log('');

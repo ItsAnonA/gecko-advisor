@@ -17,10 +17,11 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { generateInsights, persistInsights } from '../apps/backend/src/services/insightGeneratorService';
+import { generateInsights, persistInsights, generateTieredInsights, persistTieredInsights, INSIGHT_TIERS } from '../apps/backend/src/services/insightGeneratorService';
 
 const prisma = new PrismaClient();
 const outputJson = process.argv.includes('--json');
+const useTiered = process.argv.includes('--tiered') || process.argv.includes('--v2');
 const daysArg = process.argv.find((a) => a.startsWith('--days='));
 const periodDays = daysArg ? parseInt(daysArg.split('=')[1] ?? '7', 10) : 7;
 
@@ -32,6 +33,12 @@ interface InsightReport {
   byType: Record<string, number>;
   bySeverity: Record<string, number>;
   duration: number;
+  // V2 tiered fields
+  byTier?: {
+    breaking: number;
+    notable: number;
+    emerging: number;
+  };
 }
 
 async function main(): Promise<void> {
@@ -50,55 +57,124 @@ async function main(): Promise<void> {
 
   try {
     if (!outputJson) {
-      console.log('Generating insights...');
+      console.log(`Generating insights${useTiered ? ' (tiered)' : ''}...`);
     }
 
-    const insights = await generateInsights(prisma, periodDays);
-    const persisted = await persistInsights(prisma, insights, periodStart);
+    let report: InsightReport;
 
-    // Aggregate by type and severity
-    const byType: Record<string, number> = {};
-    const bySeverity: Record<string, number> = {};
+    if (useTiered) {
+      // Use tiered insight generation for higher volume
+      const tieredInsights = await generateTieredInsights(prisma, periodDays);
+      const counts = await persistTieredInsights(prisma, tieredInsights, periodStart);
 
-    for (const insight of insights) {
-      byType[insight.type] = (byType[insight.type] || 0) + 1;
-      bySeverity[insight.severity] = (bySeverity[insight.severity] || 0) + 1;
-    }
+      // Aggregate by type and severity across all tiers
+      const allInsights = [
+        ...tieredInsights.breaking,
+        ...tieredInsights.notable,
+        ...tieredInsights.emerging,
+      ];
 
-    const publishable = insights.filter((i) => i.magnitude > 50 && i.confidence > 0.8).length;
+      const byType: Record<string, number> = {};
+      const bySeverity: Record<string, number> = {};
 
-    const report: InsightReport = {
-      date: new Date().toISOString().split('T')[0] || '',
-      periodDays,
-      generated: insights.length,
-      publishable,
-      byType,
-      bySeverity,
-      duration: Date.now() - startTime,
-    };
+      for (const insight of allInsights) {
+        byType[insight.type] = (byType[insight.type] || 0) + 1;
+        bySeverity[insight.severity] = (bySeverity[insight.severity] || 0) + 1;
+      }
 
-    if (!outputJson) {
-      console.log('');
-      console.log('────────────────────────────────────────────────────────────');
-      console.log('SUMMARY');
-      console.log(`  Generated: ${report.generated}`);
-      console.log(`  Publishable: ${report.publishable}`);
-      console.log('');
-      console.log('  By Type:');
-      Object.entries(byType).forEach(([type, count]) => {
-        console.log(`    ${type}: ${count}`);
-      });
-      console.log('');
-      console.log('  By Severity:');
-      Object.entries(bySeverity).forEach(([severity, count]) => {
-        console.log(`    ${severity}: ${count}`);
-      });
-      console.log('');
-      console.log(`  Duration: ${(report.duration / 1000).toFixed(1)}s`);
-      console.log('');
-      console.log('✅ Insight generation complete');
+      report = {
+        date: new Date().toISOString().split('T')[0] || '',
+        periodDays,
+        generated: tieredInsights.total,
+        publishable: counts.breaking + counts.notable,
+        byType,
+        bySeverity,
+        duration: Date.now() - startTime,
+        byTier: {
+          breaking: counts.breaking,
+          notable: counts.notable,
+          emerging: counts.emerging,
+        },
+      };
+
+      if (!outputJson) {
+        console.log('');
+        console.log('────────────────────────────────────────────────────────────');
+        console.log('SUMMARY (Quality-Only - No Volume Targets)');
+        console.log(`  Generated: ${report.generated}`);
+        console.log(`  Publishable: ${report.publishable}`);
+        console.log('');
+        console.log('  By Tier (all that met quality threshold):');
+        console.log(`    Breaking (mag≥70, conf≥0.9): ${counts.breaking}`);
+        console.log(`    Notable (mag≥40, conf≥0.75): ${counts.notable}`);
+        console.log(`    Emerging (mag≥25, conf≥0.6): ${counts.emerging}`);
+        console.log('');
+        console.log('  By Type:');
+        Object.entries(byType).forEach(([type, count]) => {
+          console.log(`    ${type}: ${count}`);
+        });
+        console.log('');
+        console.log('  By Severity:');
+        Object.entries(bySeverity).forEach(([severity, count]) => {
+          console.log(`    ${severity}: ${count}`);
+        });
+        console.log('');
+        console.log(`  Duration: ${(report.duration / 1000).toFixed(1)}s`);
+        console.log('');
+        console.log('✅ Insight generation complete');
+      } else {
+        console.log(JSON.stringify(report, null, 2));
+      }
     } else {
-      console.log(JSON.stringify(report, null, 2));
+      // Original flow
+      const insights = await generateInsights(prisma, periodDays);
+      await persistInsights(prisma, insights, periodStart);
+
+      // Aggregate by type and severity
+      const byType: Record<string, number> = {};
+      const bySeverity: Record<string, number> = {};
+
+      for (const insight of insights) {
+        byType[insight.type] = (byType[insight.type] || 0) + 1;
+        bySeverity[insight.severity] = (bySeverity[insight.severity] || 0) + 1;
+      }
+
+      // Use lowered thresholds for publishable count
+      const publishable = insights.filter((i) => i.magnitude >= 25 && i.confidence >= 0.6).length;
+
+      report = {
+        date: new Date().toISOString().split('T')[0] || '',
+        periodDays,
+        generated: insights.length,
+        publishable,
+        byType,
+        bySeverity,
+        duration: Date.now() - startTime,
+      };
+
+      if (!outputJson) {
+        console.log('');
+        console.log('────────────────────────────────────────────────────────────');
+        console.log('SUMMARY');
+        console.log(`  Generated: ${report.generated}`);
+        console.log(`  Publishable: ${report.publishable}`);
+        console.log('');
+        console.log('  By Type:');
+        Object.entries(byType).forEach(([type, count]) => {
+          console.log(`    ${type}: ${count}`);
+        });
+        console.log('');
+        console.log('  By Severity:');
+        Object.entries(bySeverity).forEach(([severity, count]) => {
+          console.log(`    ${severity}: ${count}`);
+        });
+        console.log('');
+        console.log(`  Duration: ${(report.duration / 1000).toFixed(1)}s`);
+        console.log('');
+        console.log('✅ Insight generation complete');
+      } else {
+        console.log(JSON.stringify(report, null, 2));
+      }
     }
 
     // Save report to database
