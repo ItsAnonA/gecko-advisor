@@ -18,6 +18,7 @@ const BASE_URL = SEO_CONSTANTS.BASE_URL;
 const staticPages = [
   { loc: '/', priority: '1.0', changefreq: 'daily' },
   { loc: '/reports', priority: '0.9', changefreq: 'daily' },
+  { loc: '/changes', priority: '0.8', changefreq: 'daily' },
 ];
 
 export async function GET() {
