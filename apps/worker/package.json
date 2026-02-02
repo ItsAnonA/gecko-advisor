@@ -14,11 +14,11 @@
     "postinstall": "prisma generate --schema=../../infra/prisma/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "5.22.0",
     "@gecko-advisor/shared": "workspace:*",
+    "@prisma/client": "5.22.0",
     "@sentry/node": "^8.22.0",
     "bullmq": "^5.11.4",
-    "cheerio": "^1.0.0",
+    "cheerio": "^1.2.0",
     "ioredis": "^5.4.1",
     "pino": "^9.5.0",
     "tldts": "^7.0.16"

@@ -17,16 +17,16 @@
         "cleanup:blocked": "tsx ./scripts/cleanup-blocked-domains.ts"
     },
     "dependencies": {
+        "@gecko-advisor/shared": "workspace:*",
         "@paralleldrive/cuid2": "^2.2.2",
         "@prisma/client": "5.22.0",
-        "@gecko-advisor/shared": "workspace:*",
         "@sentry/node": "^8.22.0",
         "basic-auth": "^2.0.1",
         "bcryptjs": "^3.0.2",
         "bullmq": "^5.11.4",
         "compression": "^1.8.1",
         "cors": "^2.8.5",
-        "express": "^4.19.2",
+        "express": "^5.2.1",
         "express-rate-limit": "^7.4.0",
         "helmet": "^7.1.0",
         "ioredis": "^5.4.1",
