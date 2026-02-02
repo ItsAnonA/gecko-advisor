@@ -8,10 +8,16 @@ import { ScanForm } from '@/components/home';
 
 /**
  * SEO Metadata for the homepage
+ *
+ * IMPORTANT: Canonical URL ensures all query string variants (?url=, ?p=, etc.)
+ * consolidate to the base homepage URL for SEO purposes.
  */
 export const metadata: Metadata = {
   title: 'Gecko Advisor - Free Website Privacy Scanner',
   description: 'Scan any website to reveal hidden trackers, cookies, and data collection practices. 100% free, open-source, and privacy-respecting.',
+  alternates: {
+    canonical: 'https://geckoadvisor.com/',
+  },
   openGraph: {
     title: 'Gecko Advisor - Instant Privacy Analysis for Any Website',
     description: 'Free open-source privacy scanner. Analyze any site for trackers, cookies, and security issues.',

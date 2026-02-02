@@ -87,12 +87,15 @@ function generate404Html(domain: string): string {
  * - Social media shares
  *
  * Keep active for at least 1 year after migration.
+ *
+ * NOTE: X-Robots-Tag reinforces de-indexing of old URL pattern.
  */
 ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain'], (req, res) => {
   const domain = req.params.domain || '';
 
   // If domain is empty, redirect to home
   if (!domain) {
+    res.setHeader('X-Robots-Tag', 'noindex');
     res.redirect(301, '/');
     return;
   }
@@ -101,6 +104,9 @@ ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain
 
   // Log for monitoring redirect volume
   logger.info({ oldUrl: req.originalUrl, newPath }, 'Redirecting old URL to new path');
+
+  // X-Robots-Tag tells search engines to de-index this old URL pattern
+  res.setHeader('X-Robots-Tag', 'noindex');
 
   // 301 = permanent redirect (tells search engines to update their index)
   res.redirect(301, newPath);
@@ -111,6 +117,9 @@ ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain
  */
 ssrDomainRouter.get('/privacy-policy/:domain/*', (req, res) => {
   const domain = req.params.domain || '';
+
+  // X-Robots-Tag tells search engines to de-index this old URL pattern
+  res.setHeader('X-Robots-Tag', 'noindex');
 
   if (!domain) {
     res.redirect(301, '/');

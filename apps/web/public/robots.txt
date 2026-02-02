@@ -31,6 +31,10 @@ Disallow: /settings
 Disallow: /_next/
 Disallow: /ssr
 
+# Legacy redirect-only paths (301 → /privacy-report/)
+# Block to prevent crawling redirect chains
+Disallow: /privacy-policy/
+
 # Block crawler artifacts (reduces 404s from dynamic pages)
 # Privacy report pages
 Disallow: /privacy-report/*/_next/
