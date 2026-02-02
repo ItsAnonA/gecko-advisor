@@ -7,7 +7,6 @@
 User-agent: *
 Allow: /
 Allow: /privacy-report/
-Allow: /r/
 Allow: /blog/
 Allow: /reports
 Allow: /about
@@ -34,6 +33,7 @@ Disallow: /ssr
 # Legacy redirect-only paths (301 → /privacy-report/)
 # Block to prevent crawling redirect chains
 Disallow: /privacy-policy/
+Disallow: /r/
 
 # Block crawler artifacts (reduces 404s from dynamic pages)
 # Privacy report pages
