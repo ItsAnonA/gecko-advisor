@@ -357,10 +357,14 @@ ssrDomainRouter.get(['/privacy-report/:domain', '/api/ssr/privacy-report/:domain
 });
 
 /**
- * SEO Redirect: /r/:slug → /privacy-policy/:domain
+ * SEO Redirect: /r/:slug → /privacy-report/:domain
  *
  * Redirects old report URLs to canonical domain-based URLs for SEO.
  * This ensures search engines always index the canonical URL.
+ *
+ * IMPORTANT: Redirects directly to /privacy-report/ to avoid redirect chain:
+ * - Old: /r/:slug → /privacy-policy/:domain → /privacy-report/:domain (BAD - 2 hops)
+ * - New: /r/:slug → /privacy-report/:domain (GOOD - 1 hop)
  */
 ssrDomainRouter.get('/r/:slug', async (req, res) => {
   try {
@@ -373,8 +377,29 @@ ssrDomainRouter.get('/r/:slug', async (req, res) => {
     });
 
     if (!scan) {
-      // If scan not found, let the frontend handle 404
-      return res.redirect(302, `https://geckoadvisor.com/r/${slug}`);
+      // Return 410 Gone for deleted/expired slugs
+      // This tells Google to de-index the URL faster than 404
+      logger.info({ slug }, 'SEO redirect /r/:slug - slug not found, returning 410 Gone');
+      res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('X-Robots-Tag', 'noindex');
+      res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Expired | Gecko Advisor</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon_500x500.png">
+</head>
+<body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; text-align: center;">
+  <div>
+    <h1>Report Expired</h1>
+    <p>This report link has expired or been removed.</p>
+    <a href="/" style="color: #2ecc71;">Scan a New Website</a>
+  </div>
+</body>
+</html>`);
+      return;
     }
 
     // Extract domain from scan input
@@ -386,12 +411,28 @@ ssrDomainRouter.get('/r/:slug', async (req, res) => {
       domain = scan.input;
     }
 
-    // 301 permanent redirect to canonical URL (via API for SSR)
-    logger.info({ slug, domain }, 'SEO redirect /r/:slug -> /privacy-policy/:domain');
-    res.redirect(301, `https://api.geckoadvisor.com/privacy-policy/${encodeURIComponent(domain)}`);
+    // 301 permanent redirect directly to canonical URL (skip /privacy-policy/ intermediate)
+    logger.info({ slug, domain }, 'SEO redirect /r/:slug -> /privacy-report/:domain');
+    res.redirect(301, `https://geckoadvisor.com/privacy-report/${encodeURIComponent(domain)}`);
   } catch (error) {
     logger.error({ error, slug: req.params.slug }, 'Error in /r/:slug redirect');
-    // On error, let frontend handle it
-    res.redirect(302, `https://geckoadvisor.com/r/${req.params.slug}`);
+    // Return 410 Gone on error to avoid crawl loops
+    res.status(410).setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('X-Robots-Tag', 'noindex');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Unavailable | Gecko Advisor</title>
+  <meta name="robots" content="noindex">
+</head>
+<body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: white; text-align: center;">
+  <div>
+    <h1>Report Unavailable</h1>
+    <p>This report is temporarily unavailable.</p>
+    <a href="/" style="color: #2ecc71;">Go to Home</a>
+  </div>
+</body>
+</html>`);
   }
 });
