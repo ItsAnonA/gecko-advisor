@@ -114,8 +114,9 @@ ssrDomainRouter.get(['/privacy-policy/:domain', '/api/ssr/privacy-policy/:domain
 
 /**
  * Catch-all for any /privacy-policy sub-paths
+ * Note: path-to-regexp v8 requires named wildcards (*path instead of *)
  */
-ssrDomainRouter.get('/privacy-policy/:domain/*', (req, res) => {
+ssrDomainRouter.get('/privacy-policy/:domain/*path', (req, res) => {
   const domain = req.params.domain || '';
 
   // X-Robots-Tag tells search engines to de-index this old URL pattern
