@@ -2,8 +2,8 @@
 SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const psl = require('psl') as { get: (hostname: string) => string | null };
+// @ts-expect-error - psl package types don't export correctly with ESM
+import psl from 'psl';
 import type { ScoreLabel } from './types.js';
 /**
  * Safely normalizes a URL input with proper validation to prevent SSRF attacks.

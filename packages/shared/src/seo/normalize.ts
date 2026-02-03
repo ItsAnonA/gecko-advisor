@@ -2,8 +2,8 @@
 SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const psl = require('psl') as { get: (hostname: string) => string | null };
+// @ts-expect-error - psl package types don't export correctly with ESM
+import psl from 'psl';
 
 /**
  * SEO Domain Normalization Utilities
