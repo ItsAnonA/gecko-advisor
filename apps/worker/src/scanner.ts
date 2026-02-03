@@ -271,7 +271,8 @@ export async function scanSiteJob(
   const u = normalizeUrl(urlInput);
   const origin = u.origin;
   const hostname = u.hostname;
-  const siteRoot = etldPlusOne(hostname);
+  // etldPlusOne returns null for bare TLDs; fall back to hostname for comparison
+  const siteRoot = etldPlusOne(hostname) ?? hostname;
 
   // Load privacy lists - 20% progress
   await reportProgress(20);
@@ -359,7 +360,8 @@ export async function scanSiteJob(
 
       try {
         const resolved = new URL(sanitizedSrc);
-        const root = etldPlusOne(resolved.hostname);
+        // etldPlusOne returns null for bare TLDs; fall back to hostname
+        const root = etldPlusOne(resolved.hostname) ?? resolved.hostname;
         const evidence: ThirdPartyEvidence = {
           scanId,
           hostname: resolved.hostname,

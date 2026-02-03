@@ -97,7 +97,8 @@ reportV1Router.get("/reports/recent", async (_req, res) => {
       let domain = scan.input;
       try {
         const url = new URL(scan.input);
-        domain = etldPlusOne(url.hostname);
+        // etldPlusOne returns null for bare TLDs, fall back to hostname
+        domain = etldPlusOne(url.hostname) ?? url.hostname;
       } catch {
         // ignore
       }

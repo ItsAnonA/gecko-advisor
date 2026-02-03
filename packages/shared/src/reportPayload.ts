@@ -259,7 +259,8 @@ export function buildReportPayload(scan: ScanEntity, options: BuildReportPayload
   const domain = (() => {
     try {
       const parsed = new URL(scan.input);
-      return etldPlusOne(parsed.hostname);
+      // etldPlusOne returns null for bare TLDs, fall back to hostname
+      return etldPlusOne(parsed.hostname) ?? parsed.hostname;
     } catch {
       return scan.input;
     }

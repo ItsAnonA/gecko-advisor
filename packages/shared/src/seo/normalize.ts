@@ -2,6 +2,8 @@
 SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const psl = require('psl') as { get: (hostname: string) => string | null };
 
 /**
  * SEO Domain Normalization Utilities
@@ -153,75 +155,29 @@ export function isValidDomain(domain: string | null | undefined): domain is stri
 }
 
 /**
- * Common compound TLDs (public suffixes with 2+ parts)
- * These are TLDs, not registrable domains
- */
-const COMPOUND_TLDS = [
-  'co.uk',
-  'org.uk',
-  'me.uk',
-  'ac.uk',
-  'gov.uk',
-  'co.jp',
-  'co.nz',
-  'co.za',
-  'com.au',
-  'org.au',
-  'net.au',
-  'com.br',
-  'org.br',
-  'net.br',
-  'com.mx',
-  'org.mx',
-  'co.in',
-  'com.sg',
-  'com.hk',
-  'co.kr',
-  'co.il',
-  'com.ar',
-  'com.tw',
-  'com.cn',
-  'co.th',
-];
-
-/**
- * Common single-part TLDs
- */
-const SINGLE_TLDS = [
-  'com', 'net', 'org', 'edu', 'gov', 'mil', 'int',
-  'uk', 'jp', 'de', 'fr', 'it', 'es', 'nl', 'be', 'at', 'ch',
-  'au', 'nz', 'ca', 'br', 'mx', 'ar', 'cl', 'co', 'pe', 've',
-  'in', 'cn', 'hk', 'tw', 'sg', 'my', 'id', 'ph', 'th', 'vn',
-  'kr', 'jp', 'ru', 'ua', 'pl', 'cz', 'sk', 'hu', 'ro', 'bg',
-  'gr', 'tr', 'il', 'ae', 'sa', 'za', 'ng', 'ke', 'eg', 'ma',
-  'io', 'ai', 'app', 'dev', 'xyz', 'tech', 'online', 'site',
-  'info', 'biz', 'pro', 'name', 'mobi', 'tv', 'cc', 'ws', 'me',
-];
-
-/**
- * Extracts the registrable domain (eTLD+1) from a hostname.
- * Handles common compound TLDs like .co.uk
+ * Extracts the registrable domain (eTLD+1) from a hostname using the Public Suffix List.
  *
  * @param hostname - Full hostname
- * @returns eTLD+1 or the original hostname
+ * @returns eTLD+1 or empty string if invalid/bare TLD
  */
 export function getRegistrableDomain(hostname: string): string {
-  const parts = hostname.split('.').filter(Boolean);
-  if (parts.length <= 2) return hostname;
-
-  // Handle common compound TLDs
-  const lastTwo = parts.slice(-2).join('.');
-
-  if (COMPOUND_TLDS.includes(lastTwo)) {
-    return parts.slice(-3).join('.');
+  if (!hostname || typeof hostname !== 'string') {
+    return '';
   }
 
-  return parts.slice(-2).join('.');
+  const normalized = hostname.toLowerCase().trim().replace(/\.+$/, '');
+  if (!normalized) {
+    return '';
+  }
+
+  // Use psl.get() which returns the registrable domain or null for bare TLDs
+  const domain = psl.get(normalized);
+  return domain ?? '';
 }
 
 /**
  * Checks if a string is a public suffix (TLD) rather than a registrable domain.
- * Public suffixes like "com", "co.uk", "com.au" are TLDs that cannot be registered.
+ * Uses the Public Suffix List for accurate detection.
  *
  * Examples:
  *   - "com" → true (single TLD)
@@ -238,45 +194,15 @@ export function isPublicSuffix(domain: string): boolean {
     return true; // Invalid input treated as public suffix
   }
 
-  const normalized = domain.toLowerCase().trim();
-  const parts = normalized.split('.').filter(Boolean);
-
-  if (parts.length === 0) {
+  const normalized = domain.toLowerCase().trim().replace(/\.+$/, '');
+  if (!normalized) {
     return true;
   }
 
-  // Single part - definitely a TLD
-  if (parts.length === 1) {
-    return true;
-  }
-
-  // Two parts - check if it's a compound TLD
-  if (parts.length === 2) {
-    // Check if this is a compound TLD like "co.uk", "com.au"
-    if (COMPOUND_TLDS.includes(normalized)) {
-      return true;
-    }
-
-    // Check if first part is too short (likely TLD pattern)
-    // Real domains have meaningful first labels (e.g., "google.com")
-    // TLD patterns have short first parts (e.g., "co.uk", "com.br")
-    const firstPart = parts[0];
-    if (firstPart && firstPart.length <= 3 && SINGLE_TLDS.includes(parts[1] ?? '')) {
-      // Pattern like "co.uk", "com.au", "org.br"
-      return true;
-    }
-  }
-
-  // Three+ parts - likely a real domain, but verify the last parts aren't a compound TLD
-  // Check that it has something before the public suffix
-  const lastTwo = parts.slice(-2).join('.');
-  if (COMPOUND_TLDS.includes(lastTwo)) {
-    // Has compound TLD, must have at least one part before it
-    return parts.length < 3;
-  }
-
-  // Has single TLD, must have at least one part before it
-  return parts.length < 2;
+  // psl.get() returns null for public suffixes (bare TLDs)
+  // If it returns a value, the input is a registrable domain
+  const registrable = psl.get(normalized);
+  return registrable === null;
 }
 
 /**

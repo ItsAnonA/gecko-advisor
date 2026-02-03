@@ -11,8 +11,18 @@ import { etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
  *   - "https://www.example.com/path" → "example.com"
  *   - "subdomain.example.co.uk" → "example.co.uk"
  *   - "example.com" → "example.com"
+ *   - "com.br" → "" (bare TLD, invalid)
+ *
+ * Returns empty string for:
+ *   - Bare TLDs (e.g., "com.br", "co.uk")
+ *   - Invalid hostnames
+ *   - Empty input
  */
 export function normalizeDomain(input: string): string {
+  if (!input || typeof input !== 'string') {
+    return '';
+  }
+
   let hostname = input.toLowerCase().trim();
 
   // Strip protocol if present
@@ -29,8 +39,14 @@ export function normalizeDomain(input: string): string {
   // Strip port if present
   hostname = hostname.split(':')[0] ?? hostname;
 
+  if (!hostname || hostname.length === 0) {
+    return '';
+  }
+
   // Get effective TLD+1 (e.g., sub.example.com → example.com)
-  return etldPlusOne(hostname);
+  // Returns null for bare TLDs like "com.br" or "co.uk"
+  const domain = etldPlusOne(hostname);
+  return domain ?? '';
 }
 
 /**

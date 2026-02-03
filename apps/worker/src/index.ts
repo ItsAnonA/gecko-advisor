@@ -15,8 +15,14 @@ import { etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
 /**
  * Normalize a URL or hostname to its effective domain (eTLD+1).
  * Mirrors the backend's domainService.normalizeDomain function.
+ *
+ * Returns empty string for bare TLDs (e.g., "com.br", "co.uk") which are
+ * not valid registrable domains.
  */
 function normalizeDomain(input: string): string {
+  if (!input || typeof input !== 'string') {
+    return '';
+  }
   let hostname = input.toLowerCase().trim();
   hostname = hostname.replace(/^https?:\/\//, '');
   hostname = hostname.replace(/^www\./, '');
@@ -24,7 +30,11 @@ function normalizeDomain(input: string): string {
   hostname = hostname.split('?')[0] ?? hostname;
   hostname = hostname.split('#')[0] ?? hostname;
   hostname = hostname.split(':')[0] ?? hostname;
-  return etldPlusOne(hostname);
+  if (!hostname || hostname.length === 0) {
+    return '';
+  }
+  // etldPlusOne returns null for bare TLDs like "com.br"
+  return etldPlusOne(hostname) ?? '';
 }
 
 /**

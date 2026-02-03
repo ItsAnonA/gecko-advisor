@@ -2,6 +2,8 @@
 SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const psl = require('psl') as { get: (hostname: string) => string | null };
 import type { ScoreLabel } from './types.js';
 /**
  * Safely normalizes a URL input with proper validation to prevent SSRF attacks.
@@ -112,13 +114,44 @@ export function normalizeUrl(input: string): URL {
   return url;
 }
 
-export function etldPlusOne(hostname: string): string {
-  const parts = hostname.split('.').filter(Boolean);
-  if (parts.length <= 2) return hostname;
-  const lastTwo = parts.slice(-2).join('.');
-  const lastThree = parts.slice(-3).join('.');
-  if (/\.co\.uk$/.test(lastThree)) return lastThree;
-  return lastTwo;
+/**
+ * Extract the registrable domain (eTLD+1) from a hostname using the Public Suffix List.
+ *
+ * Examples:
+ *   - "www.example.com" → "example.com"
+ *   - "sub.example.co.uk" → "example.co.uk"
+ *   - "site.com.br" → "site.com.br"
+ *   - "com.br" → null (bare TLD, invalid)
+ *   - "example.com" → "example.com"
+ *
+ * @param hostname - The hostname to parse (must NOT include protocol, port, or path)
+ * @returns The registrable domain (eTLD+1), or null if the input is invalid or a bare TLD
+ */
+export function etldPlusOne(hostname: string): string | null {
+  if (!hostname || typeof hostname !== 'string') {
+    return null;
+  }
+
+  // Normalize: lowercase and remove any trailing dots
+  const normalized = hostname.toLowerCase().trim().replace(/\.+$/, '');
+
+  if (!normalized || normalized.length === 0) {
+    return null;
+  }
+
+  // Use psl.get() which returns the registrable domain or null
+  // psl.get() returns null for:
+  // - Bare TLDs (e.g., "com", "co.uk", "com.br")
+  // - Invalid domains
+  // - Listed public suffixes without a registrable part
+  const domain = psl.get(normalized);
+
+  // psl.get() returns null for bare TLDs and invalid inputs
+  if (!domain) {
+    return null;
+  }
+
+  return domain;
 }
 
 export function labelForScore(score: number): ScoreLabel {
