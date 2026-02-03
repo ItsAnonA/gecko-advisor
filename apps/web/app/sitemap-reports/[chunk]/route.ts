@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { fetchIndexableDomains } from '@/lib/api';
-import { SEO_CONSTANTS, normalizeDomain } from '@gecko-advisor/shared';
+import { SEO_CONSTANTS, normalizeDomain, isPublicSuffix } from '@gecko-advisor/shared';
 
 const BASE_URL = SEO_CONSTANTS.BASE_URL;
 const URLS_PER_CHUNK = 10000;
@@ -44,6 +44,10 @@ export async function GET(_request: Request, { params }: Props) {
     .map((d) => {
       const domain = normalizeDomain(d.domain);
       if (!domain) return null;
+
+      // Filter out domains that become bare TLDs after www. removal
+      // e.g., www.gov.il → gov.il (public suffix, not a registrable domain)
+      if (isPublicSuffix(domain)) return null;
 
       // Validate date if present
       let lastmod = '';
