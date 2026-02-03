@@ -13,6 +13,7 @@ import WhatThisMeansSection from './WhatThisMeansSection';
 import CategoryContextBlock from './CategoryContextBlock';
 import RelatedDomainsSection from './RelatedDomainsSection';
 import ComparisonPrompt from './ComparisonPrompt';
+import { ReportSummary } from './summary';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { CategoryBadge } from '@/components/ui/CategoryBadge';
 import type { ReportData, CategoryInfo } from '@/lib/api';
@@ -582,22 +583,20 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
         </div>
       </header>
 
-      {/* Quick Summary - methodology context, not verdict repetition */}
-      <section className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-        <h2 className="text-lg font-semibold text-zinc-900 flex items-center gap-2 mb-2">
-          <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Quick Summary
-        </h2>
-        <p className="text-sm text-slate-700">
-          This score reflects publicly observable network behavior measured during a live scan.{' '}
-          {evidence.length > 0 ? `${evidence.length} signals analyzed` : 'No significant concerns detected'}
-          {trackerCount === 0
-            ? ', no tracking scripts detected.'
-            : `, ${trackerCount} tracker${trackerCount !== 1 ? 's' : ''} identified.`}
-        </p>
-      </section>
+      {/* Quick Summary - Interpretation → Comparison → Consequence */}
+      <ReportSummary
+        score={score}
+        domain={domain}
+        trackerCount={trackerCount}
+        thirdPartyCount={thirdPartyCount}
+        cookieCount={cookieCount}
+        evidenceCount={evidence.length}
+        percentile={meta?.benchmarks?.percentile}
+        totalDomains={meta?.globalBenchmarks?.totalDomains}
+        averageScore={meta?.globalBenchmarks?.averageScore}
+        category={category?.name}
+        evidence={evidence}
+      />
 
       {/* Key Metrics - with color-score consistency */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
