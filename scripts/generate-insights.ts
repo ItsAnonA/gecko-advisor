@@ -18,6 +18,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { generateInsights, persistInsights, generateTieredInsights, persistTieredInsights, INSIGHT_TIERS } from '../apps/backend/src/services/insightGeneratorService';
+import { recordGovernanceMetric } from '../apps/backend/src/services/truthMetricsService';
 
 const prisma = new PrismaClient();
 const outputJson = process.argv.includes('--json');
@@ -187,6 +188,13 @@ async function main(): Promise<void> {
       update: {
         value: report as unknown as Record<string, unknown>,
       },
+    });
+
+    // Record governance metrics for insight generation
+    await recordGovernanceMetric(prisma, {
+      insightsGenerated: report.generated,
+      insightsPublished: report.publishable,
+      insightsFailedQuality: report.generated - report.publishable,
     });
   } catch (error) {
     console.error('❌ Insight generation failed:', error);

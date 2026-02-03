@@ -3,6 +3,9 @@
  *
  * Generates weekly privacy reports with narratives.
  * Aggregates insights, category trends, and tracker movements.
+ *
+ * CRITICAL: All narratives MUST pass hedge validation before publishing.
+ * Governance metrics are recorded for tracking enforcement.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -10,6 +13,8 @@ import { generateInsights, persistInsights } from './insightGeneratorService.js'
 import { getCategoryRankings } from './categoryIntelligenceService.js';
 import { getTrackerMovers } from './trackerEvolutionService.js';
 import { getDomainsByTrend } from './stabilityService.js';
+import { validateHedgeLanguage } from './credibilityService.js';
+import { recordGovernanceMetric } from './truthMetricsService.js';
 
 interface ReportData {
   changesDetected: number;
@@ -123,7 +128,7 @@ export async function generateWeeklyReport(prisma: PrismaClient): Promise<{
   const keyInsights = insights.filter((i) => i.magnitude > 60).slice(0, 10);
 
   // Build narrative
-  const narrative = buildNarrative({
+  const rawNarrative = buildNarrative({
     changesDetected,
     avgScoreChange: avgChange._avg.scoreDelta || 0,
     categoryRankings,
@@ -135,6 +140,26 @@ export async function generateWeeklyReport(prisma: PrismaClient): Promise<{
       severity: i.severity,
     })),
   });
+
+  // MANDATORY: Validate hedge language - record governance metrics
+  const validation = validateHedgeLanguage(rawNarrative);
+  const narrative = validation.valid ? rawNarrative : null;
+
+  // Record governance tracking
+  await recordGovernanceMetric(prisma, {
+    narrativesAttempted: 1,
+    narrativesBlocked: validation.valid ? 0 : 1,
+    narrativesApproved: validation.valid ? 1 : 0,
+    forbiddenCausalCount: validation.violations.length,
+    insightsGenerated: insights.length,
+    insightsPublished: keyInsights.length,
+  });
+
+  if (!validation.valid) {
+    console.warn(
+      `[WEEKLY REPORT] Narrative blocked due to hedge violations: ${validation.violations.join(', ')}`
+    );
+  }
 
   // Create report
   const report = await prisma.weeklyReport.create({

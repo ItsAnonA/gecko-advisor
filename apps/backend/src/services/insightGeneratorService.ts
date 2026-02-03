@@ -310,6 +310,10 @@ export async function generateTieredInsights(
 }> {
   const allInsights = await generateRawInsights(prisma, periodDays);
 
+  // Helper to generate consistent dedup IDs (normalize undefined/null to empty string)
+  const getInsightId = (i: GeneratedInsight): string =>
+    `${i.type}-${i.domainId ?? ''}-${i.categoryId ?? ''}-${i.trackerDomain ?? ''}`;
+
   // Classify by tier - NO volume caps, quality threshold only
   const breaking = allInsights
     .filter(
@@ -320,11 +324,11 @@ export async function generateTieredInsights(
     .map((i) => ({ ...i, tier: 'breaking' as const }));
   // NO .slice() - publish ALL that meet threshold
 
-  const breakingIds = new Set(breaking.map((i) => `${i.type}-${i.domainId}-${i.categoryId}-${i.trackerDomain}`));
+  const breakingIds = new Set(breaking.map(getInsightId));
 
   const notable = allInsights
     .filter((i) => {
-      const id = `${i.type}-${i.domainId}-${i.categoryId}-${i.trackerDomain}`;
+      const id = getInsightId(i);
       return (
         i.magnitude >= INSIGHT_TIERS.notable.minMagnitude &&
         i.confidence >= INSIGHT_TIERS.notable.minConfidence &&
@@ -334,11 +338,11 @@ export async function generateTieredInsights(
     .map((i) => ({ ...i, tier: 'notable' as const }));
   // NO .slice() - publish ALL that meet threshold
 
-  const notableIds = new Set(notable.map((i) => `${i.type}-${i.domainId}-${i.categoryId}-${i.trackerDomain}`));
+  const notableIds = new Set(notable.map(getInsightId));
 
   const emerging = allInsights
     .filter((i) => {
-      const id = `${i.type}-${i.domainId}-${i.categoryId}-${i.trackerDomain}`;
+      const id = getInsightId(i);
       return (
         i.magnitude >= INSIGHT_TIERS.emerging.minMagnitude &&
         i.confidence >= INSIGHT_TIERS.emerging.minConfidence &&

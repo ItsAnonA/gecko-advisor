@@ -117,8 +117,12 @@ export async function updateTrackerTrends(
         periodType,
         domainCount: 0, // Would need separate calculation
         domainCountPrev: 0,
-        adoptionChange: tracker.net > 0 ? 100 : -100,
-        adoptionTrend: tracker.net > 0 ? 'UP' : 'DOWN',
+        // Calculate adoption change as percentage of total activity, not binary ±100
+        // This gives a meaningful rate: net change relative to total tracker activity
+        adoptionChange: tracker.additions + tracker.removals > 0
+          ? Math.round((tracker.net / (tracker.additions + tracker.removals)) * 100)
+          : 0,
+        adoptionTrend: tracker.net > 0 ? 'UP' : tracker.net < 0 ? 'DOWN' : 'FLAT',
         tierACount: 0,
         tierBCount: 0,
         tierCCount: 0,
@@ -132,7 +136,10 @@ export async function updateTrackerTrends(
         newAdoptions: tracker.additions,
         removals: tracker.removals,
         netChange: tracker.net,
-        adoptionTrend: tracker.net > 0 ? 'UP' : 'DOWN',
+        adoptionChange: tracker.additions + tracker.removals > 0
+          ? Math.round((tracker.net / (tracker.additions + tracker.removals)) * 100)
+          : 0,
+        adoptionTrend: tracker.net > 0 ? 'UP' : tracker.net < 0 ? 'DOWN' : 'FLAT',
         calculatedAt: now,
       },
     });
