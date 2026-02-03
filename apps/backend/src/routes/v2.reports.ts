@@ -613,21 +613,24 @@ reportV2Router.get('/domains/indexable', async (req, res) => {
 
     const domains = scans
       .map((scan) => {
-        let domain = scan.normalizedInput || scan.input;
+        const rawDomain = scan.normalizedInput || scan.input;
         try {
-          const url = new URL(domain.startsWith('http') ? domain : `https://${domain}`);
-          // etldPlusOne returns null for bare TLDs, fall back to hostname
-              domain = etldPlusOne(url.hostname) ?? url.hostname;
+          const url = new URL(rawDomain.startsWith('http') ? rawDomain : `https://${rawDomain}`);
+          // etldPlusOne returns null for bare TLDs (public suffixes) - filter these out
+          const domain = etldPlusOne(url.hostname);
+          if (!domain) {
+            return null; // Skip bare TLDs like gov.br, co.uk, etc.
+          }
+          return {
+            domain,
+            scannedAt: scan.createdAt.toISOString(),
+          };
         } catch {
-          // Keep as-is
+          return null; // Skip malformed URLs
         }
-        return {
-          domain,
-          scannedAt: scan.createdAt.toISOString(),
-        };
       })
-      // Filter out blocked domains from sitemap/indexable list
-      .filter((item) => !isBlockedDomain(item.domain));
+      // Filter out nulls and blocked domains from sitemap/indexable list
+      .filter((item): item is NonNullable<typeof item> => item !== null && !isBlockedDomain(item.domain));
 
     res.json({ domains });
   } catch (error) {
