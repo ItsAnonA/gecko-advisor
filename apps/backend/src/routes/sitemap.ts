@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import { Router } from "express";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { logger } from "../logger.js";
 import { getIndexedDomains, countIndexedDomains } from "../services/domainService.js";
@@ -323,9 +324,12 @@ sitemapRouter.get('/sitemap-blog.xml', async (_req, res) => {
 sitemapRouter.get('/sitemap-categories.xml', async (_req, res) => {
   try {
     // Fetch all categories with benchmarks
+    // IMPORTANT: Must check BOTH benchmarksCalculatedAt AND benchmarks
+    // to avoid including URLs that return 404 (API requires benchmarks JSON)
     const categories = await prisma.category.findMany({
       where: {
         benchmarksCalculatedAt: { not: null },
+        benchmarks: { not: Prisma.DbNull },
       },
       select: {
         slug: true,
