@@ -78,6 +78,19 @@ function generate404Html(domain: string): string {
 }
 
 /**
+ * Bare /privacy-policy and /privacy-policy/ redirect to /reports
+ * Must be defined BEFORE :domain routes to catch empty paths.
+ *
+ * Fixes GSC 5xx errors where requests to /privacy-policy/ (no domain)
+ * were falling through to Express's 404 handler.
+ */
+ssrDomainRouter.get(['/privacy-policy', '/privacy-policy/'], (req, res) => {
+  logger.info({ url: req.originalUrl }, 'Redirecting bare /privacy-policy to /reports');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  res.redirect(308, '/reports');
+});
+
+/**
  * 301 Redirect: /privacy-policy/:domain → /privacy-report/:domain
  *
  * Preserves SEO equity from:

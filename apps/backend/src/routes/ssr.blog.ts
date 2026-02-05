@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import { Router } from "express";
+import { isSearchBot } from "@gecko-advisor/shared";
 import { prisma } from "../prisma.js";
 import { logger } from "../logger.js";
 
@@ -18,6 +19,38 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+/**
+ * Generate fallback HTML for error cases.
+ * Returns 200 with noindex to avoid GSC 5xx errors while preventing indexing.
+ */
+function generateFallbackHtml(title: string, message: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)} | Gecko Advisor</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon_500x500.png">
+  <style>
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #0f172a; color: white; text-align: center;
+    }
+    a { color: #2ecc71; }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(message)}</p>
+    <a href="/">Return to Home</a>
+  </div>
+</body>
+</html>`;
 }
 
 /**
@@ -260,12 +293,13 @@ function generateBlogListHtml(posts: Array<{
 
 /**
  * SSR route for individual blog posts
- * GET /api/ssr/blog/:slug
+ * GET /blog/:slug (direct) and /api/ssr/blog/:slug (internal)
  *
- * Note: Cloudflare routes /api/* to backend, so we use /api/ssr/blog/*
- * The nginx config proxies /blog/* requests to these routes.
+ * Handles both direct requests and nginx/Cloudflare rewritten requests.
+ * Direct /blog/:slug paths added to fix GSC 5xx errors when nginx
+ * rewrite rules are not applied.
  */
-ssrBlogRouter.get('/api/ssr/blog/:slug', async (req, res) => {
+ssrBlogRouter.get(['/blog/:slug', '/api/ssr/blog/:slug'], async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -298,19 +332,31 @@ ssrBlogRouter.get('/api/ssr/blog/:slug', async (req, res) => {
 
     logger.info({ slug, userAgent: req.get('User-Agent')?.substring(0, 50) }, 'SSR blog post served');
   } catch (error) {
-    logger.error({ error, slug: req.params.slug }, 'SSR blog post error');
+    const userAgent = req.get('User-Agent') || '';
+    const isBot = isSearchBot(userAgent);
+    logger.error({ error, slug: req.params.slug, isBot }, 'SSR blog post error');
+
+    // For bots, return 200 with noindex to avoid GSC 5xx errors
+    if (isBot) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+      res.send(generateFallbackHtml('Blog Temporarily Unavailable', 'Please try again later.'));
+      return;
+    }
+
     res.status(500).send('Internal server error');
   }
 });
 
 /**
  * SSR route for blog listing page
- * GET /api/ssr/blog
+ * GET /blog (direct) and /api/ssr/blog (internal)
  *
- * Note: Cloudflare routes /api/* to backend, so we use /api/ssr/blog
- * The nginx config proxies /blog requests to this route.
+ * Handles both direct requests and nginx/Cloudflare rewritten requests.
+ * Direct /blog path added to fix GSC 5xx errors when nginx
+ * rewrite rules are not applied.
  */
-ssrBlogRouter.get('/api/ssr/blog', async (req, res) => {
+ssrBlogRouter.get(['/blog', '/api/ssr/blog'], async (req, res) => {
   try {
     const posts = await prisma.blogPost.findMany({
       where: { status: 'PUBLISHED' },
@@ -333,7 +379,18 @@ ssrBlogRouter.get('/api/ssr/blog', async (req, res) => {
 
     logger.info({ postCount: posts.length, userAgent: req.get('User-Agent')?.substring(0, 50) }, 'SSR blog list served');
   } catch (error) {
-    logger.error({ error }, 'SSR blog list error');
+    const userAgent = req.get('User-Agent') || '';
+    const isBot = isSearchBot(userAgent);
+    logger.error({ error, isBot }, 'SSR blog list error');
+
+    // For bots, return 200 with noindex to avoid GSC 5xx errors
+    if (isBot) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+      res.send(generateFallbackHtml('Blog Temporarily Unavailable', 'Please try again later.'));
+      return;
+    }
+
     res.status(500).send('Internal server error');
   }
 });
