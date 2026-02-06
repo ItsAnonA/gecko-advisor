@@ -187,7 +187,7 @@ export default function FaqPage() {
                 key={index}
                 className="bg-stone-50 p-5 rounded-lg border-2 border-gray-200 hover:border-advisor-500 hover:shadow-lg transition-all"
               >
-                <h3 className="text-lg font-semibold text-gecko-800 mb-2">{faq.question}</h3>
+                <h2 className="text-lg font-semibold text-gecko-800 mb-2">{faq.question}</h2>
                 <p className="text-sm md:text-base text-gecko-600 leading-relaxed">{faq.answer}</p>
               </div>
             ))}

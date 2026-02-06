@@ -82,29 +82,52 @@ export default function SEOLayout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <main className="flex-1">{children}</main>
 
-      {/* Minimal Footer */}
-      <footer className="border-t border-light-border bg-white py-8">
+      {/* Footer */}
+      <footer className="border-t bg-gray-50 py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-gecko-500 text-sm">
-              &copy; {new Date().getFullYear()} Gecko Advisor. Free and open-source.
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+
+            <div>
+              <h3 className="font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><Link href="/">Home</Link></li>
+                <li><Link href="/privacy-scanner">Scanner</Link></li>
+                <li><Link href="/reports">Reports</Link></li>
+                <li><Link href="/privacy-benchmarks">Benchmarks</Link></li>
+                <li><Link href="/changes">Changes</Link></li>
+              </ul>
             </div>
-            <div className="flex gap-6 text-sm">
-              <Link href="/reports" className="text-gecko-500 hover:text-advisor-600">
-                Privacy Reports
-              </Link>
-              <Link href="/" className="text-gecko-500 hover:text-advisor-600">
-                Scan a Website
-              </Link>
-              <a
-                href="https://github.com/privacygecko/gecko-advisor"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gecko-500 hover:text-advisor-600"
-              >
-                GitHub
-              </a>
+
+            <div>
+              <h3 className="font-semibold mb-4">Resources</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><Link href="/methodology">Methodology</Link></li>
+                <li><Link href="/faq">FAQ</Link></li>
+                <li><Link href="/blog">Blog</Link></li>
+              </ul>
             </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Company</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><Link href="/about">About</Link></li>
+                <li><Link href="/roadmap">Roadmap</Link></li>
+                <li><Link href="/security">Security</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><Link href="/legal">Terms &amp; Privacy</Link></li>
+                <li><a href="https://github.com/privacygecko/gecko-advisor" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              </ul>
+            </div>
+
+          </div>
+
+          <div className="mt-8 pt-8 border-t text-center text-sm text-gray-500">
+            &copy; {new Date().getFullYear()} Gecko Advisor
           </div>
         </div>
       </footer>

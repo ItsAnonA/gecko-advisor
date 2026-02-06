@@ -156,7 +156,7 @@ function buildThirdPartyDescriptionPart(scanData: ScanDataForMetadata): string {
  * @returns Full canonical URL
  */
 export function buildCanonicalUrl(domain: string, baseUrl = SEO_CONSTANTS.BASE_URL): string {
-  return `${baseUrl}/privacy-policy/${domain}`;
+  return `${baseUrl}/privacy-report/${domain}`;
 }
 
 /**

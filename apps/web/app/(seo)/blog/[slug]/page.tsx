@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { fetchBlogPost } from '@/lib/api';
 
+export const revalidate = 3600;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }

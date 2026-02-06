@@ -10,6 +10,8 @@ import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { fetchBlogPosts, BlogPostSummary } from '@/lib/api';
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Privacy Blog | Gecko Advisor',
   description:
