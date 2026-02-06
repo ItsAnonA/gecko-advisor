@@ -915,3 +915,52 @@ model GovernanceMetrics {
 
   @@index([date])
 }
+
+// === P0 #2: DDG Tracker Radar Shadow Mode ===
+// Shadow tables for comparing DDG Tracker Radar data against production lists.
+// Completely separate from production scoring - read-only comparison only.
+
+model ShadowTrackerSource {
+  id           String          @id @default(cuid())
+  name         String          @unique // "ddg-tracker-radar", "disconnect", etc.
+  version      String                  // Commit hash or date string
+  lastUpdated  DateTime
+  trackerCount Int
+  metadata     Json?                   // Source-specific metadata
+  createdAt    DateTime        @default(now())
+  trackers     ShadowTracker[]
+}
+
+model ShadowTracker {
+  id             String              @id @default(cuid())
+  sourceId       String
+  domain         String
+  owner          String?             // Entity that owns this tracker
+  category       String?             // "Analytics", "Advertising", etc.
+  prevalence     Float?              // 0-1, how common across the web
+  fingerprinting Int?                // DDG fingerprinting score 0-3
+  cookies        Float?              // Cookie usage metric
+  metadata       Json?               // Additional source-specific data
+  createdAt      DateTime            @default(now())
+  source         ShadowTrackerSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([domain])
+  @@index([sourceId])
+}
+
+model ShadowScoreComparison {
+  id                 String   @id @default(cuid())
+  scanId             String
+  domainId           String
+  productionScore    Int
+  productionTrackers Int
+  shadowScore        Int      // What score would be with shadow data
+  shadowTrackers     Int      // How many trackers shadow source found
+  scoreDelta         Int      // shadow - production
+  trackerDelta       Int      // shadow trackers - production trackers
+  newTrackersFound   Json?    // Trackers found by shadow but not production
+  createdAt          DateTime @default(now())
+
+  @@index([scanId])
+  @@index([domainId])
+}

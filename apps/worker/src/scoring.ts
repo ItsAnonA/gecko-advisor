@@ -135,7 +135,7 @@ function getEvidenceKey(ev: Evidence): string {
   }
 }
 
-function deduplicateEvidence(evidence: Evidence[]): Evidence[] {
+export function deduplicateEvidence(evidence: Evidence[]): Evidence[] {
   const uniqueMap = new Map<string, Evidence>();
   for (const ev of evidence) {
     const key = getEvidenceKey(ev);
@@ -186,7 +186,7 @@ function getRootUrl(scan: { input: string; normalizedInput?: string | null }): s
  *
  * Total capped at 50 points.
  */
-function calculateTrackingPenalty(
+export function calculateTrackingPenalty(
   evidence: Evidence[],
   fingerprintSignalsCount: number,
   explanations: { evidenceId: string; points: number; reason: string }[]
@@ -246,7 +246,7 @@ function calculateTrackingPenalty(
  *
  * Total capped at 45 points.
  */
-function calculateSecurityPenalty(
+export function calculateSecurityPenalty(
   evidence: Evidence[],
   rootUrl: string,
   explanations: { evidenceId: string; points: number; reason: string }[]
@@ -347,7 +347,7 @@ function calculateSecurityPenalty(
  *
  * First-party CDNs are filtered out before counting.
  */
-function calculateThirdPartyPenalty(
+export function calculateThirdPartyPenalty(
   evidence: Evidence[],
   rootDomain: string,
   explanations: { evidenceId: string; points: number; reason: string }[]
@@ -389,7 +389,7 @@ function calculateThirdPartyPenalty(
  * Components:
  * - Insecure cookies: 2 pts each, capped at 10
  */
-function calculateCookiePenalty(
+export function calculateCookiePenalty(
   evidence: Evidence[],
   explanations: { evidenceId: string; points: number; reason: string }[]
 ): number {
@@ -413,7 +413,7 @@ function calculateCookiePenalty(
  * Missing privacy policy - PENALTY ONLY, no bonus.
  * Policy presence is a weak signal since anyone can add a link.
  */
-function calculateCompliancePenalty(
+export function calculateCompliancePenalty(
   evidence: Evidence[],
   explanations: { evidenceId: string; points: number; reason: string }[]
 ): { penalty: number; policyFound: boolean } {
@@ -447,7 +447,7 @@ function calculateCompliancePenalty(
  * - "No trackers" bonus (+5) - unnecessary, zero trackers already avoids penalty
  * - "Policy found" bonus (+3) - removed to fix double-counting
  */
-function calculateBonuses(
+export function calculateBonuses(
   evidence: Evidence[],
   isHttpOnly: boolean,
   explanations: { evidenceId: string; points: number; reason: string }[]
@@ -491,7 +491,7 @@ function calculateBonuses(
  * Assesses scan confidence based on coverage and success metrics.
  * Helps users understand when to trust the score.
  */
-function assessConfidence(meta: {
+export function assessConfidence(meta: {
   pagesScanned?: number;
   tlsScanFailed?: boolean;
   crawlErrors?: number;
