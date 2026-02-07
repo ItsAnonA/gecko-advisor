@@ -123,7 +123,7 @@ export function buildWebPageSchema(
 ): WebPageSchema {
   const title = getPageTitle(domain, scanData?.score);
   const description = buildMetaDescription(scanData, domain);
-  const url = `${baseUrl}/privacy-policy/${domain}`;
+  const url = `${baseUrl}/privacy-report/${domain}`;
   const dateModified = scanData?.finishedAt
     ? new Date(scanData.finishedAt).toISOString()
     : undefined;
@@ -328,7 +328,7 @@ export function buildWebSiteSchema(baseUrl = SEO_CONSTANTS.BASE_URL): Record<str
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${baseUrl}/privacy-policy/{search_term_string}`,
+        urlTemplate: `${baseUrl}/privacy-report/{search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

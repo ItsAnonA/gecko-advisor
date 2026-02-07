@@ -211,7 +211,7 @@ describe('buildWebPageSchema', () => {
 
   it('contains correct URL', () => {
     const schema = buildWebPageSchema(fullData, 'example.com');
-    expect(schema.url).toBe('https://geckoadvisor.com/privacy-policy/example.com');
+    expect(schema.url).toBe('https://geckoadvisor.com/privacy-report/example.com');
   });
 
   it('contains site name in isPartOf', () => {
@@ -231,7 +231,7 @@ describe('buildWebPageSchema', () => {
 
   it('uses custom baseUrl when provided', () => {
     const schema = buildWebPageSchema(fullData, 'example.com', 'https://custom.com');
-    expect(schema.url).toBe('https://custom.com/privacy-policy/example.com');
+    expect(schema.url).toBe('https://custom.com/privacy-report/example.com');
     expect(schema.isPartOf.url).toBe('https://custom.com');
   });
 });

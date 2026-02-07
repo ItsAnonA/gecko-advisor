@@ -85,7 +85,7 @@ domainV2Router.get('/domain/:domain', async (req, res) => {
       ...payload,
       canonical: {
         domain,
-        url: `https://geckoadvisor.com/privacy-policy/${domain}`,
+        url: `https://geckoadvisor.com/privacy-report/${domain}`,
         slug: scan.slug,
         slugUrl: `https://geckoadvisor.com/r/${scan.slug}`,
       },

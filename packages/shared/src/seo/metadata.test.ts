@@ -167,12 +167,12 @@ describe('buildMetaDescription', () => {
 
 describe('buildCanonicalUrl', () => {
   it('returns correct format', () => {
-    expect(buildCanonicalUrl('example.com')).toBe('https://geckoadvisor.com/privacy-policy/example.com');
+    expect(buildCanonicalUrl('example.com')).toBe('https://geckoadvisor.com/privacy-report/example.com');
   });
 
   it('uses custom base URL when provided', () => {
     expect(buildCanonicalUrl('example.com', 'https://custom.com')).toBe(
-      'https://custom.com/privacy-policy/example.com'
+      'https://custom.com/privacy-report/example.com'
     );
   });
 });
@@ -207,7 +207,7 @@ describe('buildOpenGraphData', () => {
 
   it('url is canonical URL', () => {
     const og = buildOpenGraphData(fullData, 'example.com');
-    expect(og.url).toBe('https://geckoadvisor.com/privacy-policy/example.com');
+    expect(og.url).toBe('https://geckoadvisor.com/privacy-report/example.com');
   });
 
   it('type is article', () => {
