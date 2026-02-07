@@ -41,11 +41,11 @@ async function evaluateInsightOutcome(
     where: {
       domainId,
       status: 'done',
-      completedAt: { gt: insight.createdAt },
+      finishedAt: { gt: insight.createdAt },
     },
-    orderBy: { completedAt: 'desc' },
+    orderBy: { finishedAt: 'desc' },
     take: 3,
-    select: { score: true, completedAt: true },
+    select: { score: true, finishedAt: true },
   });
 
   if (recentScans.length < 2) {
@@ -524,7 +524,7 @@ async function calculateChangeSignalQuality() {
   const scansProcessed = await prisma.scan.count({
     where: {
       status: 'done',
-      completedAt: { gte: since },
+      finishedAt: { gte: since },
     },
   });
 
