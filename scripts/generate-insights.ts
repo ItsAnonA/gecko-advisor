@@ -19,6 +19,7 @@
 import { PrismaClient } from '@prisma/client';
 import { generateInsights, persistInsights, generateTieredInsights, persistTieredInsights, INSIGHT_TIERS } from '../apps/backend/src/services/insightGeneratorService';
 import { recordGovernanceMetric } from '../apps/backend/src/services/truthMetricsService';
+import { processInsightNarratives } from '../apps/backend/src/services/insightNarrativeService';
 
 const prisma = new PrismaClient();
 const outputJson = process.argv.includes('--json');
@@ -190,11 +191,32 @@ async function main(): Promise<void> {
       },
     });
 
+    // Narrative governance: generate + validate narratives for all publishable insights
+    const narrativeResult = await processInsightNarratives(prisma, periodStart);
+
+    if (!outputJson) {
+      console.log('');
+      console.log('  Narrative Governance:');
+      console.log(`    Attempted: ${narrativeResult.attempted}`);
+      console.log(`    Approved: ${narrativeResult.approved}`);
+      console.log(`    Blocked: ${narrativeResult.blocked}`);
+      console.log(`    Errored: ${narrativeResult.errored}`);
+      console.log(`    Skipped: ${narrativeResult.skipped}`);
+      const totalBlocked = narrativeResult.blocked + narrativeResult.errored;
+      const blockRate = narrativeResult.attempted > 0
+        ? ((totalBlocked / narrativeResult.attempted) * 100).toFixed(1)
+        : '0.0';
+      console.log(`    Block Rate: ${blockRate}%`);
+    }
+
     // Record governance metrics for insight generation
     await recordGovernanceMetric(prisma, {
       insightsGenerated: report.generated,
       insightsPublished: report.publishable,
       insightsFailedQuality: report.generated - report.publishable,
+      narrativesAttempted: narrativeResult.attempted,
+      narrativesBlocked: narrativeResult.blocked + narrativeResult.errored,
+      narrativesApproved: narrativeResult.approved,
     });
   } catch (error) {
     console.error('❌ Insight generation failed:', error);

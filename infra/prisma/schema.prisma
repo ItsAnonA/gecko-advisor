@@ -831,6 +831,11 @@ model Insight {
   retractionVisibleAt   DateTime?       // When retraction became visible in public feeds
   visibilityLagHours    Float?          // Hours between publish and visible (target: <12h)
 
+  // Narrative governance
+  narrative             String?         // Generated narrative text
+  narrativeStatus       String?         // 'approved' | 'blocked' | 'error' | 'skipped'
+  narrativeScope        String?         // 'INSIGHT' | 'WEEKLY'
+
   createdAt             DateTime        @default(now())
 
   @@index([insightType, createdAt])
@@ -839,6 +844,7 @@ model Insight {
   @@index([domainId])
   @@index([outcome, createdAt])
   @@index([outcomeValidatedAt])
+  @@index([narrativeStatus, createdAt])
 }
 
 // Weekly Privacy Reports
