@@ -5,7 +5,8 @@ SPDX-License-Identifier: MIT
 
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
-import { SEO_CONSTANTS } from '@gecko-advisor/shared/seo';
+import { SEO_CONSTANTS, buildOrganizationSchema, buildWebSiteSchema } from '@gecko-advisor/shared/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { UmamiAnalytics } from '@/components/analytics';
 import JourneyTracker from '@/components/analytics/JourneyTracker';
 import './globals.css';
@@ -106,6 +107,10 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <JsonLd data={buildOrganizationSchema() as unknown as Record<string, unknown>} />
+        <JsonLd data={buildWebSiteSchema() as Record<string, unknown>} />
+      </head>
       <body className="min-h-screen bg-light-bg antialiased font-sans">
         {children}
         <UmamiAnalytics />

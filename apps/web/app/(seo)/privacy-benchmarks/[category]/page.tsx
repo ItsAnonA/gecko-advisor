@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { SampleComparisonsSection } from '@/components/ui/SampleComparisonsSection';
 import { getCategoryContent } from '@/content/category-content';
+import { fetchCategorySlugsForStaticParams } from '@/lib/api';
 
 interface Props {
   params: Promise<{ category: string }>;
@@ -73,6 +74,18 @@ interface CategoryData {
 
 // Revalidate every hour
 export const revalidate = 3600;
+
+// Pre-generate all category pages at build time. The category set is small and finite,
+// so we generate all of them for instant loads.
+export async function generateStaticParams(): Promise<Array<{ category: string }>> {
+  try {
+    const slugs = await fetchCategorySlugsForStaticParams();
+    return slugs.map((category) => ({ category }));
+  } catch {
+    // On any failure, return empty array. Pages will be generated on-demand via ISR.
+    return [];
+  }
+}
 
 async function getCategoryData(slug: string): Promise<CategoryData | null> {
   try {

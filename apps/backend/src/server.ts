@@ -11,7 +11,6 @@ import type { HttpLogger, Options as PinoHttpOptions } from "pino-http";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { requestId } from "./middleware/request-id.js";
-import { withCsp } from "./middleware/csp.js";
 import { performanceMonitor, addPerformanceHeaders } from "./middleware/performance-monitor.js";
 import { apiV1Router, apiV2Router } from "./routes/index.js";
 import { adminRouter } from "./routes/admin.js";
@@ -75,16 +74,27 @@ export function createServer() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+          'default-src': ["'self'"],
+          'script-src': ["'self'"],
+          'style-src': ["'self'", "'unsafe-inline'"],
+          'img-src': config.csp.imageSources,
+          'font-src': ["'self'", 'data:'],
+          'media-src': ["'none'"],
+          'connect-src': config.csp.connectSources,
+          'frame-ancestors': ["'none'"],
+          'object-src': ["'none'"],
+          'form-action': ["'self'"],
+          'base-uri': ["'self'"],
+          'upgrade-insecure-requests': [],
+          ...(config.cspReportUri
+            ? { 'report-uri': [config.cspReportUri] }
+            : {}),
+        },
+      },
       crossOriginEmbedderPolicy: false,
-    })
-  );
-
-  app.use(
-    withCsp({
-      connectSources: config.csp.connectSources,
-      imageSources: config.csp.imageSources,
-      reportUri: config.cspReportUri,
     })
   );
 

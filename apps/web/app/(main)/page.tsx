@@ -4,6 +4,8 @@ SPDX-License-Identifier: MIT
 */
 
 import type { Metadata } from 'next';
+import { buildSoftwareApplicationSchema } from '@gecko-advisor/shared/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { ScanForm } from '@/components/home';
 
 /**
@@ -36,8 +38,11 @@ export const metadata: Metadata = {
  */
 export default function HomePage() {
   return (
-    <main className="max-w-5xl mx-auto p-4 md:p-6 pb-16 md:pb-24 space-y-6 md:space-y-8">
-      <ScanForm />
-    </main>
+    <>
+      <JsonLd data={buildSoftwareApplicationSchema() as unknown as Record<string, unknown>} />
+      <main className="max-w-5xl mx-auto p-4 md:p-6 pb-16 md:pb-24 space-y-6 md:space-y-8">
+        <ScanForm />
+      </main>
+    </>
   );
 }

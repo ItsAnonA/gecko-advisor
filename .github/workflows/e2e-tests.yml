@@ -154,7 +154,7 @@ jobs:
       - name: Start frontend in background
         if: env.E2E_TARGET_ENV != 'stage'
         run: |
-          cd apps/frontend
+          cd apps/web
           VITE_API_PROXY_TARGET=http://localhost:5000 \
           NODE_ENV=test \
           nohup pnpm dev > ../../frontend.log 2>&1 &
@@ -372,7 +372,7 @@ jobs:
       - name: Start frontend in background
         if: env.E2E_TARGET_ENV != 'stage'
         run: |
-          cd apps/frontend
+          cd apps/web
           VITE_API_PROXY_TARGET=http://localhost:5000 \
           NODE_ENV=test \
           nohup pnpm dev > ../../frontend.log 2>&1 &
@@ -550,7 +550,7 @@ jobs:
       - name: Start frontend in background
         if: env.E2E_TARGET_ENV != 'stage'
         run: |
-          cd apps/frontend
+          cd apps/web
           VITE_API_PROXY_TARGET=http://localhost:5000 \
           NODE_ENV=test \
           nohup pnpm dev > ../../frontend.log 2>&1 &

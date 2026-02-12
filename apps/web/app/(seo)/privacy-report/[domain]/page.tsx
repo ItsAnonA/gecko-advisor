@@ -22,7 +22,7 @@ import {
   buildBreadcrumbSchema,
   SEO_CONSTANTS,
 } from '@gecko-advisor/shared';
-import { getReportForDomain, fetchDomainChanges, checkDomainStatus } from '@/lib/api';
+import { getReportForDomain, fetchDomainChanges, checkDomainStatus, fetchTopDomainsForStaticParams } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SEOSummary } from '@/components/seo/SEOSummary';
 import { InteractiveReport, ChangeHistory, ChangeHistorySkeleton } from '@/components/report';
@@ -33,6 +33,19 @@ interface Props {
 
 // Revalidate every hour
 export const revalidate = 3600;
+
+// Pre-generate the top 100 most-scanned domains at build time for faster initial loads.
+// Falls back to on-demand ISR for all other domains.
+export async function generateStaticParams(): Promise<Array<{ domain: string }>> {
+  try {
+    const domains = await fetchTopDomainsForStaticParams(100);
+    return domains.map((domain) => ({ domain }));
+  } catch {
+    // On any failure (e.g., API unreachable at build time), return empty array.
+    // All pages will still be generated on-demand via ISR.
+    return [];
+  }
+}
 
 // Phase 3: Change History Section (async component for Suspense)
 async function ChangeHistorySection({ domain }: { domain: string }) {

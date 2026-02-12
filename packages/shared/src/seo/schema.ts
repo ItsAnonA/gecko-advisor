@@ -108,6 +108,29 @@ export interface OrganizationSchema {
   sameAs?: string[];
 }
 
+export interface SoftwareApplicationSchema {
+  '@context': 'https://schema.org';
+  '@type': 'WebApplication';
+  name: string;
+  url: string;
+  description: string;
+  applicationCategory: string;
+  operatingSystem: string;
+  offers: {
+    '@type': 'Offer';
+    price: string;
+    priceCurrency: string;
+  };
+  creator: {
+    '@type': 'Organization';
+    name: string;
+    url: string;
+  };
+  featureList?: string[];
+  isAccessibleForFree: boolean;
+  browserRequirements?: string;
+}
+
 /**
  * Builds WebPage schema for a domain report.
  *
@@ -332,5 +355,51 @@ export function buildWebSiteSchema(baseUrl = SEO_CONSTANTS.BASE_URL): Record<str
       },
       'query-input': 'required name=search_term_string',
     },
+  };
+}
+
+/**
+ * Builds SoftwareApplication (WebApplication) schema for rich snippets.
+ *
+ * Describes Gecko Advisor as a free web-based privacy scanning tool.
+ * Uses WebApplication subtype for browser-based applications.
+ *
+ * @param baseUrl - Base URL
+ * @returns WebApplication JSON-LD schema
+ */
+export function buildSoftwareApplicationSchema(
+  baseUrl = SEO_CONSTANTS.BASE_URL
+): SoftwareApplicationSchema {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: SEO_CONSTANTS.SITE_NAME,
+    url: baseUrl,
+    description:
+      'Free, open-source website privacy scanner. Analyze any site for trackers, cookies, fingerprinting, and security issues with detailed scoring and recommendations.',
+    applicationCategory: 'SecurityApplication',
+    operatingSystem: 'Web',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    creator: {
+      '@type': 'Organization',
+      name: SEO_CONSTANTS.SITE_NAME,
+      url: baseUrl,
+    },
+    featureList: [
+      'Privacy score calculation (0-100)',
+      'Tracker and analytics detection',
+      'Cookie analysis (first-party and third-party)',
+      'Fingerprinting detection (canvas, WebGL, audio)',
+      'Security header validation (HTTPS, CSP, HSTS)',
+      'Domain comparison',
+      'Industry benchmarks',
+      'Historical change tracking',
+    ],
+    isAccessibleForFree: true,
+    browserRequirements: 'Requires a modern web browser with JavaScript enabled',
   };
 }

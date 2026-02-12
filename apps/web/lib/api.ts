@@ -477,6 +477,42 @@ export async function fetchIndexableDomains(
   }
 }
 
+/**
+ * Fetches top domains for static generation (generateStaticParams).
+ * Returns the first N indexable domains sorted by most recent scan.
+ * Gracefully returns empty array on any failure.
+ */
+export async function fetchTopDomainsForStaticParams(
+  limit: number = 100
+): Promise<string[]> {
+  try {
+    const domains = await fetchIndexableDomains(0, limit);
+    return domains.map((d) => d.domain);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetches all category slugs for static generation (generateStaticParams).
+ * Gracefully returns empty array on any failure.
+ */
+export async function fetchCategorySlugsForStaticParams(): Promise<string[]> {
+  try {
+    const res = await fetch(`${getApiInternalUrl()}/api/v2/categories`, {
+      next: { revalidate: 3600 },
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const categories: Array<{ slug: string }> = data.categories || [];
+    return categories.map((c) => c.slug);
+  } catch {
+    return [];
+  }
+}
+
 // ============================================================================
 // Client-Side API Functions (for Home page, Scan page)
 // ============================================================================

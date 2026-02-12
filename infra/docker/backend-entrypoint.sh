@@ -2,7 +2,7 @@
 set -e
 
 echo "Running Prisma migrations..."
-npx prisma migrate deploy --schema=/app/infra/prisma/schema.prisma
+node ./node_modules/prisma/build/index.js migrate deploy --schema=/app/infra/prisma/schema.prisma
 
 echo "Starting backend server..."
-exec node --import tsx apps/backend/src/index.ts
+exec node dist/apps/backend/src/index.js

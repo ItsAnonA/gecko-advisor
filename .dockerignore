@@ -1,0 +1,45 @@
+# Dependencies (installed inside container)
+node_modules
+**/node_modules
+
+# Build outputs (built inside container)
+**/dist
+**/.next
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Tests (not needed in production images)
+tests/
+**/__tests__/
+**/*.test.ts
+**/*.spec.ts
+coverage/
+
+# Documentation
+docs/
+*.md
+!packages/shared/data/*.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# CI/CD (not needed in image build)
+.github/
+
+# Misc
+.turbo
+.eslintcache
