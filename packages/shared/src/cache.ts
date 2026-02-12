@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
  * to invalidate old cache entries without manual purging.
  */
 
-import { normalizeDomain as normalizeUtil } from './seo/normalize.js';
+import { normalizeHostname as normalizeUtil } from './seo/normalize.js';
 
 // Increment this when report structure changes to invalidate old cache
 export const REPORT_SCHEMA_VERSION = 1;

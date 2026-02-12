@@ -6,6 +6,7 @@ import { getLists } from './lists.js';
 import { logger } from './logger.js';
 import { objectStorage } from './objectStorage.js';
 import { config } from './config.js';
+import { ProgressThrottle } from './utils/progressThrottle.js';
 
 /**
  * Sanitizes HTML content to prevent XSS attacks by removing dangerous elements and attributes.
@@ -131,10 +132,74 @@ function timeoutAbort(ms: number): AbortSignal {
   return controller.signal;
 }
 
-async function gradeTls(u: URL): Promise<'A' | 'B' | 'C' | 'D' | 'F'> {
-  if (u.protocol !== 'https:') return 'C';
-  // Quick heuristic: https assumed A/B for MVP; a real TLS dial is out-of-scope here
-  return 'A';
+async function gradeTls(u: URL): Promise<'A+' | 'A' | 'B' | 'C' | 'D' | 'F'> {
+  if (u.protocol !== 'https:') return 'F';
+
+  try {
+    const tls = await import('node:tls');
+    const { Socket } = await import('node:net');
+
+    const result = await new Promise<{ protocol: string; authorized: boolean }>((resolve, reject) => {
+      const socket = new Socket();
+      socket.setTimeout(5_000);
+
+      socket.on('timeout', () => {
+        socket.destroy();
+        reject(new Error('TLS connection timed out'));
+      });
+
+      const tlsSocket = tls.connect(
+        {
+          host: u.hostname,
+          port: Number(u.port) || 443,
+          socket,
+          servername: u.hostname,
+          rejectUnauthorized: false, // We check authorization separately
+        },
+        () => {
+          const protocol = tlsSocket.getProtocol() ?? 'unknown';
+          const authorized = tlsSocket.authorized;
+          tlsSocket.destroy();
+          resolve({ protocol, authorized });
+        }
+      );
+
+      tlsSocket.on('error', (err) => {
+        tlsSocket.destroy();
+        reject(err);
+      });
+
+      socket.connect({ host: u.hostname, port: Number(u.port) || 443 });
+    });
+
+    // Grade based on protocol version and certificate validity
+    // F: No TLS or invalid cert
+    // D: TLS 1.0/1.1 (deprecated)
+    // C: TLS 1.2 with invalid cert
+    // B: TLS 1.2 with valid cert
+    // A: TLS 1.3 with valid cert OR TLS 1.2 with valid cert (baseline good)
+    // A+: Handled by caller if HSTS is also present
+
+    if (!result.authorized) {
+      // Invalid/expired/self-signed certificate
+      if (result.protocol === 'TLSv1.3') return 'C';
+      return 'D';
+    }
+
+    if (result.protocol === 'TLSv1' || result.protocol === 'TLSv1.1') {
+      return 'D'; // Deprecated protocols
+    }
+
+    if (result.protocol === 'TLSv1.3') {
+      return 'A'; // Best protocol + valid cert (A+ requires HSTS, checked later)
+    }
+
+    // TLSv1.2 + valid cert
+    return 'B';
+  } catch {
+    // TLS check failed - return B as a safe default (site is HTTPS but we couldn't probe details)
+    return 'B';
+  }
 }
 
 async function loadFixture(hostname: string): Promise<FixtureFetch | null> {
@@ -242,9 +307,13 @@ export async function scanSiteJob(
   urlInput: string,
   job?: { updateProgress: (progress: number) => Promise<void> }
 ) {
+  const progressThrottle = new ProgressThrottle();
+
   const reportProgress = async (value: number) => {
     const tasks: Promise<unknown>[] = [];
 
+    // BullMQ progress updates go to Redis (in-memory) -- always send them
+    // so the frontend polling receives real-time updates.
     if (job) {
       tasks.push(
         job.updateProgress(value).catch((error) => {
@@ -253,14 +322,18 @@ export async function scanSiteJob(
       );
     }
 
-    tasks.push(
-      prisma.scan.update({
-        where: { id: scanId },
-        data: { progress: value },
-      }).catch((error) => {
-        logger.debug({ error, scanId, value }, 'Failed to persist scan progress');
-      })
-    );
+    // Throttle Prisma DB writes to reduce PostgreSQL write amplification.
+    // Writes only when progress changed by >=5 points, >=3s elapsed, or at 100%.
+    if (progressThrottle.shouldWrite(value)) {
+      tasks.push(
+        prisma.scan.update({
+          where: { id: scanId },
+          data: { progress: value },
+        }).catch((error) => {
+          logger.debug({ error, scanId, value }, 'Failed to persist scan progress');
+        })
+      );
+    }
 
     await Promise.all(tasks);
   };
@@ -320,7 +393,12 @@ export async function scanSiteJob(
     allEvidence.push(...collectCookieIssues(scanId, headers));
 
     if (visited.size === 1) {
-      const grade = await gradeTls(u);
+      let grade = await gradeTls(u);
+      // Upgrade to A+ if TLS is already A and HSTS header is present
+      const hasHsts = !!headers.get('strict-transport-security');
+      if (grade === 'A' && hasHsts) {
+        grade = 'A+';
+      }
       allEvidence.push({
         scanId,
         kind: 'tls',

@@ -119,7 +119,13 @@ export function createServer() {
   app.use('/api', apiV2Router);
 
   app.use('/api', adminRouter);
-  app.use('/api/auth', authRouter);
+
+  // Auth routes are feature-flagged (ENABLE_AUTH=false by default)
+  // Gecko Advisor's mission is "no auth required" - auth is opt-in for future Pro features
+  if (config.enableAuth) {
+    app.use('/api/auth', authRouter);
+    logger.info('Auth routes enabled (ENABLE_AUTH=true)');
+  }
   app.use('/docs', docsRouter);
 
   // SEO: Dynamic sitemap routes

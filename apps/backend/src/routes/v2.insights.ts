@@ -1,3 +1,8 @@
+/*
+SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
+SPDX-License-Identifier: MIT
+*/
+
 /**
  * Insights API Routes (Phase 3C)
  *
@@ -8,8 +13,11 @@
  */
 
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
 import type { DomainTrend, PeriodType } from '@prisma/client';
+import { prisma } from '../prisma.js';
+import { problem } from '../problem.js';
+import { logger } from '../logger.js';
 import { getUnstableDomains, getDomainsByTrend, getStabilityCoverage } from '../services/stabilityService.js';
 import { getCategoryRankings } from '../services/categoryIntelligenceService.js';
 import { getTrackerMovers } from '../services/trackerEvolutionService.js';
@@ -27,9 +35,51 @@ import {
   TOPIC_GUIDANCE,
 } from '../services/credibilityService.js';
 
-const prisma = new PrismaClient();
-
 export const insightsV2Router = Router();
+
+// ============================================================================
+// Schemas
+// ============================================================================
+
+const LimitQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
+
+const UnstableQuerySchema = z.object({
+  tier: z.string().optional(),
+  minVolatility: z.coerce.number().min(0).max(100).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
+
+const TrendQuerySchema = z.object({
+  tier: z.string().optional(),
+  minStrength: z.coerce.number().min(0).max(1).optional().default(0.3),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
+
+const PeriodQuerySchema = z.object({
+  period: z.enum(['WEEKLY', 'MONTHLY']).optional().default('WEEKLY'),
+});
+
+const DaysQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).optional().default(7),
+});
+
+const SignalQuerySchema = z.object({
+  signal: z.string().optional(),
+});
+
+const StatusQuerySchema = z.object({
+  status: z.string().optional(),
+});
+
+const ValidateTextSchema = z.object({
+  text: z.string().min(1),
+});
+
+// ============================================================================
+// Stability Routes
+// ============================================================================
 
 /**
  * GET /api/v2/insights/stability/unstable
@@ -37,16 +87,21 @@ export const insightsV2Router = Router();
  */
 insightsV2Router.get('/stability/unstable', async (req, res) => {
   try {
-    const { tier, minVolatility = '50', limit = '20' } = req.query;
+    const parsed = UnstableQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const { tier, minVolatility, limit } = parsed.data;
     const result = await getUnstableDomains(prisma, {
-      tier: tier as string | undefined,
-      minVolatility: parseFloat(minVolatility as string),
-      limit: parseInt(limit as string, 10),
+      tier,
+      minVolatility,
+      limit,
     });
     res.json({ domains: result });
   } catch (error) {
-    console.error('Error fetching unstable domains:', error);
-    res.status(500).json({ error: 'Failed to fetch unstable domains' });
+    logger.error({ error }, 'Error fetching unstable domains');
+    return problem(res, 500, 'Failed to fetch unstable domains');
   }
 });
 
@@ -57,24 +112,48 @@ insightsV2Router.get('/stability/unstable', async (req, res) => {
 insightsV2Router.get('/stability/trend/:trend', async (req, res) => {
   try {
     const { trend } = req.params;
-    const { tier, minStrength = '0.3', limit = '20' } = req.query;
 
     const validTrends: DomainTrend[] = ['IMPROVING', 'STABLE', 'DECLINING', 'VOLATILE'];
     if (!validTrends.includes(trend as DomainTrend)) {
-      return res.status(400).json({ error: 'Invalid trend. Must be IMPROVING, STABLE, DECLINING, or VOLATILE' });
+      return problem(res, 400, 'Invalid trend', 'Must be IMPROVING, STABLE, DECLINING, or VOLATILE');
     }
 
+    const parsed = TrendQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const { tier, minStrength, limit } = parsed.data;
+
     const result = await getDomainsByTrend(prisma, trend as DomainTrend, {
-      tier: tier as string | undefined,
-      minStrength: parseFloat(minStrength as string),
-      limit: parseInt(limit as string, 10),
+      tier,
+      minStrength,
+      limit,
     });
     res.json({ domains: result });
   } catch (error) {
-    console.error('Error fetching domains by trend:', error);
-    res.status(500).json({ error: 'Failed to fetch domains by trend' });
+    logger.error({ error, trend: req.params.trend }, 'Error fetching domains by trend');
+    return problem(res, 500, 'Failed to fetch domains by trend');
   }
 });
+
+/**
+ * GET /api/v2/insights/stability/coverage
+ * Get stability coverage statistics.
+ */
+insightsV2Router.get('/stability/coverage', async (_req, res) => {
+  try {
+    const coverage = await getStabilityCoverage(prisma);
+    res.json(coverage);
+  } catch (error) {
+    logger.error({ error }, 'Error fetching stability coverage');
+    return problem(res, 500, 'Failed to fetch stability coverage');
+  }
+});
+
+// ============================================================================
+// Category & Tracker Routes
+// ============================================================================
 
 /**
  * GET /api/v2/insights/categories/rankings
@@ -82,18 +161,16 @@ insightsV2Router.get('/stability/trend/:trend', async (req, res) => {
  */
 insightsV2Router.get('/categories/rankings', async (req, res) => {
   try {
-    const { period = 'WEEKLY' } = req.query;
-
-    const validPeriods: PeriodType[] = ['WEEKLY', 'MONTHLY'];
-    if (!validPeriods.includes(period as PeriodType)) {
-      return res.status(400).json({ error: 'Invalid period. Must be WEEKLY or MONTHLY' });
+    const parsed = PeriodQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
     }
 
-    const result = await getCategoryRankings(prisma, period as PeriodType);
+    const result = await getCategoryRankings(prisma, parsed.data.period as PeriodType);
     res.json(result);
   } catch (error) {
-    console.error('Error fetching category rankings:', error);
-    res.status(500).json({ error: 'Failed to fetch category rankings' });
+    logger.error({ error }, 'Error fetching category rankings');
+    return problem(res, 500, 'Failed to fetch category rankings');
   }
 });
 
@@ -103,20 +180,22 @@ insightsV2Router.get('/categories/rankings', async (req, res) => {
  */
 insightsV2Router.get('/trackers/movers', async (req, res) => {
   try {
-    const { period = 'WEEKLY' } = req.query;
-
-    const validPeriods: PeriodType[] = ['WEEKLY', 'MONTHLY'];
-    if (!validPeriods.includes(period as PeriodType)) {
-      return res.status(400).json({ error: 'Invalid period. Must be WEEKLY or MONTHLY' });
+    const parsed = PeriodQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
     }
 
-    const result = await getTrackerMovers(prisma, period as PeriodType);
+    const result = await getTrackerMovers(prisma, parsed.data.period as PeriodType);
     res.json(result);
   } catch (error) {
-    console.error('Error fetching tracker movers:', error);
-    res.status(500).json({ error: 'Failed to fetch tracker movers' });
+    logger.error({ error }, 'Error fetching tracker movers');
+    return problem(res, 500, 'Failed to fetch tracker movers');
   }
 });
+
+// ============================================================================
+// Insights Routes
+// ============================================================================
 
 /**
  * GET /api/v2/insights
@@ -124,29 +203,59 @@ insightsV2Router.get('/trackers/movers', async (req, res) => {
  */
 insightsV2Router.get('/', async (req, res) => {
   try {
-    const { limit = '20' } = req.query;
-    const result = await getPublishableInsights(prisma, parseInt(limit as string, 10));
+    const parsed = LimitQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const result = await getPublishableInsights(prisma, parsed.data.limit);
     res.json({ insights: result });
   } catch (error) {
-    console.error('Error fetching insights:', error);
-    res.status(500).json({ error: 'Failed to fetch insights' });
+    logger.error({ error }, 'Error fetching insights');
+    return problem(res, 500, 'Failed to fetch insights');
   }
 });
+
+/**
+ * GET /api/v2/insights/tiered
+ * Get insights organized by tier (breaking, notable, emerging).
+ */
+insightsV2Router.get('/tiered', async (req, res) => {
+  try {
+    const parsed = DaysQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const result = await generateTieredInsights(prisma, parsed.data.days);
+    res.json({
+      ...result,
+      tiers: INSIGHT_TIERS,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Error fetching tiered insights');
+    return problem(res, 500, 'Failed to fetch tiered insights');
+  }
+});
+
+// ============================================================================
+// Weekly Reports
+// ============================================================================
 
 /**
  * GET /api/v2/insights/reports/weekly/latest
  * Get the most recent weekly report.
  */
-insightsV2Router.get('/reports/weekly/latest', async (req, res) => {
+insightsV2Router.get('/reports/weekly/latest', async (_req, res) => {
   try {
     const report = await getLatestWeeklyReport(prisma);
     if (!report) {
-      return res.status(404).json({ error: 'No weekly reports available' });
+      return problem(res, 404, 'No weekly reports available');
     }
     res.json({ report });
   } catch (error) {
-    console.error('Error fetching latest weekly report:', error);
-    res.status(500).json({ error: 'Failed to fetch weekly report' });
+    logger.error({ error }, 'Error fetching latest weekly report');
+    return problem(res, 500, 'Failed to fetch weekly report');
   }
 });
 
@@ -156,70 +265,34 @@ insightsV2Router.get('/reports/weekly/latest', async (req, res) => {
  */
 insightsV2Router.get('/reports/weekly', async (req, res) => {
   try {
-    const { limit = '10' } = req.query;
-    const reports = await listWeeklyReports(prisma, parseInt(limit as string, 10));
+    const parsed = LimitQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const reports = await listWeeklyReports(prisma, parsed.data.limit);
     res.json({ reports });
   } catch (error) {
-    console.error('Error fetching weekly reports:', error);
-    res.status(500).json({ error: 'Failed to fetch weekly reports' });
+    logger.error({ error }, 'Error fetching weekly reports');
+    return problem(res, 500, 'Failed to fetch weekly reports');
   }
 });
 
 // ============================================================
-// TIERED INSIGHTS (Gap 1)
-// ============================================================
-
-/**
- * GET /api/v2/insights/tiered
- * Get insights organized by tier (breaking, notable, emerging).
- */
-insightsV2Router.get('/tiered', async (req, res) => {
-  try {
-    const { days = '7' } = req.query;
-    const result = await generateTieredInsights(prisma, parseInt(days as string, 10));
-    res.json({
-      ...result,
-      tiers: INSIGHT_TIERS,
-    });
-  } catch (error) {
-    console.error('Error fetching tiered insights:', error);
-    res.status(500).json({ error: 'Failed to fetch tiered insights' });
-  }
-});
-
-// ============================================================
-// STABILITY COVERAGE (Gap 2)
-// ============================================================
-
-/**
- * GET /api/v2/insights/stability/coverage
- * Get stability coverage statistics.
- */
-insightsV2Router.get('/stability/coverage', async (req, res) => {
-  try {
-    const coverage = await getStabilityCoverage(prisma);
-    res.json(coverage);
-  } catch (error) {
-    console.error('Error fetching stability coverage:', error);
-    res.status(500).json({ error: 'Failed to fetch stability coverage' });
-  }
-});
-
-// ============================================================
-// PREDICTIONS (Gap 3)
+// PREDICTIONS
 // ============================================================
 
 /**
  * GET /api/v2/insights/predictions/summary
  * Get prediction summary statistics.
  */
-insightsV2Router.get('/predictions/summary', async (req, res) => {
+insightsV2Router.get('/predictions/summary', async (_req, res) => {
   try {
     const summary = await getPredictionSummary(prisma);
     res.json(summary);
   } catch (error) {
-    console.error('Error fetching prediction summary:', error);
-    res.status(500).json({ error: 'Failed to fetch prediction summary' });
+    logger.error({ error }, 'Error fetching prediction summary');
+    return problem(res, 500, 'Failed to fetch prediction summary');
   }
 });
 
@@ -229,17 +302,21 @@ insightsV2Router.get('/predictions/summary', async (req, res) => {
  */
 insightsV2Router.get('/predictions/warnings', async (req, res) => {
   try {
-    const { signal } = req.query;
+    const parsed = SignalQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
     let warnings = await detectEarlyWarnings(prisma);
 
-    if (signal) {
-      warnings = warnings.filter((w) => w.signal === signal);
+    if (parsed.data.signal) {
+      warnings = warnings.filter((w) => w.signal === parsed.data.signal);
     }
 
     res.json({ warnings, count: warnings.length });
   } catch (error) {
-    console.error('Error fetching early warnings:', error);
-    res.status(500).json({ error: 'Failed to fetch early warnings' });
+    logger.error({ error }, 'Error fetching early warnings');
+    return problem(res, 500, 'Failed to fetch early warnings');
   }
 });
 
@@ -253,13 +330,13 @@ insightsV2Router.get('/predictions/momentum/:domainId', async (req, res) => {
     const momentum = await calculateMomentum(prisma, domainId);
 
     if (!momentum) {
-      return res.status(404).json({ error: 'Not enough data for momentum calculation' });
+      return problem(res, 404, 'Not enough data for momentum calculation');
     }
 
     res.json({ momentum });
   } catch (error) {
-    console.error('Error fetching momentum:', error);
-    res.status(500).json({ error: 'Failed to fetch momentum' });
+    logger.error({ error, domainId: req.params.domainId }, 'Error fetching momentum');
+    return problem(res, 500, 'Failed to fetch momentum');
   }
 });
 
@@ -269,35 +346,39 @@ insightsV2Router.get('/predictions/momentum/:domainId', async (req, res) => {
  */
 insightsV2Router.get('/predictions/trackers/saturation', async (req, res) => {
   try {
-    const { status } = req.query;
+    const parsed = StatusQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
     let predictions = await predictTrackerSaturation(prisma);
 
-    if (status) {
-      predictions = predictions.filter((p) => p.status === status);
+    if (parsed.data.status) {
+      predictions = predictions.filter((p) => p.status === parsed.data.status);
     }
 
     res.json({ predictions, count: predictions.length });
   } catch (error) {
-    console.error('Error fetching tracker saturation:', error);
-    res.status(500).json({ error: 'Failed to fetch tracker saturation' });
+    logger.error({ error }, 'Error fetching tracker saturation');
+    return problem(res, 500, 'Failed to fetch tracker saturation');
   }
 });
 
 // ============================================================
-// QUALITY (Gap 4)
+// QUALITY
 // ============================================================
 
 /**
  * GET /api/v2/insights/quality/distribution
  * Get quality distribution for recent insights.
  */
-insightsV2Router.get('/quality/distribution', async (req, res) => {
+insightsV2Router.get('/quality/distribution', async (_req, res) => {
   try {
     const distribution = await getQualityDistribution(prisma);
     res.json(distribution);
   } catch (error) {
-    console.error('Error fetching quality distribution:', error);
-    res.status(500).json({ error: 'Failed to fetch quality distribution' });
+    logger.error({ error }, 'Error fetching quality distribution');
+    return problem(res, 500, 'Failed to fetch quality distribution');
   }
 });
 
@@ -307,17 +388,21 @@ insightsV2Router.get('/quality/distribution', async (req, res) => {
  */
 insightsV2Router.get('/quality/top', async (req, res) => {
   try {
-    const { limit = '10' } = req.query;
-    const insights = await getTopQualityInsights(prisma, parseInt(limit as string, 10));
+    const parsed = LimitQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const insights = await getTopQualityInsights(prisma, parsed.data.limit);
     res.json({ insights });
   } catch (error) {
-    console.error('Error fetching top quality insights:', error);
-    res.status(500).json({ error: 'Failed to fetch top quality insights' });
+    logger.error({ error }, 'Error fetching top quality insights');
+    return problem(res, 500, 'Failed to fetch top quality insights');
   }
 });
 
 // ============================================================
-// NARRATIVES (Gap 5)
+// NARRATIVES
 // ============================================================
 
 /**
@@ -329,8 +414,8 @@ insightsV2Router.get('/narratives/templates', async (_req, res) => {
     const templates = getAvailableTemplates();
     res.json({ templates });
   } catch (error) {
-    console.error('Error fetching narrative templates:', error);
-    res.status(500).json({ error: 'Failed to fetch narrative templates' });
+    logger.error({ error }, 'Error fetching narrative templates');
+    return problem(res, 500, 'Failed to fetch narrative templates');
   }
 });
 
@@ -338,7 +423,7 @@ insightsV2Router.get('/narratives/templates', async (_req, res) => {
  * GET /api/v2/insights/narratives/weekly-digest
  * Generate weekly digest narrative.
  */
-insightsV2Router.get('/narratives/weekly-digest', async (req, res) => {
+insightsV2Router.get('/narratives/weekly-digest', async (_req, res) => {
   try {
     // Get data for weekly digest
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -442,8 +527,8 @@ insightsV2Router.get('/narratives/weekly-digest', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error generating weekly digest:', error);
-    res.status(500).json({ error: 'Failed to generate weekly digest' });
+    logger.error({ error }, 'Error generating weekly digest');
+    return problem(res, 500, 'Failed to generate weekly digest');
   }
 });
 
@@ -457,8 +542,12 @@ insightsV2Router.get('/narratives/weekly-digest', async (req, res) => {
  */
 insightsV2Router.get('/methodology', async (req, res) => {
   try {
-    const { days = '7' } = req.query;
-    const metrics = await calculateMethodologyMetrics(prisma, parseInt(days as string, 10));
+    const parsed = DaysQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const metrics = await calculateMethodologyMetrics(prisma, parsed.data.days);
 
     res.json({
       methodology: {
@@ -486,8 +575,8 @@ insightsV2Router.get('/methodology', async (req, res) => {
       recentMetrics: metrics,
     });
   } catch (error) {
-    console.error('Error fetching methodology:', error);
-    res.status(500).json({ error: 'Failed to fetch methodology' });
+    logger.error({ error }, 'Error fetching methodology');
+    return problem(res, 500, 'Failed to fetch methodology');
   }
 });
 
@@ -495,7 +584,7 @@ insightsV2Router.get('/methodology', async (req, res) => {
  * GET /api/v2/insights/accuracy
  * Public accuracy track record.
  */
-insightsV2Router.get('/accuracy', async (req, res) => {
+insightsV2Router.get('/accuracy', async (_req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
@@ -554,8 +643,8 @@ insightsV2Router.get('/accuracy', async (req, res) => {
       disclaimer: 'Accuracy metrics reflect automated analysis. External validation pending.',
     });
   } catch (error) {
-    console.error('Error fetching accuracy:', error);
-    res.status(500).json({ error: 'Failed to fetch accuracy' });
+    logger.error({ error }, 'Error fetching accuracy');
+    return problem(res, 500, 'Failed to fetch accuracy');
   }
 });
 
@@ -563,7 +652,7 @@ insightsV2Router.get('/accuracy', async (req, res) => {
  * GET /api/v2/insights/corrections
  * Public correction history.
  */
-insightsV2Router.get('/corrections', async (req, res) => {
+insightsV2Router.get('/corrections', async (_req, res) => {
   try {
     // For now, return structure for future corrections
     // Will be populated as insights are validated and corrections made
@@ -579,8 +668,8 @@ insightsV2Router.get('/corrections', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching corrections:', error);
-    res.status(500).json({ error: 'Failed to fetch corrections' });
+    logger.error({ error }, 'Error fetching corrections');
+    return problem(res, 500, 'Failed to fetch corrections');
   }
 });
 
@@ -590,8 +679,12 @@ insightsV2Router.get('/corrections', async (req, res) => {
  */
 insightsV2Router.get('/governance/topic-distribution', async (req, res) => {
   try {
-    const { days = '7' } = req.query;
-    const periodStart = new Date(Date.now() - parseInt(days as string, 10) * 24 * 60 * 60 * 1000);
+    const parsed = DaysQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid query parameters', parsed.error.flatten());
+    }
+
+    const periodStart = new Date(Date.now() - parsed.data.days * 24 * 60 * 60 * 1000);
 
     const insights = await prisma.insight.findMany({
       where: { createdAt: { gte: periodStart } },
@@ -601,7 +694,7 @@ insightsV2Router.get('/governance/topic-distribution', async (req, res) => {
     const distribution = analyzeTopicDistribution(insights);
 
     res.json({
-      period: `Last ${days} days`,
+      period: `Last ${parsed.data.days} days`,
       totalInsights: insights.length,
       distribution,
       policy: {
@@ -611,8 +704,8 @@ insightsV2Router.get('/governance/topic-distribution', async (req, res) => {
       guidance: TOPIC_GUIDANCE,
     });
   } catch (error) {
-    console.error('Error fetching topic distribution:', error);
-    res.status(500).json({ error: 'Failed to fetch topic distribution' });
+    logger.error({ error }, 'Error fetching topic distribution');
+    return problem(res, 500, 'Failed to fetch topic distribution');
   }
 });
 
@@ -622,18 +715,17 @@ insightsV2Router.get('/governance/topic-distribution', async (req, res) => {
  */
 insightsV2Router.post('/validate/hedge', async (req, res) => {
   try {
-    const { text } = req.body;
-
-    if (!text || typeof text !== 'string') {
-      return res.status(400).json({ error: 'Text is required' });
+    const parsed = ValidateTextSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid request body', parsed.error.flatten());
     }
 
-    const validation = validateHedgeLanguage(text);
+    const validation = validateHedgeLanguage(parsed.data.text);
 
     res.json(validation);
   } catch (error) {
-    console.error('Error validating hedge language:', error);
-    res.status(500).json({ error: 'Failed to validate hedge language' });
+    logger.error({ error }, 'Error validating hedge language');
+    return problem(res, 500, 'Failed to validate hedge language');
   }
 });
 
@@ -643,18 +735,17 @@ insightsV2Router.post('/validate/hedge', async (req, res) => {
  */
 insightsV2Router.post('/validate/retraction', async (req, res) => {
   try {
-    const { text } = req.body;
-
-    if (!text || typeof text !== 'string') {
-      return res.status(400).json({ error: 'Text is required' });
+    const parsed = ValidateTextSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return problem(res, 400, 'Invalid request body', parsed.error.flatten());
     }
 
-    const validation = validateRetractionTone(text);
+    const validation = validateRetractionTone(parsed.data.text);
 
     res.json(validation);
   } catch (error) {
-    console.error('Error validating retraction tone:', error);
-    res.status(500).json({ error: 'Failed to validate retraction tone' });
+    logger.error({ error }, 'Error validating retraction tone');
+    return problem(res, 500, 'Failed to validate retraction tone');
   }
 });
 
@@ -672,7 +763,7 @@ insightsV2Router.get('/confidence/:insightId', async (req, res) => {
     });
 
     if (!insight) {
-      return res.status(404).json({ error: 'Insight not found' });
+      return problem(res, 404, 'Insight not found');
     }
 
     const display = getConfidenceDisplay(insight.confidence);
@@ -683,7 +774,7 @@ insightsV2Router.get('/confidence/:insightId', async (req, res) => {
       display,
     });
   } catch (error) {
-    console.error('Error fetching confidence:', error);
-    res.status(500).json({ error: 'Failed to fetch confidence' });
+    logger.error({ error, insightId: req.params.insightId }, 'Error fetching confidence');
+    return problem(res, 500, 'Failed to fetch confidence');
   }
 });

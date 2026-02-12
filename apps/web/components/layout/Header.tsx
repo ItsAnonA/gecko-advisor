@@ -72,7 +72,7 @@ const Header = memo(function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
                   pathname === link.href
                     ? 'text-advisor-600'
                     : 'text-gecko-600 hover:text-advisor-600'
@@ -85,7 +85,7 @@ const Header = memo(function Header() {
               href="https://github.com/privacygecko/gecko-advisor"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-zinc-700 hover:text-advisor-600 hover:border-advisor-400 hover:bg-gray-50 transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-zinc-700 hover:text-advisor-600 hover:border-advisor-400 hover:bg-gray-50 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
               aria-label="View on GitHub"
             >
               <GitHubIcon className="w-5 h-5" />
@@ -96,7 +96,7 @@ const Header = memo(function Header() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-lg text-gecko-600 hover:text-advisor-600 hover:bg-gray-100 transition-colors"
+            className="md:hidden inline-flex items-center justify-center p-2 rounded-lg text-gecko-600 hover:text-advisor-600 hover:bg-gray-100 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
             onClick={toggleMobileMenu}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -125,7 +125,7 @@ const Header = memo(function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={closeMobileMenu}
-                className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
                   pathname === link.href
                     ? 'bg-advisor-50 text-advisor-600'
                     : 'text-gecko-600 hover:bg-gray-50 hover:text-advisor-600'

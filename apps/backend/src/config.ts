@@ -90,6 +90,8 @@ const objectStorageConfiguration = {
   signedUrlExpirySeconds: parseNumber(process.env.OBJECT_STORAGE_SIGNED_URL_SECONDS, 3600),
 };
 
+const enableAuth = parseBoolean(process.env.ENABLE_AUTH, false);
+
 const turnstileEnabled = parseBoolean(process.env.TURNSTILE_ENABLED, false);
 const turnstileConfiguration = {
   enabled: turnstileEnabled && Boolean(process.env.TURNSTILE_SECRET_KEY),
@@ -123,6 +125,7 @@ export const config = {
     connectSources,
     imageSources,
   },
+  enableAuth,
   objectStorage: objectStorageConfiguration,
   turnstile: turnstileConfiguration,
 };

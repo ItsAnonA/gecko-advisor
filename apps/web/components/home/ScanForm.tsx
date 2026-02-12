@@ -277,6 +277,7 @@ export default function ScanForm() {
               transition-all duration-300
               text-white font-semibold text-base
               whitespace-nowrap
+              focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none
             "
             aria-label="Start privacy scan"
           >
@@ -398,58 +399,60 @@ export default function ScanForm() {
               <li
                 key={report.slug}
                 className={`
-                  py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3
-                  rounded-lg px-3 -mx-3 cursor-pointer
+                  rounded-lg -mx-3
                   transition-all duration-200
                   hover:bg-white/5 hover:shadow-[0_0_15px_rgba(16,185,129,0.15)]
                   hover:border-advisor-500/40 border-2 border-transparent
                   ${index !== recentReports.length - 1 ? 'border-b-2 !border-b-white/5 hover:!border-b-transparent' : ''}
                 `}
-                onClick={() => window.location.href = `/privacy-report/${report.domain}`}
               >
-                {/* Left side: Favicon + Domain + Meta */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {/* Favicon */}
-                  <div className="flex-shrink-0 w-10 h-10 rounded bg-white flex items-center justify-center overflow-hidden border-2 border-gray-200">
-                    <img
-                      src={`https://www.google.com/s2/favicons?domain=${report.domain}&sz=32`}
-                      alt=""
-                      width="32"
-                      height="32"
-                      className="rounded"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
+                <Link
+                  href={`/privacy-report/${report.domain}`}
+                  className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-3 rounded-lg focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  aria-label={`View privacy report for ${report.domain}`}
+                >
+                  {/* Left side: Favicon + Domain + Meta */}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Favicon */}
+                    <div className="flex-shrink-0 w-10 h-10 rounded bg-white flex items-center justify-center overflow-hidden border-2 border-gray-200">
+                      <img
+                        src={`https://www.google.com/s2/favicons?domain=${report.domain}&sz=32`}
+                        alt=""
+                        width="32"
+                        height="32"
+                        className="rounded"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    </div>
 
-                  {/* Domain info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-zinc-900 truncate">{report.domain}</div>
-                    <div className="text-xs text-zinc-600 flex items-center gap-2 mt-0.5">
-                      <span>{getRelativeTime(report.createdAt)}</span>
-                      <span className="text-zinc-400">•</span>
-                      <span>{report.evidenceCount || 0} checks</span>
+                    {/* Domain info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-zinc-900 truncate">{report.domain}</div>
+                      <div className="text-xs text-zinc-600 flex items-center gap-2 mt-0.5">
+                        <span>{getRelativeTime(report.createdAt)}</span>
+                        <span className="text-zinc-400">•</span>
+                        <span>{report.evidenceCount || 0} checks</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right side: Grade + View Link */}
-                <div className="flex items-center gap-3 flex-shrink-0 sm:ml-4">
-                  <div className="flex items-center">
-                    <GradeBadge score={report.score} size="md" showLabel={true} />
+                  {/* Right side: Grade + View indicator */}
+                  <div className="flex items-center gap-3 flex-shrink-0 sm:ml-4">
+                    <div className="flex items-center">
+                      <GradeBadge score={report.score} size="md" showLabel={true} />
+                    </div>
+
+                    <span
+                      className="text-advisor-600 text-sm font-semibold whitespace-nowrap"
+                      aria-hidden="true"
+                    >
+                      View Report →
+                    </span>
                   </div>
-
-                  <Link
-                    href={`/privacy-report/${report.domain}`}
-                    className="text-green-400 hover:text-green-300 hover:underline text-sm font-semibold transition-colors whitespace-nowrap"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`View privacy report for ${report.domain}`}
-                  >
-                    View Report →
-                  </Link>
-                </div>
+                </Link>
               </li>
             ))}
           </ul>

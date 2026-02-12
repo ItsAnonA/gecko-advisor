@@ -59,17 +59,11 @@ export function ConditionalContent({
   // Extract fingerprinting types from evidence
   const fingerprintingEvidence = evidence.filter(
     (e) =>
-      e.kind === 'fingerprinting' ||
-      e.kind === 'canvas_fingerprinting' ||
-      e.kind === 'webgl_fingerprinting' ||
-      e.kind === 'audio_fingerprinting'
+      e.kind === 'fingerprint'
   );
 
   const hasFingerprinting = fingerprintingEvidence.length > 0;
   const fingerprintingTypes = fingerprintingEvidence.map((e) => {
-    if (e.kind === 'canvas_fingerprinting') return 'canvas';
-    if (e.kind === 'webgl_fingerprinting') return 'webgl';
-    if (e.kind === 'audio_fingerprinting') return 'audio';
     return 'general';
   });
 

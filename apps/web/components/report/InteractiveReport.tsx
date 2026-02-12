@@ -553,7 +553,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
             <div className="flex items-center justify-center md:justify-start gap-2 pt-2">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors text-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors text-sm focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -562,19 +562,21 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
               </Link>
               <button
                 onClick={() => window.print()}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-zinc-600 transition-colors"
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-zinc-600 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                 title="Print report"
+                aria-label="Print report"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
               </button>
               <button
                 onClick={exportJson}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-zinc-600 transition-colors"
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-zinc-600 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                 title="Export as JSON"
+                aria-label="Export report as JSON"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </button>
@@ -638,6 +640,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
               onClick={() => setActiveTab(tab.id)}
               className={`
                 flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
+                focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset focus-visible:outline-none
                 ${activeTab === tab.id
                   ? 'border-emerald-500 text-emerald-600'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-gray-300'}
@@ -885,7 +888,7 @@ function ShareSection({
         <p className="text-sm text-zinc-700 italic">&ldquo;{text}&rdquo;</p>
         <button
           onClick={handleCopyText}
-          className="mt-2 text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+          className="mt-2 text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 rounded focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           {copied ? (
             <>
@@ -911,7 +914,7 @@ function ShareSection({
           href={getTwitterShareUrl(shareParams)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-3 py-2 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -922,7 +925,7 @@ function ShareSection({
           href={getLinkedInShareUrl(domain)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-3 py-2 bg-[#0A66C2] text-white text-xs font-medium rounded-lg hover:bg-[#004182] transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-[#0A66C2] text-white text-xs font-medium rounded-lg hover:bg-[#004182] transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -931,7 +934,7 @@ function ShareSection({
         </a>
         <button
           onClick={handleCopyLink}
-          className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-zinc-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-zinc-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -1328,7 +1331,7 @@ function EvidencePanel({
                       onClick={() => toggleGroup(group.key)}
                       aria-expanded={isExpanded}
                       aria-controls={`details-${group.key}`}
-                      className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                      className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 rounded focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
                       <span>{isExpanded ? '−' : '+'}</span>
                       <span>{isExpanded ? 'Hide details' : `Show details${group.count > 1 ? ` (${group.count} items)` : ''}`}</span>

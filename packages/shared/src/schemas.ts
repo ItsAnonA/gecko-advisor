@@ -16,6 +16,106 @@ export const EvidenceKind = z.enum([
   'mixed-content',
 ]);
 
+// ============================================================================
+// Evidence Details Schemas (per-kind)
+//
+// Each schema describes the `details` JSON field for a given evidence kind.
+// All schemas use .passthrough() to tolerate unexpected fields in existing
+// data while still enforcing known fields.
+// ============================================================================
+
+/** details for kind: 'tracker' */
+export const TrackerDetailsSchema = z.object({
+  domain: z.string(),
+  fingerprinting: z.boolean().optional(),
+}).passthrough();
+
+/** details for kind: 'thirdparty' */
+export const ThirdPartyDetailsSchema = z.object({
+  domain: z.string(),
+  root: z.string().optional(),
+  fingerprinting: z.boolean().optional(),
+}).passthrough();
+
+/** details for kind: 'header' */
+export const HeaderDetailsSchema = z.object({
+  name: z.string(),
+}).passthrough();
+
+/** details for kind: 'cookie' */
+export const CookieDetailsSchema = z.object({
+  cookie: z.string(),
+}).passthrough();
+
+/** details for kind: 'tls' */
+export const TlsDetailsSchema = z.object({
+  grade: z.string(),
+}).passthrough();
+
+/** details for kind: 'policy' */
+export const PolicyDetailsSchema = z.object({
+  href: z.string(),
+}).passthrough();
+
+/** details for kind: 'fingerprint' (may be empty or contain a signal name) */
+export const FingerprintDetailsSchema = z.object({
+  signal: z.string().optional(),
+}).passthrough();
+
+/** details for kind: 'insecure' and 'mixed-content' */
+export const InsecureDetailsSchema = z.object({
+  url: z.string(),
+  host: z.string().optional(),
+  path: z.string().optional(),
+  resourceType: z.enum(['resource', 'link']).optional(),
+}).passthrough();
+
+/**
+ * Union of all known evidence detail shapes.
+ * Used as a fallback when the evidence kind is not known at schema-parse time.
+ * Falls back to z.record(z.string(), z.unknown()) for completely unknown shapes.
+ */
+export const EvidenceDetailsSchema = z.union([
+  TrackerDetailsSchema,
+  ThirdPartyDetailsSchema,
+  HeaderDetailsSchema,
+  CookieDetailsSchema,
+  TlsDetailsSchema,
+  PolicyDetailsSchema,
+  FingerprintDetailsSchema,
+  InsecureDetailsSchema,
+  z.record(z.string(), z.unknown()),
+]);
+
+/**
+ * Maps each evidence kind to its typed details schema.
+ * Useful for runtime validation when the kind is known.
+ */
+export const EvidenceDetailsSchemaByKind = {
+  tracker: TrackerDetailsSchema,
+  thirdparty: ThirdPartyDetailsSchema,
+  header: HeaderDetailsSchema,
+  cookie: CookieDetailsSchema,
+  tls: TlsDetailsSchema,
+  policy: PolicyDetailsSchema,
+  fingerprint: FingerprintDetailsSchema,
+  insecure: InsecureDetailsSchema,
+  'mixed-content': InsecureDetailsSchema,
+} as const satisfies Record<z.infer<typeof EvidenceKind>, z.ZodType>;
+
+// Inferred TypeScript types for each evidence details shape
+export type TrackerDetails = z.infer<typeof TrackerDetailsSchema>;
+export type ThirdPartyDetails = z.infer<typeof ThirdPartyDetailsSchema>;
+export type HeaderDetails = z.infer<typeof HeaderDetailsSchema>;
+export type CookieDetails = z.infer<typeof CookieDetailsSchema>;
+export type TlsDetails = z.infer<typeof TlsDetailsSchema>;
+export type PolicyDetails = z.infer<typeof PolicyDetailsSchema>;
+export type FingerprintDetails = z.infer<typeof FingerprintDetailsSchema>;
+export type InsecureDetails = z.infer<typeof InsecureDetailsSchema>;
+
+/** Union of all known evidence detail types */
+export type EvidenceDetails = z.infer<typeof EvidenceDetailsSchema>;
+
 export const IssueSeverity = z.enum(['info', 'low', 'medium', 'high', 'critical']);
 
 export const UrlScanRequestSchema = z.object({
@@ -53,7 +153,7 @@ export const EvidenceSchema = z.object({
   kind: EvidenceKind,
   severity: z.number().int().min(1).max(5),
   title: z.string(),
-  details: z.any(),
+  details: EvidenceDetailsSchema,
   createdAt: z.string().or(z.date()),
 });
 
@@ -64,7 +164,7 @@ export const LegacyEvidenceSchema = z.object({
   type: EvidenceKind,
   severity: z.number().int().min(1).max(5),
   title: z.string(),
-  details: z.any(),
+  details: EvidenceDetailsSchema,
   createdAt: z.string().or(z.date()),
 });
 

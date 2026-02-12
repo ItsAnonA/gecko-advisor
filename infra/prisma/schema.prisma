@@ -193,6 +193,8 @@ model Scan {
   @@index([scannerIp, createdAt(sort: Desc)], map: "Scan_ip_ratelimit_idx")
   // Domain Intelligence Engine: Index for volatility queries
   @@index([domainId, status, finishedAt(sort: Desc)], map: "Scan_domain_volatility_idx")
+  // Analytics queries (status + score filtering)
+  @@index([status, score], map: "Scan_analytics_idx")
 }
 
 model Evidence {
@@ -207,6 +209,8 @@ model Evidence {
 
   // Covering index for optimal evidence queries and counting
   @@index([scanId, createdAt], map: "Evidence_scan_covering_idx")
+  // Index for kind-based filtering (fingerprint detection, policy checks)
+  @@index([kind, scanId], map: "Evidence_kind_scan_idx")
 }
 
 model Issue {

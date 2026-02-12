@@ -1,0 +1,313 @@
+import { describe, it, expect } from 'vitest';
+import {
+  calculateStdDev,
+  calculateTrend,
+  computeStabilityFromData,
+  computeProvisionalFromData,
+  STABILITY_REQUIREMENTS,
+} from '../stabilityService.js';
+
+// ============================================================================
+// Helper: create scan rows with finishedAt dates relative to "now"
+// ============================================================================
+
+function makeScan(score: number, daysAgo: number): { score: number | null; finishedAt: Date | null } {
+  const now = new Date();
+  return {
+    score,
+    finishedAt: new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000),
+  };
+}
+
+function makeChange(
+  changeType: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR' | 'CRITICAL',
+  daysAgo: number
+): { detectedAt: Date; changeType: typeof changeType } {
+  const now = new Date();
+  return {
+    changeType,
+    detectedAt: new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000),
+  };
+}
+
+const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+// ============================================================================
+// calculateStdDev
+// ============================================================================
+
+describe('calculateStdDev', () => {
+  it('returns 0 for empty array', () => {
+    expect(calculateStdDev([])).toBe(0);
+  });
+
+  it('returns 0 for single value', () => {
+    expect(calculateStdDev([50])).toBe(0);
+  });
+
+  it('returns 0 for identical values', () => {
+    expect(calculateStdDev([80, 80, 80])).toBe(0);
+  });
+
+  it('calculates correct standard deviation', () => {
+    // [60, 80] -> mean=70, diffs=[-10,10], squaredDiffs=[100,100], variance=100, stddev=10
+    expect(calculateStdDev([60, 80])).toBe(10);
+  });
+
+  it('handles larger arrays', () => {
+    const values = [10, 20, 30, 40, 50];
+    // mean=30, diffs=[-20,-10,0,10,20], squared=[400,100,0,100,400], var=200, std=~14.14
+    const result = calculateStdDev(values);
+    expect(result).toBeCloseTo(14.142, 2);
+  });
+});
+
+// ============================================================================
+// calculateTrend
+// ============================================================================
+
+describe('calculateTrend', () => {
+  it('returns STABLE with trendStrength 0 for fewer than 3 scans', () => {
+    const result = calculateTrend([makeScan(80, 1), makeScan(75, 10)]);
+    expect(result.trend).toBe('STABLE');
+    expect(result.trendStrength).toBe(0);
+  });
+
+  it('returns STABLE for consistent scores', () => {
+    const scans = [makeScan(80, 1), makeScan(80, 10), makeScan(80, 20), makeScan(80, 30)];
+    const result = calculateTrend(scans);
+    expect(result.trend).toBe('STABLE');
+  });
+
+  it('detects IMPROVING trend when recent scores are higher', () => {
+    // Recent half (first 2): 90, 88 -> avg 89
+    // Older half (last 2): 60, 55 -> avg 57.5
+    // percentChange = (89 - 57.5) / 57.5 * 100 = ~54.8%
+    const scans = [makeScan(90, 1), makeScan(88, 5), makeScan(60, 20), makeScan(55, 30)];
+    const result = calculateTrend(scans);
+    expect(result.trend).toBe('IMPROVING');
+    expect(result.trendStrength).toBeGreaterThan(0);
+  });
+
+  it('detects DECLINING trend when recent scores are lower', () => {
+    // Recent half (first 2): 72, 74 -> avg 73
+    // Older half (last 2): 82, 84 -> avg 83
+    // percentChange = (73 - 83) / 83 * 100 = -12.05%
+    // CoV is low because scores are clustered, so VOLATILE won't trigger first
+    const scans = [makeScan(72, 1), makeScan(74, 5), makeScan(82, 20), makeScan(84, 30)];
+    const result = calculateTrend(scans);
+    expect(result.trend).toBe('DECLINING');
+    expect(result.trendStrength).toBeGreaterThan(0);
+  });
+
+  it('detects VOLATILE trend for high variance', () => {
+    // Scores: [90, 10, 90, 10] -> mean=50, stddev very high
+    // coefficientOfVariation > 0.3
+    const scans = [makeScan(90, 1), makeScan(10, 10), makeScan(90, 20), makeScan(10, 30)];
+    const result = calculateTrend(scans);
+    expect(result.trend).toBe('VOLATILE');
+  });
+});
+
+// ============================================================================
+// computeStabilityFromData
+// ============================================================================
+
+describe('computeStabilityFromData', () => {
+  it('calculates correct metrics for stable domain', () => {
+    const scans = [makeScan(80, 1), makeScan(80, 10), makeScan(80, 20), makeScan(80, 60)];
+    const changes: { detectedAt: Date; changeType: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR' | 'CRITICAL' }[] = [];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'high', 1.0);
+
+    expect(result.volatilityIndex).toBe(0); // no variance, no changes
+    expect(result.stabilityScore).toBe(100);
+    expect(result.trend).toBe('STABLE');
+    expect(result.confidenceLevel).toBe('high');
+    expect(result.confidenceScore).toBe(1.0);
+    expect(result.scanCount).toBe(4);
+    expect(result.avgScoreLast90d).toBe(80);
+    expect(result.changesLast90d).toBe(0);
+  });
+
+  it('increases volatility for major changes', () => {
+    const scans = [makeScan(80, 1), makeScan(80, 10), makeScan(80, 20)];
+    const changes = [makeChange('MAJOR', 5), makeChange('CRITICAL', 15)];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'high', 1.0);
+
+    // volatility = stddev*5 + changes*2 + majorChanges*10
+    // stddev=0, changes=2, major=2 -> 0 + 4 + 20 = 24
+    expect(result.volatilityIndex).toBe(24);
+    expect(result.stabilityScore).toBe(76);
+    expect(result.majorChangesLast90d).toBe(2);
+    expect(result.changesLast90d).toBe(2);
+  });
+
+  it('correctly partitions changes into 30d and 90d', () => {
+    const scans = [makeScan(80, 1), makeScan(75, 15), makeScan(70, 60)];
+    const changes = [
+      makeChange('MINOR', 5),   // within 30d
+      makeChange('MINOR', 25),  // within 30d
+      makeChange('MINOR', 45),  // only in 90d
+      makeChange('MINOR', 80),  // only in 90d
+    ];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'medium', 0.7);
+
+    expect(result.changesLast30d).toBe(2);
+    expect(result.changesLast90d).toBe(4);
+    expect(result.confidenceLevel).toBe('medium');
+    expect(result.confidenceScore).toBe(0.7);
+  });
+
+  it('caps volatility at 100', () => {
+    const scans = [makeScan(10, 1), makeScan(90, 10), makeScan(10, 20)];
+    const changes = [
+      makeChange('CRITICAL', 5),
+      makeChange('CRITICAL', 10),
+      makeChange('CRITICAL', 15),
+      makeChange('CRITICAL', 20),
+      makeChange('CRITICAL', 25),
+    ];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'high', 1.0);
+
+    expect(result.volatilityIndex).toBeLessThanOrEqual(100);
+    expect(result.stabilityScore).toBeGreaterThanOrEqual(0);
+  });
+
+  it('calculates standard deviations for 30d and 90d windows', () => {
+    // 3 scans in last 30d, 1 scan in 60-90d range
+    const scans = [makeScan(80, 1), makeScan(60, 10), makeScan(70, 20), makeScan(50, 60)];
+
+    const result = computeStabilityFromData(scans, [], thirtyDaysAgo, 'high', 1.0);
+
+    // 30d scores: [80, 60, 70], mean=70, stddev = sqrt((100+100+0)/3) = ~8.165
+    expect(result.scoreStdDev30d).toBeCloseTo(8.165, 2);
+    // 90d scores: [80, 60, 70, 50], mean=65
+    expect(result.scoreStdDev90d).toBeGreaterThan(0);
+    expect(result.avgScoreLast30d).toBeCloseTo(70, 0);
+    expect(result.avgScoreLast90d).toBeCloseTo(65, 0);
+  });
+});
+
+// ============================================================================
+// computeProvisionalFromData
+// ============================================================================
+
+describe('computeProvisionalFromData', () => {
+  it('returns base stability for null domain proxy', () => {
+    const result = computeProvisionalFromData(null, 75);
+
+    expect(result.stabilityScore).toBe(50);
+    expect(result.volatilityIndex).toBe(50);
+    expect(result.trend).toBe('STABLE');
+    expect(result.trendStrength).toBe(0.3);
+    expect(result.confidenceLevel).toBe('provisional');
+    expect(result.confidenceScore).toBe(STABILITY_REQUIREMENTS.provisional.confidenceMultiplier);
+    expect(result.scanCount).toBe(1);
+    expect(result.avgScoreLast30d).toBe(75);
+    expect(result.avgScoreLast90d).toBe(75);
+  });
+
+  it('boosts stability for Tier A domain with high Tranco rank', () => {
+    const result = computeProvisionalFromData({ trancoRank: 5000, indexTier: 'A' }, 80);
+
+    // base 50 + trancoRank<=10000 (+20) + tierA (+15) = 85
+    expect(result.stabilityScore).toBe(85);
+    expect(result.volatilityIndex).toBe(15);
+  });
+
+  it('partially boosts stability for Tier B domain with moderate Tranco rank', () => {
+    const result = computeProvisionalFromData({ trancoRank: 50000, indexTier: 'B' }, 60);
+
+    // base 50 + trancoRank<=100000 (+10) + tierB (+5) = 65
+    expect(result.stabilityScore).toBe(65);
+    expect(result.volatilityIndex).toBe(35);
+  });
+
+  it('uses only Tranco boost for Tier C domain', () => {
+    const result = computeProvisionalFromData({ trancoRank: 5000, indexTier: 'C' }, 70);
+
+    // base 50 + trancoRank<=10000 (+20) + tierC (+0) = 70
+    expect(result.stabilityScore).toBe(70);
+    expect(result.volatilityIndex).toBe(30);
+  });
+
+  it('uses base stability for domain with no Tranco rank', () => {
+    const result = computeProvisionalFromData({ trancoRank: null, indexTier: 'A' }, 80);
+
+    // base 50 + trancoRank null (+0) + tierA (+15) = 65
+    expect(result.stabilityScore).toBe(65);
+    expect(result.volatilityIndex).toBe(35);
+  });
+
+  it('defaults score to 50 when null', () => {
+    const result = computeProvisionalFromData(null, null);
+
+    expect(result.avgScoreLast30d).toBe(50);
+    expect(result.avgScoreLast90d).toBe(50);
+  });
+
+  it('returns zero std deviations and zero changes', () => {
+    const result = computeProvisionalFromData(null, 80);
+
+    expect(result.scoreStdDev30d).toBe(0);
+    expect(result.scoreStdDev90d).toBe(0);
+    expect(result.changesLast30d).toBe(0);
+    expect(result.changesLast90d).toBe(0);
+    expect(result.majorChangesLast90d).toBe(0);
+  });
+});
+
+// ============================================================================
+// Consistency: computeStabilityFromData matches inline calculation logic
+// ============================================================================
+
+describe('computeStabilityFromData consistency', () => {
+  it('produces identical results to inline calculation for same input', () => {
+    // Simulate the same input that calculateDomainStability would produce
+    const scans = [
+      makeScan(85, 2),
+      makeScan(78, 12),
+      makeScan(82, 25),
+      makeScan(70, 45),
+      makeScan(75, 65),
+    ];
+    const changes = [
+      makeChange('MINOR', 10),
+      makeChange('MODERATE', 40),
+      makeChange('MAJOR', 60),
+    ];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'high', 1.0);
+
+    // Manually compute expected values
+    const scans30d = scans.filter((s) => s.finishedAt! >= thirtyDaysAgo);
+    const scores30d = scans30d.map((s) => s.score!);
+    const scores90d = scans.map((s) => s.score!);
+
+    const expectedAvg30d = scores30d.reduce((a, b) => a + b, 0) / scores30d.length;
+    const expectedAvg90d = scores90d.reduce((a, b) => a + b, 0) / scores90d.length;
+
+    expect(result.avgScoreLast30d).toBeCloseTo(expectedAvg30d, 5);
+    expect(result.avgScoreLast90d).toBeCloseTo(expectedAvg90d, 5);
+
+    // Verify volatility formula: stddev90d*5 + changes90d*2 + majorChanges90d*10
+    const expectedStdDev90d = calculateStdDev(scores90d);
+    const changesLast30d = changes.filter((c) => c.detectedAt >= thirtyDaysAgo).length;
+    const changesLast90d = changes.length;
+    const majorChanges = changes.filter(
+      (c) => c.changeType === 'MAJOR' || c.changeType === 'CRITICAL'
+    ).length;
+
+    const expectedVolatility = Math.min(100, expectedStdDev90d * 5 + changesLast90d * 2 + majorChanges * 10);
+
+    expect(result.volatilityIndex).toBeCloseTo(expectedVolatility, 5);
+    expect(result.stabilityScore).toBeCloseTo(Math.max(0, 100 - expectedVolatility), 5);
+    expect(result.changesLast30d).toBe(changesLast30d);
+    expect(result.changesLast90d).toBe(changesLast90d);
+    expect(result.majorChangesLast90d).toBe(majorChanges);
+  });
+});

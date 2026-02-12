@@ -189,7 +189,7 @@ export function InterpretationCardList({ findings, maxVisible = 3, onLearnMore }
       {hiddenCount > 0 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+          className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors rounded focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           Show {hiddenCount} more finding{hiddenCount === 1 ? '' : 's'}
         </button>
@@ -198,7 +198,7 @@ export function InterpretationCardList({ findings, maxVisible = 3, onLearnMore }
       {showAll && hiddenCount > 0 && (
         <button
           onClick={() => setShowAll(false)}
-          className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+          className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors rounded focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           Show less
         </button>

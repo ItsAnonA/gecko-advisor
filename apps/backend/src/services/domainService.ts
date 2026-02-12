@@ -3,51 +3,10 @@ SPDX-FileCopyrightText: 2025 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 */
 import type { PrismaClient, Scan, Domain } from "@prisma/client";
-import { etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
+import { normalizeDomain, isBlockedDomain } from "@gecko-advisor/shared";
 
-/**
- * Normalize a URL or hostname to its effective domain (eTLD+1).
- * Examples:
- *   - "https://www.example.com/path" → "example.com"
- *   - "subdomain.example.co.uk" → "example.co.uk"
- *   - "example.com" → "example.com"
- *   - "com.br" → "" (bare TLD, invalid)
- *
- * Returns empty string for:
- *   - Bare TLDs (e.g., "com.br", "co.uk")
- *   - Invalid hostnames
- *   - Empty input
- */
-export function normalizeDomain(input: string): string {
-  if (!input || typeof input !== 'string') {
-    return '';
-  }
-
-  let hostname = input.toLowerCase().trim();
-
-  // Strip protocol if present
-  hostname = hostname.replace(/^https?:\/\//, '');
-
-  // Strip www. prefix
-  hostname = hostname.replace(/^www\./, '');
-
-  // Strip path, query, fragment
-  hostname = hostname.split('/')[0] ?? hostname;
-  hostname = hostname.split('?')[0] ?? hostname;
-  hostname = hostname.split('#')[0] ?? hostname;
-
-  // Strip port if present
-  hostname = hostname.split(':')[0] ?? hostname;
-
-  if (!hostname || hostname.length === 0) {
-    return '';
-  }
-
-  // Get effective TLD+1 (e.g., sub.example.com → example.com)
-  // Returns null for bare TLDs like "com.br" or "co.uk"
-  const domain = etldPlusOne(hostname);
-  return domain ?? '';
-}
+// Re-export so existing backend consumers can continue importing from here
+export { normalizeDomain };
 
 /**
  * Find a domain record by normalized domain name.
@@ -112,9 +71,7 @@ export async function findLatestScanForDomain(
   // This handles cases where Domain record doesn't exist yet
   const scan = await prisma.scan.findFirst({
     where: {
-      normalizedInput: {
-        contains: normalized,
-      },
+      normalizedInput: normalized,
       status: 'done',
     },
     orderBy: {

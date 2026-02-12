@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { fetchIndexableDomains } from '@/lib/api';
-import { SEO_CONSTANTS, normalizeDomain, isPublicSuffix } from '@gecko-advisor/shared';
+import { SEO_CONSTANTS, normalizeHostname as normalizeDomain, isPublicSuffix } from '@gecko-advisor/shared';
 
 const BASE_URL = SEO_CONSTANTS.BASE_URL;
 const URLS_PER_CHUNK = 10000;

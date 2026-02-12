@@ -267,10 +267,7 @@ export function extractScanData(
 
     // Check for fingerprinting
     if (
-      evidence.kind === "fingerprinting" ||
-      evidence.kind === "canvas_fingerprinting" ||
-      evidence.kind === "webgl_fingerprinting" ||
-      evidence.kind === "audio_fingerprinting"
+      evidence.kind === "fingerprint"
     ) {
       hasFingerprinting = true;
     }

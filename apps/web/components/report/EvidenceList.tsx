@@ -83,7 +83,7 @@ export function EvidenceList({ items, filter, onFilterChange, pageSize = PAGE_SI
             `}
           >
             {option.label}
-            <span className="ml-1 text-xs text-zinc-500">[{option.shortcut}]</span>
+            <span className={`ml-1 text-xs ${filter === option.key ? 'text-white/70' : 'text-zinc-500'}`}>[{option.shortcut}]</span>
           </button>
         ))}
         <span className="text-xs text-zinc-500">Use keys 1-4 to switch views</span>

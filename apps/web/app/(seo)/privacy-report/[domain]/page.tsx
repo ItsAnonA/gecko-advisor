@@ -15,7 +15,7 @@ import { notFound, redirect, permanentRedirect } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import {
-  normalizeDomain,
+  normalizeHostname as normalizeDomain,
   isValidDomain,
   buildWebPageSchema,
   buildFAQSchema,

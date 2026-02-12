@@ -37,11 +37,11 @@ export default {
           'border': '#1f2937',     // Subtle borders
           'hover': '#374151',      // Hover states
         },
-        // Privacy score colors (brightened for dark mode)
+        // Privacy score colors - WCAG AA compliant on white backgrounds
         'score': {
-          'safe': '#34d399',       // emerald-400 (brighter)
-          'caution': '#fcd34d',    // amber-300 (brighter)
-          'danger': '#fca5a5',     // red-300 (softer)
+          'safe': '#16a34a',       // green-600 (4.5:1 contrast on white - WCAG AA)
+          'caution': '#b45309',    // amber-700 (5.9:1 contrast on white - WCAG AA)
+          'danger': '#dc2626',     // red-600 (4.6:1 contrast on white - WCAG AA)
         },
         // Privacy Gecko Master Brand (professional sky blue)
         'privacy-gecko': {

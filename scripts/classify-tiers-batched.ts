@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { PrismaClient } from '@prisma/client';
+import { normalizeHostname } from '@gecko-advisor/shared';
 
 const prisma = new PrismaClient();
 
@@ -109,14 +110,9 @@ const POPULAR_BRANDS = new Set([
   'robinhood.com',
 ]);
 
-// Normalize domain for matching
-function normalizeDomain(domain: string): string {
-  return domain.toLowerCase().replace(/^www\./, '');
-}
-
 // FIX #3: Check if domain matches any popular brand
 function isPopularBrand(domain: string): boolean {
-  const normalized = normalizeDomain(domain);
+  const normalized = normalizeHostname(domain);
 
   // Exact match
   if (POPULAR_BRANDS.has(normalized)) return true;
@@ -204,7 +200,7 @@ async function classifyTiers() {
 
       // Check for fingerprinting (high interest topic)
       const hasFingerprinting = scan.evidence?.some(
-        (e) => e.kind === 'fingerprinting' || e.kind === 'canvas_fingerprinting'
+        (e) => e.kind === 'fingerprint'
       );
       if (hasFingerprinting) tierScore += 30;
     }

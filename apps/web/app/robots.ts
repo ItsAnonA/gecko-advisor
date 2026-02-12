@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 /**
  * Robots.txt Configuration (Native Next.js)
  *
- * Uses Next.js native robots.ts file for type-safe robots.txt generation.
- * This generates the robots.txt served by Next.js.
+ * Single source of truth for robots.txt. The static public/robots.txt has been
+ * removed to eliminate the dual-source conflict (Issue #8).
  */
 
 import { MetadataRoute } from 'next';
@@ -19,8 +19,22 @@ export default function robots(): MetadataRoute.Robots {
       // Default rules for all crawlers
       {
         userAgent: '*',
-        allow: ['/', '/privacy-report/', '/r/', '/blog/', '/reports', '/about'],
+        allow: [
+          '/',
+          '/privacy-report/',
+          '/blog/',
+          '/reports',
+          '/about',
+          '/privacy-benchmarks/',
+          '/changes',
+          '/compare/',
+          '/privacy-scanner',
+          '/methodology',
+          '/faq',
+          '/roadmap',
+        ],
         disallow: [
+          // Internal / API endpoints
           '/api/',
           '/admin/',
           '/scan/',
@@ -29,7 +43,12 @@ export default function robots(): MetadataRoute.Robots {
           '/settings',
           '/_next/',
           '/ssr',
-          // Block crawler artifacts (reduces 404s)
+
+          // Legacy redirect-only paths
+          '/privacy-policy/',
+          '/r/',
+
+          // Crawler artifact blocking (sub-resources under dynamic routes)
           '/privacy-report/*/_next/',
           '/privacy-report/*/api/',
           '/privacy-report/*/.well-known/',
@@ -37,24 +56,73 @@ export default function robots(): MetadataRoute.Robots {
           '/privacy-report/*/*.js',
           '/privacy-report/*/*.css',
           '/privacy-report/*/*.json',
+          '/privacy-benchmarks/*/_next/',
+          '/privacy-benchmarks/*/api/',
+          '/compare/*/_next/',
+          '/compare/*/api/',
+
+          // Spam / bot-noise paths
+          '/index.php',
+          '/cgi-bin/',
+          '/wp-admin/',
+          '/wp-login.php',
+
+          // Garbage URL patterns
+          '/*.html$',
+          '/*.php$',
+          '/*.aspx$',
+          '/*?url=',
+          '/*?p=',
         ],
+        crawlDelay: 1,
       },
       // Block AI training crawlers
       {
-        userAgent: [
-          'GPTBot',
-          'ChatGPT-User',
-          'CCBot',
-          'Google-Extended',
-          'anthropic-ai',
-          'Claude-Web',
-          'Bytespider',
-          'Amazonbot',
-          'FacebookBot',
-          'Applebot-Extended',
-          'cohere-ai',
-          'PerplexityBot',
-        ],
+        userAgent: 'GPTBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'ChatGPT-User',
+        disallow: '/',
+      },
+      {
+        userAgent: 'CCBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Google-Extended',
+        disallow: '/',
+      },
+      {
+        userAgent: 'anthropic-ai',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Claude-Web',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Bytespider',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Amazonbot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'FacebookBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Applebot-Extended',
+        disallow: '/',
+      },
+      {
+        userAgent: 'cohere-ai',
+        disallow: '/',
+      },
+      {
+        userAgent: 'PerplexityBot',
         disallow: '/',
       },
     ],

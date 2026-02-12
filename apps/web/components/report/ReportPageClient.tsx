@@ -349,7 +349,7 @@ export default function ReportPageClient({
             <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap pt-2">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-advisor-500 hover:bg-advisor-600 text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-advisor-500/50 focus:ring-offset-2"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-advisor-500 hover:bg-advisor-600 text-white font-semibold rounded-lg transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -364,10 +364,11 @@ export default function ReportPageClient({
 
               <button
                 onClick={() => window.print()}
-                className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors"
+                className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                 title="Print report"
+                aria-label="Print report"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -379,10 +380,11 @@ export default function ReportPageClient({
 
               <button
                 onClick={exportJson}
-                className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors"
+                className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-zinc-600 hover:text-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                 title="Export as JSON"
+                aria-label="Export report as JSON"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

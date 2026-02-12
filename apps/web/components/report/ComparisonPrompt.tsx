@@ -105,7 +105,7 @@ export default function ComparisonPrompt({ currentDomain, currentScore, onCompar
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="text-sm text-zinc-600 hover:text-zinc-900 inline-flex items-center gap-1 transition-colors"
+          className="text-sm text-zinc-600 hover:text-zinc-900 inline-flex items-center gap-1 transition-colors rounded focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -125,7 +125,7 @@ export default function ComparisonPrompt({ currentDomain, currentScore, onCompar
           <button
             type="submit"
             disabled={!searchValue.trim()}
-            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             Compare
           </button>
@@ -135,7 +135,7 @@ export default function ComparisonPrompt({ currentDomain, currentScore, onCompar
               setShowSearch(false);
               setSearchValue('');
             }}
-            className="px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900"
+            className="px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 rounded focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             Cancel
           </button>

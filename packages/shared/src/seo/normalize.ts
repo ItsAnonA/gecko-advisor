@@ -39,7 +39,10 @@ function toPunycode(domain: string): string {
 }
 
 /**
- * Normalizes a domain for consistent URL usage.
+ * Normalizes a hostname for consistent URL usage.
+ * Unlike {@link normalizeDomain} (in domain.ts), this does NOT reduce
+ * to eTLD+1 -- subdomains are preserved.
+ *
  * - Converts to lowercase
  * - Removes www. prefix
  * - Removes trailing dots
@@ -47,9 +50,9 @@ function toPunycode(domain: string): string {
  * - Converts unicode/IDN domains to punycode
  *
  * @param input - Raw domain input
- * @returns Normalized domain or empty string if invalid
+ * @returns Normalized hostname or empty string if invalid
  */
-export function normalizeDomain(input: string | null | undefined): string {
+export function normalizeHostname(input: string | null | undefined): string {
   if (!input || typeof input !== 'string') {
     return '';
   }

@@ -22,27 +22,27 @@ const outputJson = process.argv.includes('--json');
 
 interface DriftMetrics {
   scoreDistribution: {
-    current: { mean: number; stdDev: number };
-    previous: { mean: number; stdDev: number };
+    current: { mean: number; stdDev: number; sampleSize: number };
+    previous: { mean: number; stdDev: number; sampleSize: number };
     drift: number;
     alert: boolean;
   };
   trackerDetection: {
-    currentAvg: number;
-    previousAvg: number;
-    changePercent: number;
+    currentRate: number;   // avg trackers per scan
+    previousRate: number;  // avg trackers per scan
+    absoluteDelta: number; // absolute difference in per-scan rate
     alert: boolean;
   };
   fingerprintingRate: {
-    current: number;
+    current: number;       // percentage of scans with fingerprinting
     previous: number;
-    changePercent: number;
+    absoluteDeltaPp: number; // absolute percentage-point difference
     alert: boolean;
   };
   insightVolume: {
-    current: number;
-    previous: number;
-    changePercent: number;
+    currentPerScan: number;  // insights per scan
+    previousPerScan: number;
+    absoluteDelta: number;
     alert: boolean;
   };
 }
@@ -101,59 +101,71 @@ async function main(): Promise<void> {
     const previousStdDev = calculateStdDev(previousScoreValues);
 
     const scoreDrift = previousMean !== 0 ? Math.abs((currentMean - previousMean) / previousMean) * 100 : 0;
-    const scoreDriftAlert = scoreDrift > 10; // Alert if >10% drift
+    // Alert if >10% drift AND both periods have minimum sample size
+    const MIN_SAMPLE_SIZE = 10;
+    const scoreDriftAlert = scoreDrift > 10 && currentScoreValues.length >= MIN_SAMPLE_SIZE && previousScoreValues.length >= MIN_SAMPLE_SIZE;
 
     if (scoreDriftAlert) {
-      alerts.push(`Score distribution drifted ${scoreDrift.toFixed(1)}% (threshold: 10%)`);
+      alerts.push(`Score distribution drifted ${scoreDrift.toFixed(1)}% (current: ${currentMean.toFixed(1)}, previous: ${previousMean.toFixed(1)})`);
     }
 
-    // 2. Tracker Detection Drift
-    const currentTrackers = await prisma.domainChange.aggregate({
-      where: { detectedAt: { gte: sevenDaysAgo } },
-      _avg: { trackerCountAfter: true },
+    // 2. Tracker Detection Drift (per-scan rate, not raw counts)
+    // Count evidence of kind 'tracker' per scan in each period
+    const currentTrackerEvidence = await prisma.evidence.count({
+      where: {
+        kind: 'tracker',
+        scan: { status: 'done', finishedAt: { gte: sevenDaysAgo } },
+      },
     });
 
-    const previousTrackers = await prisma.domainChange.aggregate({
-      where: { detectedAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
-      _avg: { trackerCountAfter: true },
+    const previousTrackerEvidence = await prisma.evidence.count({
+      where: {
+        kind: 'tracker',
+        scan: { status: 'done', finishedAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
+      },
     });
 
-    const currentTrackerAvg = currentTrackers._avg.trackerCountAfter ?? 0;
-    const previousTrackerAvg = previousTrackers._avg.trackerCountAfter ?? 0;
-    const trackerChangePercent = previousTrackerAvg !== 0 ? ((currentTrackerAvg - previousTrackerAvg) / previousTrackerAvg) * 100 : 0;
-    const trackerAlert = Math.abs(trackerChangePercent) > 20;
+    const currentTrackerRate = currentScoreValues.length > 0 ? currentTrackerEvidence / currentScoreValues.length : 0;
+    const previousTrackerRate = previousScoreValues.length > 0 ? previousTrackerEvidence / previousScoreValues.length : 0;
+    const trackerAbsDelta = Math.abs(currentTrackerRate - previousTrackerRate);
+    // Alert on absolute per-scan difference > 2 trackers/scan AND minimum sample size
+    const trackerAlert = trackerAbsDelta > 2 && currentScoreValues.length >= MIN_SAMPLE_SIZE && previousScoreValues.length >= MIN_SAMPLE_SIZE;
 
     if (trackerAlert) {
-      alerts.push(`Tracker detection changed ${trackerChangePercent.toFixed(1)}% (threshold: 20%)`);
+      alerts.push(`Tracker rate changed by ${trackerAbsDelta.toFixed(1)} trackers/scan (current: ${currentTrackerRate.toFixed(1)}, previous: ${previousTrackerRate.toFixed(1)})`);
     }
 
-    // 3. Fingerprinting Rate Drift
-    const currentFpChanges = await prisma.domainChange.count({
-      where: { detectedAt: { gte: sevenDaysAgo }, fingerprintingChanged: true },
+    // 3. Fingerprinting Rate Drift (absolute pp change, not relative %)
+    // Count scans with fingerprinting evidence in each period
+    const currentFpScans = await prisma.scan.count({
+      where: {
+        status: 'done',
+        finishedAt: { gte: sevenDaysAgo },
+        evidence: { some: { kind: 'fingerprint' } },
+      },
     });
 
-    const previousFpChanges = await prisma.domainChange.count({
-      where: { detectedAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo }, fingerprintingChanged: true },
+    const previousFpScans = await prisma.scan.count({
+      where: {
+        status: 'done',
+        finishedAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo },
+        evidence: { some: { kind: 'fingerprint' } },
+      },
     });
 
-    const currentTotalChanges = await prisma.domainChange.count({
-      where: { detectedAt: { gte: sevenDaysAgo } },
-    });
-
-    const previousTotalChanges = await prisma.domainChange.count({
-      where: { detectedAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
-    });
-
-    const currentFpRate = currentTotalChanges > 0 ? (currentFpChanges / currentTotalChanges) * 100 : 0;
-    const previousFpRate = previousTotalChanges > 0 ? (previousFpChanges / previousTotalChanges) * 100 : 0;
-    const fpChangePercent = previousFpRate !== 0 ? ((currentFpRate - previousFpRate) / previousFpRate) * 100 : 0;
-    const fpAlert = Math.abs(fpChangePercent) > 30;
+    const currentFpRate = currentScoreValues.length > 0 ? (currentFpScans / currentScoreValues.length) * 100 : 0;
+    const previousFpRate = previousScoreValues.length > 0 ? (previousFpScans / previousScoreValues.length) * 100 : 0;
+    // Use absolute percentage-point difference (not relative %)
+    // e.g., 3.8% → 6.3% = 2.5pp change, NOT 65.8% relative change
+    const fpAbsDeltaPp = Math.abs(currentFpRate - previousFpRate);
+    // Alert on >10 percentage point absolute shift AND minimum sample size
+    const fpAlert = fpAbsDeltaPp > 10 && currentScoreValues.length >= MIN_SAMPLE_SIZE && previousScoreValues.length >= MIN_SAMPLE_SIZE;
 
     if (fpAlert) {
-      alerts.push(`Fingerprinting rate changed ${fpChangePercent.toFixed(1)}% (threshold: 30%)`);
+      alerts.push(`Fingerprinting rate shifted ${fpAbsDeltaPp.toFixed(1)}pp (current: ${currentFpRate.toFixed(1)}%, previous: ${previousFpRate.toFixed(1)}%)`);
     }
 
-    // 4. Insight Volume Drift
+    // 4. Insight Volume Drift (normalized per scan)
     const currentInsights = await prisma.insight.count({
       where: { createdAt: { gte: sevenDaysAgo } },
     });
@@ -162,36 +174,39 @@ async function main(): Promise<void> {
       where: { createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } },
     });
 
-    const insightChangePercent = previousInsights !== 0 ? ((currentInsights - previousInsights) / previousInsights) * 100 : 0;
-    const insightAlert = Math.abs(insightChangePercent) > 50;
+    const currentInsightsPerScan = currentScoreValues.length > 0 ? currentInsights / currentScoreValues.length : 0;
+    const previousInsightsPerScan = previousScoreValues.length > 0 ? previousInsights / previousScoreValues.length : 0;
+    const insightAbsDelta = Math.abs(currentInsightsPerScan - previousInsightsPerScan);
+    // Alert on >0.5 insights/scan absolute change AND minimum sample size
+    const insightAlert = insightAbsDelta > 0.5 && currentScoreValues.length >= MIN_SAMPLE_SIZE && previousScoreValues.length >= MIN_SAMPLE_SIZE;
 
     if (insightAlert) {
-      alerts.push(`Insight volume changed ${insightChangePercent.toFixed(1)}% (threshold: 50%)`);
+      alerts.push(`Insight rate changed by ${insightAbsDelta.toFixed(2)}/scan (current: ${currentInsightsPerScan.toFixed(2)}, previous: ${previousInsightsPerScan.toFixed(2)})`);
     }
 
     const metrics: DriftMetrics = {
       scoreDistribution: {
-        current: { mean: Math.round(currentMean * 10) / 10, stdDev: Math.round(currentStdDev * 10) / 10 },
-        previous: { mean: Math.round(previousMean * 10) / 10, stdDev: Math.round(previousStdDev * 10) / 10 },
+        current: { mean: Math.round(currentMean * 10) / 10, stdDev: Math.round(currentStdDev * 10) / 10, sampleSize: currentScoreValues.length },
+        previous: { mean: Math.round(previousMean * 10) / 10, stdDev: Math.round(previousStdDev * 10) / 10, sampleSize: previousScoreValues.length },
         drift: Math.round(scoreDrift * 10) / 10,
         alert: scoreDriftAlert,
       },
       trackerDetection: {
-        currentAvg: Math.round(currentTrackerAvg * 10) / 10,
-        previousAvg: Math.round(previousTrackerAvg * 10) / 10,
-        changePercent: Math.round(trackerChangePercent * 10) / 10,
+        currentRate: Math.round(currentTrackerRate * 10) / 10,
+        previousRate: Math.round(previousTrackerRate * 10) / 10,
+        absoluteDelta: Math.round(trackerAbsDelta * 10) / 10,
         alert: trackerAlert,
       },
       fingerprintingRate: {
         current: Math.round(currentFpRate * 10) / 10,
         previous: Math.round(previousFpRate * 10) / 10,
-        changePercent: Math.round(fpChangePercent * 10) / 10,
+        absoluteDeltaPp: Math.round(fpAbsDeltaPp * 10) / 10,
         alert: fpAlert,
       },
       insightVolume: {
-        current: currentInsights,
-        previous: previousInsights,
-        changePercent: Math.round(insightChangePercent * 10) / 10,
+        currentPerScan: Math.round(currentInsightsPerScan * 100) / 100,
+        previousPerScan: Math.round(previousInsightsPerScan * 100) / 100,
+        absoluteDelta: Math.round(insightAbsDelta * 100) / 100,
         alert: insightAlert,
       },
     };
@@ -212,24 +227,24 @@ async function main(): Promise<void> {
       console.log('DRIFT ANALYSIS');
       console.log('');
       console.log('  Score Distribution:');
-      console.log(`    Current: mean=${metrics.scoreDistribution.current.mean}, stdDev=${metrics.scoreDistribution.current.stdDev}`);
-      console.log(`    Previous: mean=${metrics.scoreDistribution.previous.mean}, stdDev=${metrics.scoreDistribution.previous.stdDev}`);
+      console.log(`    Current: mean=${metrics.scoreDistribution.current.mean}, stdDev=${metrics.scoreDistribution.current.stdDev} (n=${metrics.scoreDistribution.current.sampleSize})`);
+      console.log(`    Previous: mean=${metrics.scoreDistribution.previous.mean}, stdDev=${metrics.scoreDistribution.previous.stdDev} (n=${metrics.scoreDistribution.previous.sampleSize})`);
       console.log(`    Drift: ${metrics.scoreDistribution.drift}% ${metrics.scoreDistribution.alert ? '⚠️' : '✓'}`);
       console.log('');
-      console.log('  Tracker Detection:');
-      console.log(`    Current avg: ${metrics.trackerDetection.currentAvg}`);
-      console.log(`    Previous avg: ${metrics.trackerDetection.previousAvg}`);
-      console.log(`    Change: ${metrics.trackerDetection.changePercent}% ${metrics.trackerDetection.alert ? '⚠️' : '✓'}`);
+      console.log('  Tracker Detection (per-scan rate):');
+      console.log(`    Current: ${metrics.trackerDetection.currentRate} trackers/scan`);
+      console.log(`    Previous: ${metrics.trackerDetection.previousRate} trackers/scan`);
+      console.log(`    Delta: ${metrics.trackerDetection.absoluteDelta} trackers/scan ${metrics.trackerDetection.alert ? '⚠️' : '✓'}`);
       console.log('');
-      console.log('  Fingerprinting Rate:');
+      console.log('  Fingerprinting Rate (absolute pp):');
       console.log(`    Current: ${metrics.fingerprintingRate.current}%`);
       console.log(`    Previous: ${metrics.fingerprintingRate.previous}%`);
-      console.log(`    Change: ${metrics.fingerprintingRate.changePercent}% ${metrics.fingerprintingRate.alert ? '⚠️' : '✓'}`);
+      console.log(`    Delta: ${metrics.fingerprintingRate.absoluteDeltaPp}pp ${metrics.fingerprintingRate.alert ? '⚠️' : '✓'}`);
       console.log('');
-      console.log('  Insight Volume:');
-      console.log(`    Current: ${metrics.insightVolume.current}`);
-      console.log(`    Previous: ${metrics.insightVolume.previous}`);
-      console.log(`    Change: ${metrics.insightVolume.changePercent}% ${metrics.insightVolume.alert ? '⚠️' : '✓'}`);
+      console.log('  Insight Volume (per-scan rate):');
+      console.log(`    Current: ${metrics.insightVolume.currentPerScan}/scan`);
+      console.log(`    Previous: ${metrics.insightVolume.previousPerScan}/scan`);
+      console.log(`    Delta: ${metrics.insightVolume.absoluteDelta}/scan ${metrics.insightVolume.alert ? '⚠️' : '✓'}`);
       console.log('');
       console.log('────────────────────────────────────────────────────────────');
       console.log(`STATUS: ${overallStatus.toUpperCase()}`);

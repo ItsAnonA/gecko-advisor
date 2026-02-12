@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { normalizeDomain, SEO_CONSTANTS } from '@gecko-advisor/shared';
+import { normalizeHostname as normalizeDomain, SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { fetchComparison, type DomainComparison } from '@/lib/api';
 
 interface Props {

@@ -45,7 +45,7 @@ const ScoreDial = memo(function ScoreDial({ score, className = '', size = 'md' }
   const getScoreCategory = (score: number) => {
     if (score >= 70) return {
       level: 'safe',
-      color: '#22c55e', // score-safe
+      color: '#16a34a', // green-600 (WCAG AA compliant)
       bgColor: 'bg-score-safe/20',
       textColor: 'text-score-safe',
       label: 'Low Privacy Risk',
@@ -54,7 +54,7 @@ const ScoreDial = memo(function ScoreDial({ score, className = '', size = 'md' }
     };
     if (score >= 40) return {
       level: 'caution',
-      color: '#fbbf24', // score-caution
+      color: '#d97706', // amber-600 (visible on dark ring background)
       bgColor: 'bg-score-caution/20',
       textColor: 'text-score-caution',
       label: 'Moderate Privacy Risk',
@@ -63,7 +63,7 @@ const ScoreDial = memo(function ScoreDial({ score, className = '', size = 'md' }
     };
     return {
       level: 'danger',
-      color: '#f87171', // score-danger
+      color: '#dc2626', // red-600 (WCAG AA compliant)
       bgColor: 'bg-score-danger/20',
       textColor: 'text-score-danger',
       label: 'High Privacy Risk',

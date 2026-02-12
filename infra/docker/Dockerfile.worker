@@ -12,4 +12,8 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl tini && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 COPY --from=builder /app .
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+USER appuser
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "--import", "tsx", "apps/worker/src/index.ts"]

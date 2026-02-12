@@ -51,7 +51,7 @@ function TabButton({ active, onClick, children }: TabButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+      className={`px-6 py-3 rounded-lg font-semibold transition-all focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
         active ? 'bg-advisor-500 text-white' : 'bg-gray-100 text-gecko-600 hover:bg-gray-200'
       }`}
     >

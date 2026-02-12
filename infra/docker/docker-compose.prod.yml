@@ -13,8 +13,8 @@ services:
 
     environment:
       POSTGRES_USER: postgres
-      # For quick test, simple password is OK. For real prod, use strong password!
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # REQUIRED: Set POSTGRES_PASSWORD in environment or Coolify secrets
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_DB: privacy
 
       # PRODUCTION: Enable query logging for audit trail

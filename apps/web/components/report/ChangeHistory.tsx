@@ -107,7 +107,8 @@ function TrackerChanges({
     <div className="mt-2">
       <button
         onClick={onToggle}
-        className="text-sm text-zinc-600 hover:text-zinc-900 flex items-center gap-1"
+        aria-expanded={expanded}
+        className="text-sm text-zinc-600 hover:text-zinc-900 flex items-center gap-1 rounded focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         <span>{expanded ? '−' : '+'}</span>
         <span>

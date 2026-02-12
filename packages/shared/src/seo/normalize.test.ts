@@ -4,9 +4,9 @@ SPDX-License-Identifier: MIT
 */
 
 import { describe, it, expect } from 'vitest';
-import { normalizeDomain, isValidDomain, getRegistrableDomain } from './normalize.js';
+import { normalizeHostname, isValidDomain, getRegistrableDomain } from './normalize.js';
 
-describe('normalizeDomain', () => {
+describe('normalizeHostname', () => {
   // Basic normalization cases
   const basicCases = [
     { input: 'example.com', expected: 'example.com' },
@@ -18,7 +18,7 @@ describe('normalizeDomain', () => {
   describe('basic normalization', () => {
     basicCases.forEach(({ input, expected }) => {
       it(`"${input}" → "${expected}"`, () => {
-        expect(normalizeDomain(input)).toBe(expected);
+        expect(normalizeHostname(input)).toBe(expected);
       });
     });
   });
@@ -33,7 +33,7 @@ describe('normalizeDomain', () => {
   describe('www stripping', () => {
     wwwCases.forEach(({ input, expected }) => {
       it(`"${input}" → "${expected}"`, () => {
-        expect(normalizeDomain(input)).toBe(expected);
+        expect(normalizeHostname(input)).toBe(expected);
       });
     });
   });
@@ -51,7 +51,7 @@ describe('normalizeDomain', () => {
   describe('URL stripping', () => {
     urlCases.forEach(({ input, expected }) => {
       it(`"${input}" → "${expected}"`, () => {
-        expect(normalizeDomain(input)).toBe(expected);
+        expect(normalizeHostname(input)).toBe(expected);
       });
     });
   });
@@ -66,7 +66,7 @@ describe('normalizeDomain', () => {
   describe('trailing dot removal', () => {
     trailingDotCases.forEach(({ input, expected }) => {
       it(`"${input}" → "${expected}"`, () => {
-        expect(normalizeDomain(input)).toBe(expected);
+        expect(normalizeHostname(input)).toBe(expected);
       });
     });
   });
@@ -83,7 +83,7 @@ describe('normalizeDomain', () => {
   describe('unicode → punycode conversion', () => {
     punycodeCases.forEach(({ input, expected }) => {
       it(`"${input}" → "${expected}"`, () => {
-        expect(normalizeDomain(input)).toBe(expected);
+        expect(normalizeHostname(input)).toBe(expected);
       });
     });
   });
@@ -101,7 +101,7 @@ describe('normalizeDomain', () => {
   describe('invalid inputs → empty string', () => {
     invalidCases.forEach(({ input, expected }) => {
       it(`"${input}" → "${expected}"`, () => {
-        expect(normalizeDomain(input as string | null | undefined)).toBe(expected);
+        expect(normalizeHostname(input as string | null | undefined)).toBe(expected);
       });
     });
   });
@@ -109,13 +109,13 @@ describe('normalizeDomain', () => {
   // Port removal
   describe('port removal', () => {
     it('removes port 80', () => {
-      expect(normalizeDomain('example.com:80')).toBe('example.com');
+      expect(normalizeHostname('example.com:80')).toBe('example.com');
     });
     it('removes port 443', () => {
-      expect(normalizeDomain('example.com:443')).toBe('example.com');
+      expect(normalizeHostname('example.com:443')).toBe('example.com');
     });
     it('removes custom port', () => {
-      expect(normalizeDomain('example.com:8080')).toBe('example.com');
+      expect(normalizeHostname('example.com:8080')).toBe('example.com');
     });
   });
 });

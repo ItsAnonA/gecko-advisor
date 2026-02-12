@@ -27,6 +27,12 @@ body {
   transition: stroke-dashoffset 1.5s ease-out;
 }
 
+/* Global focus-visible indicator for keyboard navigation (WCAG 2.1 AA) */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
 /* Structured data visibility helper */
 .structured-data-hidden {
   display: none;

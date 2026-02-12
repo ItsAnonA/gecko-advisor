@@ -14,5 +14,9 @@ RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 COPY --from=builder /app .
 COPY infra/docker/backend-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+USER appuser
 EXPOSE 5000
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["/entrypoint.sh"]

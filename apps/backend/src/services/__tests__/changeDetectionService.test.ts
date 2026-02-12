@@ -220,34 +220,7 @@ describe('extractScanData', () => {
   it('detects fingerprinting', () => {
     const scan = {
       ...baseScan,
-      evidence: [{ kind: 'fingerprinting', details: {} }],
-    };
-    const result = extractScanData(scan);
-    expect(result.hasFingerprinting).toBe(true);
-  });
-
-  it('detects canvas fingerprinting', () => {
-    const scan = {
-      ...baseScan,
-      evidence: [{ kind: 'canvas_fingerprinting', details: {} }],
-    };
-    const result = extractScanData(scan);
-    expect(result.hasFingerprinting).toBe(true);
-  });
-
-  it('detects webgl fingerprinting', () => {
-    const scan = {
-      ...baseScan,
-      evidence: [{ kind: 'webgl_fingerprinting', details: {} }],
-    };
-    const result = extractScanData(scan);
-    expect(result.hasFingerprinting).toBe(true);
-  });
-
-  it('detects audio fingerprinting', () => {
-    const scan = {
-      ...baseScan,
-      evidence: [{ kind: 'audio_fingerprinting', details: {} }],
+      evidence: [{ kind: 'fingerprint', details: {} }],
     };
     const result = extractScanData(scan);
     expect(result.hasFingerprinting).toBe(true);

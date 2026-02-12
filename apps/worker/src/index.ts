@@ -10,32 +10,7 @@ import { scanSiteJob } from "./scanner.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { initSentry, Sentry } from "./sentry.js";
-import { etldPlusOne, isBlockedDomain } from "@gecko-advisor/shared";
-
-/**
- * Normalize a URL or hostname to its effective domain (eTLD+1).
- * Mirrors the backend's domainService.normalizeDomain function.
- *
- * Returns empty string for bare TLDs (e.g., "com.br", "co.uk") which are
- * not valid registrable domains.
- */
-function normalizeDomain(input: string): string {
-  if (!input || typeof input !== 'string') {
-    return '';
-  }
-  let hostname = input.toLowerCase().trim();
-  hostname = hostname.replace(/^https?:\/\//, '');
-  hostname = hostname.replace(/^www\./, '');
-  hostname = hostname.split('/')[0] ?? hostname;
-  hostname = hostname.split('?')[0] ?? hostname;
-  hostname = hostname.split('#')[0] ?? hostname;
-  hostname = hostname.split(':')[0] ?? hostname;
-  if (!hostname || hostname.length === 0) {
-    return '';
-  }
-  // etldPlusOne returns null for bare TLDs like "com.br"
-  return etldPlusOne(hostname) ?? '';
-}
+import { normalizeDomain, isBlockedDomain } from "@gecko-advisor/shared";
 
 /**
  * Upsert a Domain record when a scan completes.
@@ -154,9 +129,7 @@ async function processReportGenerationJob(job: Job<ReportGenerationJobData>): Pr
     // Find the latest scan for this domain
     const latestScan = await prisma.scan.findFirst({
       where: {
-        input: {
-          contains: domain,
-        },
+        normalizedInput: domain,
         status: 'done',
       },
       orderBy: {

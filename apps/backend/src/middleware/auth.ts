@@ -5,13 +5,20 @@ SPDX-License-Identifier: MIT
 import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService.js';
 import { prisma } from '../prisma.js';
+import { config } from '../config.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
 
 /**
- * Singleton instance of AuthService
+ * Singleton instance of AuthService (lazy init only when auth is enabled)
  */
-const authService = new AuthService(prisma);
+let _authService: AuthService | null = null;
+function getAuthService(): AuthService {
+  if (!_authService) {
+    _authService = new AuthService(prisma);
+  }
+  return _authService;
+}
 
 /**
  * Extract JWT token from Authorization header
@@ -54,6 +61,12 @@ export async function optionalAuth(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // When auth is disabled, skip all token processing
+  if (!config.enableAuth) {
+    next();
+    return;
+  }
+
   try {
     const token = extractToken(req);
 
@@ -64,10 +77,11 @@ export async function optionalAuth(
     }
 
     // Verify token
+    const authService = getAuthService();
     const payload = authService.verifyToken(token);
 
     // Load user from database
-    const user = await authService.getUserById(payload.userId);
+    const user = await getAuthService().getUserById(payload.userId);
 
     // Attach user to request
     (req as Request & { user?: typeof user }).user = user;
@@ -100,6 +114,12 @@ export async function requireAuth(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // When auth is disabled, auth-required endpoints are not available
+  if (!config.enableAuth) {
+    problem(res, 404, 'Not Found', 'Authentication is not enabled');
+    return;
+  }
+
   try {
     const token = extractToken(req);
 
@@ -112,7 +132,7 @@ export async function requireAuth(
     // Verify token
     let payload;
     try {
-      payload = authService.verifyToken(token);
+      payload = getAuthService().verifyToken(token);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'TOKEN_EXPIRED') {
@@ -132,7 +152,7 @@ export async function requireAuth(
     }
 
     // Load user from database
-    const user = await authService.getUserById(payload.userId);
+    const user = await getAuthService().getUserById(payload.userId);
 
     // Attach user to request
     (req as Request & { user?: typeof user }).user = user;
@@ -170,6 +190,12 @@ export async function requirePro(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // When auth is disabled, Pro features are not available
+  if (!config.enableAuth) {
+    problem(res, 404, 'Not Found', 'Authentication is not enabled');
+    return;
+  }
+
   try {
     // First, ensure user is authenticated
     const token = extractToken(req);
@@ -183,7 +209,7 @@ export async function requirePro(
     // Verify token
     let payload;
     try {
-      payload = authService.verifyToken(token);
+      payload = getAuthService().verifyToken(token);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'TOKEN_EXPIRED') {
@@ -203,7 +229,7 @@ export async function requirePro(
     }
 
     // Load user from database
-    const user = await authService.getUserById(payload.userId);
+    const user = await getAuthService().getUserById(payload.userId);
 
     // Check if user has Pro or Team subscription
     if (user.subscription !== 'PRO' && user.subscription !== 'TEAM') {

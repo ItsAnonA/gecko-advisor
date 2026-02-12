@@ -87,7 +87,7 @@ contextV2Router.get('/v2/context/:domain', async (req, res) => {
       cookieCount: reportPayload.meta.cookieCount,
       thirdPartyCount: reportPayload.meta.thirdPartyCount,
       hasFingerprinting,
-      hasPolicyLink: reportPayload.evidence.some((e) => e.kind === 'policy-link'),
+      hasPolicyLink: reportPayload.evidence.some((e) => e.kind === 'policy'),
       isHttpOnly: reportPayload.meta.isHttpOnly ?? false,
       tlsGrade: reportPayload.meta.tlsGrade,
       penalties: reportPayload.meta.penalties,

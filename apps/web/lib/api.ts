@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 import { cache } from 'react';
 import {
-  normalizeDomain,
+  normalizeHostname as normalizeDomain,
   isValidDomain,
   getIndexTier,
   isBlockedDomain,
@@ -198,10 +198,7 @@ export const getReportForDomain = cache(
     // Detect fingerprinting from evidence
     const hasFingerprinting = data?.evidence?.some(
       (e) =>
-        e.kind === 'fingerprinting' ||
-        e.kind === 'canvas_fingerprinting' ||
-        e.kind === 'webgl_fingerprinting' ||
-        e.kind === 'audio_fingerprinting'
+        e.kind === 'fingerprint'
     ) ?? false;
 
     const seo = buildReportSEO(
