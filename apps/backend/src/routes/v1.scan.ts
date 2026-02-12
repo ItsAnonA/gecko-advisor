@@ -80,7 +80,7 @@ scanV1Router.post(['/', '/url'], requireTurnstile, scanRateLimiter, async (req, 
       normalizedInput,
       status: 'queued',
       progress: 0,
-      source: force ? 'manual-force' : 'manual',
+      source: force ? 'manual_force' : 'manual',
     });
 
     await scanQueue.add(

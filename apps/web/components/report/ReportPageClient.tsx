@@ -193,7 +193,7 @@ function getDisplayKind(kind: string): string {
     fingerprint: 'Fingerprinting',
     policy: 'Privacy Policy',
     tls: 'TLS/HTTPS',
-    'mixed-content': 'Mixed Content',
+    'mixed_content': 'Mixed Content',
   };
   return labels[kind] || kind.charAt(0).toUpperCase() + kind.slice(1);
 }
@@ -278,7 +278,7 @@ export default function ReportPageClient({
           e.kind === 'tls' ||
           e.kind === 'header' ||
           e.kind === 'insecure' ||
-          e.kind === 'mixed-content'
+          e.kind === 'mixed_content'
       );
     } else if (activeTab === 'cookies') {
       filtered = evidence.filter((e) => e.kind === 'cookie');

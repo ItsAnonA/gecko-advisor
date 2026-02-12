@@ -134,7 +134,7 @@ const KIND_LABELS: Record<string, { label: string; description: string; icon: Re
     description: 'Content loaded without encryption (HTTP)',
     icon: Icons.warning,
   },
-  'mixed-content': {
+  'mixed_content': {
     label: 'Mixed Content',
     description: 'HTTP content loaded on HTTPS page',
     icon: Icons.unlocked,
@@ -433,7 +433,7 @@ export default function InteractiveReport({ data, domain, seoContent, heading, c
     if (e.kind === 'tls') {
       return isTlsVulnerability(e); // Only include poor TLS grades
     }
-    return e.kind === 'header' || e.kind === 'insecure' || e.kind === 'mixed-content';
+    return e.kind === 'header' || e.kind === 'insecure' || e.kind === 'mixed_content';
   });
   // Positive findings (good TLS grades) - show in overview
   const positiveFindings = evidence.filter(e => {
@@ -1228,8 +1228,8 @@ function EvidencePanel({
                 ? `${highSeverity} issue${highSeverity > 1 ? 's' : ''} may need attention. `
                 : 'No critical security issues found. '}
               {kindCounts.header ? `${kindCounts.header} missing security header${kindCounts.header > 1 ? 's' : ''}. ` : ''}
-              {kindCounts.insecure || kindCounts['mixed-content']
-                ? `${(kindCounts.insecure || 0) + (kindCounts['mixed-content'] || 0)} insecure resource${((kindCounts.insecure || 0) + (kindCounts['mixed-content'] || 0)) > 1 ? 's' : ''}.`
+              {kindCounts.insecure || kindCounts['mixed_content']
+                ? `${(kindCounts.insecure || 0) + (kindCounts['mixed_content'] || 0)} insecure resource${((kindCounts.insecure || 0) + (kindCounts['mixed_content'] || 0)) > 1 ? 's' : ''}.`
                 : ''}
             </p>
           </div>

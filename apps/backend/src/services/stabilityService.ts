@@ -11,7 +11,7 @@
  * are retained for individual API calls.
  */
 
-import type { PrismaClient, DomainTrend, ChangeType } from '@prisma/client';
+import type { PrismaClient, DomainTrend, ChangeType, IndexTier } from '@prisma/client';
 
 // ============================================================
 // TIERED STABILITY REQUIREMENTS (Gap 2 Fix)
@@ -668,7 +668,7 @@ export async function updateAllDomainStability(prisma: PrismaClient): Promise<{
 export async function getUnstableDomains(
   prisma: PrismaClient,
   options: {
-    tier?: string;
+    tier?: IndexTier;
     minVolatility?: number;
     limit?: number;
   } = {}
@@ -678,7 +678,7 @@ export async function getUnstableDomains(
     domainId: string;
     volatilityIndex: number;
     trend: DomainTrend;
-    domain: { domain: string; indexTier: string; category: { name: string } | null };
+    domain: { domain: string; indexTier: IndexTier; category: { name: string } | null };
   }>
 > {
   const { tier, minVolatility = 50, limit = 20 } = options;
@@ -708,14 +708,14 @@ export async function getUnstableDomains(
 export async function getDomainsByTrend(
   prisma: PrismaClient,
   trend: DomainTrend,
-  options: { tier?: string; minStrength?: number; limit?: number } = {}
+  options: { tier?: IndexTier; minStrength?: number; limit?: number } = {}
 ): Promise<
   Array<{
     id: string;
     domainId: string;
     trend: DomainTrend;
     trendStrength: number;
-    domain: { domain: string; indexTier: string; category: { name: string } | null };
+    domain: { domain: string; indexTier: IndexTier; category: { name: string } | null };
   }>
 > {
   const { tier, minStrength = 0.3, limit = 20 } = options;

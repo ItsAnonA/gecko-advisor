@@ -13,7 +13,8 @@ export const EvidenceKind = z.enum([
   'policy',
   'tls',
   'fingerprint',
-  'mixed-content',
+  'mixed_content',
+  'third_party_tracker',
 ]);
 
 // ============================================================================
@@ -62,7 +63,7 @@ export const FingerprintDetailsSchema = z.object({
   signal: z.string().optional(),
 }).passthrough();
 
-/** details for kind: 'insecure' and 'mixed-content' */
+/** details for kind: 'insecure' and 'mixed_content' */
 export const InsecureDetailsSchema = z.object({
   url: z.string(),
   host: z.string().optional(),
@@ -100,7 +101,8 @@ export const EvidenceDetailsSchemaByKind = {
   policy: PolicyDetailsSchema,
   fingerprint: FingerprintDetailsSchema,
   insecure: InsecureDetailsSchema,
-  'mixed-content': InsecureDetailsSchema,
+  mixed_content: InsecureDetailsSchema,
+  third_party_tracker: TrackerDetailsSchema,
 } as const satisfies Record<z.infer<typeof EvidenceKind>, z.ZodType>;
 
 // Inferred TypeScript types for each evidence details shape

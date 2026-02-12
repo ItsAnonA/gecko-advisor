@@ -46,13 +46,13 @@ const LimitQuerySchema = z.object({
 });
 
 const UnstableQuerySchema = z.object({
-  tier: z.string().optional(),
+  tier: z.enum(['A', 'B', 'C']).optional(),
   minVolatility: z.coerce.number().min(0).max(100).optional().default(50),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });
 
 const TrendQuerySchema = z.object({
-  tier: z.string().optional(),
+  tier: z.enum(['A', 'B', 'C']).optional(),
   minStrength: z.coerce.number().min(0).max(1).optional().default(0.3),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });

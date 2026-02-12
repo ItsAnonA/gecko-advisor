@@ -9,6 +9,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// === String-to-Enum Conversions (Issue #49) ===
+
+enum ScanStatus {
+  queued
+  running
+  done
+  error
+}
+
+enum ScanTargetType {
+  url
+  app
+  address
+}
+
+enum ScanSource {
+  manual
+  manual_force
+  stub
+  batch
+  admin_bulk
+  scan_queue
+  rescan_orphan
+  retry_failed
+}
+
+enum EvidenceKind {
+  tracker
+  cookie
+  header
+  insecure
+  thirdparty
+  policy
+  tls
+  fingerprint
+  mixed_content
+  third_party_tracker
+}
+
+enum IndexTier {
+  A
+  B
+  C
+}
+
+enum BatchStatus {
+  running
+  completed
+  failed
+}
+
+enum NarrativeStatus {
+  approved
+  blocked
+  error
+  skipped
+}
+
+enum NarrativeScope {
+  INSIGHT
+  WEEKLY
+}
+
 // Existing enums
 enum IssueSeverity {
   info
@@ -142,10 +205,10 @@ model User {
 // Enhanced Scan model with user relations and privacy controls
 model Scan {
   id              String    @id @default(cuid())
-  targetType      String
+  targetType      ScanTargetType
   input           String
   normalizedInput String?
-  status          String
+  status          ScanStatus
   score           Int?
   label           String?
   progress        Int @default(0)
@@ -153,7 +216,7 @@ model Scan {
   startedAt       DateTime?
   finishedAt      DateTime?
   slug            String    @unique
-  source          String    @default("manual")
+  source          ScanSource @default(manual)
   dedupeOfId      String?
   shareMessage    String?
   meta            Json?
@@ -200,7 +263,7 @@ model Scan {
 model Evidence {
   id        String   @id @default(cuid())
   scanId    String
-  kind      String
+  kind      EvidenceKind
   severity  Int
   title     String
   details   Json
@@ -342,7 +405,7 @@ model Domain {
 
   // === SEO Tier System (Phase 2A) ===
   // Tier A = MUST index (~5-7K), Tier B = eligible (~20-30K), Tier C = discovery only
-  indexTier        String    @default("C") // "A", "B", "C"
+  indexTier        IndexTier @default(C)
   tierScore        Int       @default(0) // Calculated priority score
   tierCalculatedAt DateTime? // When tier was last calculated
   tierRank         Int? // Position in tier score ranking (Tier A only)
@@ -591,7 +654,7 @@ model SchedulerBatch {
   // Execution tracking
   startedAt     DateTime @default(now())
   completedAt   DateTime?
-  status        String   @default("running") // "running" | "completed" | "failed"
+  status        BatchStatus @default(running)
 
   // Results
   scheduled     Int      @default(0)
@@ -837,8 +900,8 @@ model Insight {
 
   // Narrative governance
   narrative             String?         // Generated narrative text
-  narrativeStatus       String?         // 'approved' | 'blocked' | 'error' | 'skipped'
-  narrativeScope        String?         // 'INSIGHT' | 'WEEKLY'
+  narrativeStatus       NarrativeStatus?
+  narrativeScope        NarrativeScope?
 
   createdAt             DateTime        @default(now())
 

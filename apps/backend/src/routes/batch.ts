@@ -215,8 +215,8 @@ batchRouter.get('/:batchId/status', requirePro, async (req: Request, res: Respon
     const statusCounts = {
       total: scans.length,
       completed: scans.filter((s) => s.status === 'done').length,
-      failed: scans.filter((s) => s.status === 'failed').length,
-      processing: scans.filter((s) => s.status === 'processing').length,
+      failed: scans.filter((s) => s.status === 'error').length,
+      processing: scans.filter((s) => s.status === 'running').length,
       queued: scans.filter((s) => s.status === 'queued').length,
     };
 
@@ -330,8 +330,8 @@ batchRouter.get('/history', requirePro, async (req: Request, res: Response) => {
       batch.scans.push(scan);
 
       if (scan.status === 'done') batch.completed++;
-      else if (scan.status === 'failed') batch.failed++;
-      else if (scan.status === 'processing') batch.processing++;
+      else if (scan.status === 'error') batch.failed++;
+      else if (scan.status === 'running') batch.processing++;
       else if (scan.status === 'queued') batch.queued++;
 
       // Update createdAt to earliest scan in batch

@@ -75,12 +75,12 @@ scanV2Router.post(['/', '/url'], optionalAuth, requireTurnstile, scanRateLimiter
     // Prepare scan data with optional user tracking
     // All scans are public and free - no PRO tier
     const scanData = {
-      targetType: 'url',
+      targetType: 'url' as const,
       input: url,
       normalizedInput,
-      status: 'queued',
+      status: 'queued' as const,
       progress: 0,
-      source: force ? 'manual-force' : 'manual',
+      source: force ? ('manual_force' as const) : ('manual' as const),
       // Optional user tracking for scan history
       userId: user?.id || null,
       scannerIp: req.ip || null,

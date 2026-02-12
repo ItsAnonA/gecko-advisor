@@ -9,7 +9,7 @@ import {
   assessConfidence,
   deduplicateEvidence,
 } from '../scoring.js';
-import type { Evidence } from '@prisma/client';
+import type { Evidence, EvidenceKind } from '@prisma/client';
 
 // ============================================================================
 // Test Helpers
@@ -18,7 +18,7 @@ import type { Evidence } from '@prisma/client';
 let idCounter = 0;
 
 function mockEvidence(
-  kind: string,
+  kind: EvidenceKind,
   details: Record<string, unknown> = {}
 ): Evidence {
   idCounter++;

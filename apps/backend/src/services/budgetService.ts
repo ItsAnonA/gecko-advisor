@@ -183,14 +183,14 @@ async function getSystemMetrics(prisma: PrismaClient): Promise<SystemMetrics> {
       where: { finishedAt: { gte: hourAgo } },
     }),
     prisma.scan.count({
-      where: { finishedAt: { gte: hourAgo }, status: 'failed' },
+      where: { finishedAt: { gte: hourAgo }, status: 'error' },
     }),
   ]);
   const errorRate = totalScans > 0 ? failedScans / totalScans : 0;
 
   // Queue depth (pending scans)
   const queueDepth = await prisma.scan.count({
-    where: { status: { in: ['pending', 'queued', 'running'] } },
+    where: { status: { in: ['queued', 'running'] } },
   });
 
   // Average duration (last hour, completed scans only)

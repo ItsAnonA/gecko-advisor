@@ -108,7 +108,7 @@ type ThirdPartyEvidence = {
 
 type EvidenceData = {
   scanId: string;
-  kind: string;
+  kind: Prisma.EvidenceCreateManyInput['kind'];
   severity: number;
   title: string;
   details: Prisma.InputJsonValue;

@@ -149,10 +149,10 @@ describe('calculateSignificance', () => {
 describe('extractScanData', () => {
   const baseScan = {
     id: 'scan-1',
-    targetType: 'url',
+    targetType: 'url' as const,
     input: 'https://example.com',
     normalizedInput: 'https://example.com',
-    status: 'done',
+    status: 'done' as const,
     score: 85,
     label: 'Good',
     progress: 100,
@@ -160,7 +160,7 @@ describe('extractScanData', () => {
     startedAt: new Date(),
     finishedAt: new Date(),
     slug: 'test-slug',
-    source: 'manual',
+    source: 'manual' as const,
     dedupeOfId: null,
     shareMessage: null,
     meta: null,

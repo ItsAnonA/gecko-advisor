@@ -63,7 +63,7 @@ const ReportTabs = memo(function ReportTabs({
       e.kind === 'tracker' || e.kind === 'thirdparty' || e.kind === 'fingerprint'
     );
     const security = evidence.filter(e =>
-      e.kind === 'tls' || e.kind === 'header' || e.kind === 'insecure' || e.kind === 'mixed-content'
+      e.kind === 'tls' || e.kind === 'header' || e.kind === 'insecure' || e.kind === 'mixed_content'
     );
     const cookies = evidence.filter(e => e.kind === 'cookie');
 

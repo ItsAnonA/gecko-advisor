@@ -219,7 +219,7 @@ async function retryFailedScans() {
           status: 'queued',
           isPublic: true,
           scannerIp: 'retry-script',
-          source: 'retry-failed',
+          source: 'retry_failed',
         },
       });
 
