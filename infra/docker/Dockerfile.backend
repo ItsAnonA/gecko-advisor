@@ -22,6 +22,9 @@ COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 COPY infra/prisma/package.json infra/prisma/
 
+# Copy Prisma schema (needed by postinstall hooks that run prisma generate)
+COPY infra/prisma/schema.prisma infra/prisma/
+
 # Install all dependencies (including devDependencies for building)
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
@@ -40,7 +43,20 @@ RUN pnpm prisma:generate && pnpm turbo run build --filter=@gecko-advisor/backend
 
 # Create a pruned production deployment with only production dependencies
 # pnpm deploy copies the package + production node_modules into a self-contained directory
-RUN pnpm deploy --filter=@gecko-advisor/backend --prod /app/pruned/backend
+RUN pnpm deploy --filter=@gecko-advisor/backend --prod --legacy /app/pruned/backend
+
+# Resolve pnpm symlinks for Prisma CLI packages needed at runtime (prisma migrate deploy)
+# pnpm uses symlinks in node_modules; cp -rL dereferences them into real files
+# NOTE: @prisma/client is already in pruned node_modules (production dep), so skip it here
+#       to avoid COPY conflicts. Only copy CLI deps (engines, debug, get-platform, etc.)
+RUN mkdir -p /prisma-deps/@prisma && \
+    cp -rL node_modules/.prisma /prisma-deps/.prisma && \
+    cp -rL node_modules/prisma /prisma-deps/prisma && \
+    for pkg in node_modules/.pnpm/node_modules/@prisma/*; do \
+      name=$(basename "$pkg"); \
+      [ "$name" = "client" ] && continue; \
+      cp -rL "$pkg" "/prisma-deps/@prisma/$name"; \
+    done
 
 # ---------- Stage 3: Production runner ----------
 FROM node:22-slim AS runner
@@ -64,16 +80,13 @@ COPY --from=build /app/packages/shared/package.json ./node_modules/@gecko-adviso
 # Copy Prisma schema + migrations (needed for prisma migrate deploy)
 COPY --from=build /app/infra/prisma ./infra/prisma
 
-# Copy Prisma packages for runtime and migrations
+# Copy Prisma packages for runtime and migrations (resolved from pnpm symlinks in build stage)
 # .prisma: generated client with query engine binary
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-# @prisma/* from pnpm store: engines, debug, get-platform, fetch-engine, etc.
-# These are transitive dependencies of the prisma CLI needed for migrate deploy
-COPY --from=build /app/node_modules/.pnpm/node_modules/@prisma ./node_modules/@prisma
-# @prisma/client: overlay the client package (may already be in pruned node_modules)
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /prisma-deps/.prisma ./node_modules/.prisma
+# @prisma/*: engines, client, debug, get-platform, fetch-engine, etc.
+COPY --from=build /prisma-deps/@prisma ./node_modules/@prisma
 # prisma: CLI binary for `prisma migrate deploy` in entrypoint
-COPY --from=build /app/node_modules/prisma ./node_modules/prisma
+COPY --from=build /prisma-deps/prisma ./node_modules/prisma
 
 # Copy data files needed at runtime (fallback lists loaded via process.cwd())
 COPY packages/shared/data ./packages/shared/data
@@ -88,6 +101,9 @@ RUN chmod +x /entrypoint.sh
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser
+
+# Prisma migrate deploy needs write access to @prisma/engines for engine binaries
+RUN chown -R appuser:nodejs node_modules/@prisma/engines node_modules/.prisma node_modules/prisma
 
 USER appuser
 
