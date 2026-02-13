@@ -46,7 +46,9 @@ export default function robots(): MetadataRoute.Robots {
 
           // Legacy redirect-only paths
           '/privacy-policy/',
-          '/r/',
+          // NOTE: /r/ removed — middleware now rewrites short slugs internally,
+          // and the route handler returns a single 301 to the canonical URL.
+          // Blocking /r/ in robots.txt contradicted the redirect chain.
 
           // Crawler artifact blocking (sub-resources under dynamic routes)
           '/privacy-report/*/_next/',

@@ -65,6 +65,16 @@ if (!process.env.VITEST_WORKER_ID) {
     void shutdown('SIGTERM');
   });
 
+  // Catch unhandled async errors so they're logged, not silently swallowed.
+  // GSC showed 180 5xx errors — these handlers ensure we see every one.
+  process.on('unhandledRejection', (reason) => {
+    logger.error({ err: reason }, 'Unhandled promise rejection');
+  });
+  process.on('uncaughtException', (err) => {
+    logger.fatal({ err }, 'Uncaught exception — shutting down');
+    void shutdown('SIGTERM');
+  });
+
   void start();
 }
 

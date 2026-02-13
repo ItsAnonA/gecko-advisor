@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { Suspense } from 'react';
-import { notFound, redirect, permanentRedirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import {
@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
     },
     robots: {
-      index: tier !== 'noindex',
+      index: tier === 'full',
       follow: true,
     },
     openGraph: {
@@ -106,10 +106,10 @@ export default async function ReportPage({ params }: Props) {
     notFound();
   }
 
-  // Redirect non-canonical URLs
+  // Permanent redirect non-canonical URLs (308, not 307)
   // Compare decoded rawDomain, not params.domain (which is still encoded)
   if (rawDomain !== normalized) {
-    redirect(`/privacy-report/${normalized}`);
+    permanentRedirect(`/privacy-report/${normalized}`);
   }
 
   // This call reuses cached result from generateMetadata()

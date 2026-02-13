@@ -118,26 +118,33 @@ export async function upsertDomainOnScanComplete(
 }
 
 /**
- * Index gating configuration
- * Only high-quality reports are included in sitemap
+ * Index Quality Policy v1.1 (2026-02-13)
+ *
+ * Raised thresholds to align with Google's quality filter:
+ *   - MIN_SCORE: 40 → 60  (drop "Poor" tier; only Fair+ indexed)
+ *   - MIN_EVIDENCE_COUNT: 3 → 5  (filter thin/perfect-score reports)
+ *
+ * Rationale: GSC showed 9,207 "crawled-not-indexed" pages — Google already
+ * rejected our low-quality reports. This aligns our gate with their filter
+ * instead of fighting it. Concentrates crawl budget on ~50K strong reports.
  */
 const INDEX_GATING = {
   // Minimum evidence items for a report to be indexed
-  MIN_EVIDENCE_COUNT: 3,
+  MIN_EVIDENCE_COUNT: 5,
   // Maximum age of scan in days (90 days = 3 months)
   MAX_SCAN_AGE_DAYS: 90,
   // Require valid score
   REQUIRE_SCORE: true,
-  // Minimum privacy score for indexing (excludes "Poor" and "Very Poor" reports)
-  MIN_SCORE: 40,
+  // Minimum privacy score for indexing (Fair or better)
+  MIN_SCORE: 60,
 };
 
 /**
  * Get indexed domains for sitemap generation with quality gating.
  * Only includes domains that meet quality criteria:
- * - Has at least MIN_EVIDENCE_COUNT findings
+ * - Has at least MIN_EVIDENCE_COUNT (5) findings
  * - Scanned within MAX_SCAN_AGE_DAYS
- * - Has a valid privacy score >= MIN_SCORE (excludes "Poor" and "Very Poor" reports)
+ * - Has a valid privacy score >= MIN_SCORE (60 = Fair or better)
  */
 export async function getIndexedDomains(
   prisma: PrismaClient,
@@ -162,7 +169,7 @@ export async function getIndexedDomains(
       latestScan: {
         status: 'done',
         score: INDEX_GATING.REQUIRE_SCORE
-          ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 40 (Fair or better)
+          ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 60 (Fair or better)
           : undefined,
         evidence: {
           // Has at least MIN_EVIDENCE_COUNT evidence items
@@ -222,7 +229,7 @@ export async function countIndexedDomains(prisma: PrismaClient): Promise<number>
       latestScan: {
         status: 'done',
         score: INDEX_GATING.REQUIRE_SCORE
-          ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 40 (Fair or better)
+          ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 60 (Fair or better)
           : undefined,
         evidence: {
           some: {},

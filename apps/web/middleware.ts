@@ -34,11 +34,27 @@ const GONE_PATTERNS = [
   /^\/list(?:\/|$)/,
   /^\/entry(?:\/|$)/,
 
+  // WordPress / CMS probes (GSC 404 cleanup — 5,633 pages)
+  /^\/wp-(?:admin|login|content|includes|json)(?:\/|$)/i,
+  /^\/admin(?:\/|$)/,
+  /^\/login(?:\/|$)/,
+  /^\/cgi-bin(?:\/|$)/,
+  /^\/phpmyadmin(?:\/|$)/i,
+  /^\/(vendor|node_modules)(?:\/|$)/,
+
+  // Credential / config fishing
+  /^\/\.env/,
+  /^\/\.git(?:\/|$)/,
+  /^\/\.well-known\/(?!change-password|security\.txt)/,
+
   // File extensions that should never exist
   /\.php$/i,
   /\.html?$/i,
   /\.aspx?$/i,
   /\.asp$/i,
+  /\.jsp$/i,
+  /\.cgi$/i,
+  /\.xml$/i,
 ];
 
 // Static pages that happen to be 8 characters - exclude from short slug redirect
@@ -60,22 +76,22 @@ export function middleware(request: NextRequest) {
   }
 
   // ==========================================================================
-  // 1. Legacy short slug redirect: /ePpVg5Ab → /r/ePpVg5Ab
+  // 1. Legacy short slug: /ePpVg5Ab → rewrite to /r/ePpVg5Ab (internal)
+  //    The /r/[slug] route handler does the DB lookup and returns a single
+  //    301 redirect to /privacy-report/[domain]. Using rewrite (not redirect)
+  //    eliminates the 2-hop chain that was wasting crawl budget.
   // ==========================================================================
   const shortSlugMatch = pathname.match(SHORT_SLUG_PATTERN);
   if (shortSlugMatch) {
     const slug = shortSlugMatch[1];
 
-    // Don't redirect static pages that happen to be 8 characters
+    // Don't rewrite static pages that happen to be 8 characters
     if (STATIC_PAGES_8_CHARS.has(slug.toLowerCase())) {
       return NextResponse.next();
     }
 
-    const redirectUrl = new URL(`/r/${slug}`, request.url);
-
-    const response = NextResponse.redirect(redirectUrl, 308);
-    response.headers.set('X-Robots-Tag', 'noindex');
-    return response;
+    const rewriteUrl = new URL(`/r/${slug}`, request.url);
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   // ==========================================================================
