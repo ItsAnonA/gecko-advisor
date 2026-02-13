@@ -989,6 +989,42 @@ model GovernanceMetrics {
   @@index([date])
 }
 
+// === Phase 0: Transparency Reports (Authority Brand Infrastructure) ===
+
+enum TransparencyReportStatus {
+  DRAFT
+  PUBLISHED
+  UPDATED // Corrections post-publish, original preserved
+}
+
+model TransparencyReport {
+  id            String                   @id @default(cuid())
+  slug          String                   @unique // "2026-02" = month reported
+  title         String
+  status        TransparencyReportStatus @default(DRAFT)
+
+  scheduledFor  DateTime // Always 1st of next month, 09:00 UTC
+  publishedAt   DateTime?
+  autoPublished Boolean  @default(false)
+
+  // Immutable frozen snapshot. This IS the truth. No parallel version fields.
+  metricsSnapshot Json
+
+  // Content
+  content       String   @db.Text
+  quotables     String[] @default([])
+  keyFinding    String? // Headline finding
+  revisionNote  String? // For UPDATED reports
+
+  // Methodology snapshot (immutable copy at publication time)
+  methodologySnapshot Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt(sort: Desc)], map: "TransparencyReport_status_published_idx")
+}
+
 // === P0 #2: DDG Tracker Radar Shadow Mode ===
 // Shadow tables for comparing DDG Tracker Radar data against production lists.
 // Completely separate from production scoring - read-only comparison only.

@@ -211,6 +211,84 @@ export default function MethodologyPage() {
           </ul>
         </section>
 
+        {/* Prediction Validation */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold text-zinc-900 mb-4">Prediction Validation</h2>
+          <p className="text-zinc-700 mb-4">
+            Gecko Advisor generates predictive insights about domain privacy trends. All predictions
+            are tracked and validated against actual outcomes:
+          </p>
+          <ul className="space-y-2 text-zinc-700">
+            <li>Predictions require a minimum 30-day observation window before validation</li>
+            <li>Rolling accuracy uses a 90-day window and excludes pending predictions</li>
+            <li>Unvalidated claims are never counted as wins</li>
+            <li>Statistical confidence intervals require a minimum of 50 validated predictions</li>
+          </ul>
+        </section>
+
+        {/* Freeze Policy */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold text-zinc-900 mb-4">Freeze Policy</h2>
+          <p className="text-zinc-700 mb-4">
+            When prediction accuracy falls below acceptable thresholds, affected prediction types
+            are frozen — no new predictions of that type are published until accuracy recovers:
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200">
+                  <th className="text-left py-3 pr-4 font-semibold text-zinc-900">Scope</th>
+                  <th className="text-left py-3 pr-4 font-semibold text-zinc-900">Threshold</th>
+                  <th className="text-left py-3 font-semibold text-zinc-900">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-zinc-700">
+                <tr className="border-b border-zinc-100">
+                  <td className="py-3 pr-4">Overall accuracy</td>
+                  <td className="py-3 pr-4">&lt; 60% for 2 consecutive months</td>
+                  <td className="py-3">All predictions frozen</td>
+                </tr>
+                <tr>
+                  <td className="py-3 pr-4">Per-subtype accuracy</td>
+                  <td className="py-3 pr-4">&lt; 50% with n &ge; 20</td>
+                  <td className="py-3">Subtype frozen</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-zinc-600 text-sm mt-4">
+            Freeze enforcement will become programmatic in Phase 1. Currently, freeze decisions
+            are made manually based on monthly transparency report data.
+          </p>
+        </section>
+
+        {/* Methodology Changelog */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold text-zinc-900 mb-4">Methodology Changelog</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200">
+                  <th className="text-left py-3 pr-4 font-semibold text-zinc-900">Version</th>
+                  <th className="text-left py-3 pr-4 font-semibold text-zinc-900">Date</th>
+                  <th className="text-left py-3 font-semibold text-zinc-900">Changes</th>
+                </tr>
+              </thead>
+              <tbody className="text-zinc-700">
+                <tr>
+                  <td className="py-3 pr-4 font-mono">v1.0</td>
+                  <td className="py-3 pr-4">March 2026</td>
+                  <td className="py-3">
+                    Initial methodology. Scoring v1.0, calibration v1.0. Freeze policy defined
+                    (manual enforcement). Prediction validation framework established with 30-day
+                    observation window and 90-day rolling accuracy.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         {/* Footer */}
         <footer className="pt-8 border-t border-zinc-200">
           <div className="flex flex-wrap gap-4 text-sm">
@@ -219,6 +297,9 @@ export default function MethodologyPage() {
             </Link>
             <Link href="/reports" className="text-emerald-600 hover:text-emerald-700 underline">
               Browse reports
+            </Link>
+            <Link href="/transparency-reports" className="text-emerald-600 hover:text-emerald-700 underline">
+              Transparency Reports
             </Link>
             <Link href="/faq" className="text-emerald-600 hover:text-emerald-700 underline">
               FAQ

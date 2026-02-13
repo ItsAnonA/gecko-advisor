@@ -71,6 +71,12 @@ const Footer = memo(function Footer() {
           >
             Legal
           </Link>
+          <Link
+            href="/transparency-reports"
+            className="font-semibold hover:text-advisor-600 transition-colors"
+          >
+            Transparency
+          </Link>
           <a
             href="https://twitter.com/PrivacyGecko"
             target="_blank"
