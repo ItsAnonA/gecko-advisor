@@ -202,7 +202,7 @@ async function generateDailyReport(): Promise<DailyReport> {
         PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (NOW() - "lastScannedAt")) / 86400) as p90_days,
         PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (NOW() - "lastScannedAt")) / 86400) as p99_days
       FROM "Domain"
-      WHERE "indexTier" = ${tier}
+      WHERE "indexTier" = ${tier}::"IndexTier"
         AND "eligibleForScan" = true
         AND "lastScannedAt" IS NOT NULL
     `;
@@ -299,7 +299,7 @@ async function generateDailyReport(): Promise<DailyReport> {
     by: ['status'],
     where: {
       createdAt: { gte: yesterday },
-      status: { in: ['error', 'timeout', 'failed'] },
+      status: 'error',
     },
     _count: true,
   });

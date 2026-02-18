@@ -225,7 +225,7 @@ async function getP90Status(prisma: PrismaClient): Promise<P90Status> {
           ORDER BY EXTRACT(EPOCH FROM (NOW() - "lastScannedAt")) / 86400
         ) as p90_days
         FROM "Domain"
-        WHERE "indexTier" = ${tier}
+        WHERE "indexTier" = ${tier}::"IndexTier"
           AND "eligibleForScan" = true
           AND "lastScannedAt" IS NOT NULL
       `;

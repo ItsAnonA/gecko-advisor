@@ -65,6 +65,7 @@ jobs:
               - *shared
               - *prisma
               - 'apps/backend/**'
+              - 'scripts/**'
               - 'infra/docker/Dockerfile.backend'
               - 'infra/docker/backend-entrypoint.sh'
 

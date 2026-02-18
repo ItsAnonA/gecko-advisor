@@ -363,7 +363,7 @@ async function generateSLAReport(): Promise<void> {
     const avgStaleness = await prisma.$queryRaw<{ avg_days: number | null }[]>`
       SELECT AVG(EXTRACT(EPOCH FROM (NOW() - "lastScannedAt")) / 86400) as avg_days
       FROM "Domain"
-      WHERE "indexTier" = ${tier} AND "eligibleForScan" = true AND "lastScannedAt" IS NOT NULL
+      WHERE "indexTier" = ${tier}::"IndexTier" AND "eligibleForScan" = true AND "lastScannedAt" IS NOT NULL
     `;
 
     // P90 staleness
@@ -372,7 +372,7 @@ async function generateSLAReport(): Promise<void> {
         ORDER BY EXTRACT(EPOCH FROM (NOW() - "lastScannedAt")) / 86400
       ) as p90_days
       FROM "Domain"
-      WHERE "indexTier" = ${tier} AND "eligibleForScan" = true AND "lastScannedAt" IS NOT NULL
+      WHERE "indexTier" = ${tier}::"IndexTier" AND "eligibleForScan" = true AND "lastScannedAt" IS NOT NULL
     `;
 
     const scannedTotal = total - neverScanned;

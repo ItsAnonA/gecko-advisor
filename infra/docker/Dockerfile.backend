@@ -91,6 +91,15 @@ COPY --from=build /prisma-deps/prisma ./node_modules/prisma
 # Copy data files needed at runtime (fallback lists loaded via process.cwd())
 COPY packages/shared/data ./packages/shared/data
 
+# Copy cron scripts and their dependencies (scripts use tsx to run TypeScript directly)
+# Scripts import from ../apps/backend/src/ via relative paths, so we need source files
+COPY scripts/ ./scripts/
+COPY --from=build /app/apps/backend/src ./apps/backend/src
+COPY --from=build /app/apps/backend/tsconfig.json ./apps/backend/
+COPY --from=build /app/packages/shared/src ./packages/shared/src
+COPY --from=build /app/packages/shared/package.json ./packages/shared/
+COPY tsconfig.base.json ./
+
 # Copy OpenAPI spec (served by /docs endpoint) - static file, copy from context
 COPY infra/openapi.yaml ./infra/openapi.yaml
 
@@ -98,9 +107,11 @@ COPY infra/openapi.yaml ./infra/openapi.yaml
 COPY infra/docker/backend-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Create non-root user
+# Create non-root user with a writable home directory
+# HOME must be writable for tsx/npm cache (cron scripts use tsx at runtime)
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 appuser
+    adduser --system --uid 1001 --home /home/appuser appuser && \
+    mkdir -p /home/appuser && chown appuser:nodejs /home/appuser
 
 # Prisma migrate deploy needs write access to @prisma/engines for engine binaries
 RUN chown -R appuser:nodejs node_modules/@prisma/engines node_modules/.prisma node_modules/prisma
