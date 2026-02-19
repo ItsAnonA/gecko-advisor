@@ -29,14 +29,19 @@ export const config = {
   backoffMs: parseNumber(process.env.WORKER_BACKOFF_MS, 5000),
   // Increased default concurrency from 2 to 5 for better throughput
   concurrency: parseNumber(process.env.WORKER_CONCURRENCY, 5),
-  requestTimeoutMs: parseNumber(process.env.WORKER_REQUEST_TIMEOUT_MS, 5000),
+  // Per-page fetch timeout: 15s allows slow but legitimate sites to respond
+  // Previous 5s caused ~15-20% of errors (sites respond in 5-10s under load)
+  requestTimeoutMs: parseNumber(process.env.WORKER_REQUEST_TIMEOUT_MS, 15_000),
   maxContentLength: parseNumber(process.env.WORKER_MAX_CONTENT_BYTES, 800_000),
-  crawlTimeBudgetMs: parseNumber(process.env.WORKER_CRAWL_BUDGET_MS, 10_000),
+  // Total crawl time budget: 30s allows multi-page crawl at 15s/page
+  // Previous 10s only allowed 2 pages at old 5s timeout
+  crawlTimeBudgetMs: parseNumber(process.env.WORKER_CRAWL_BUDGET_MS, 30_000),
   crawlPageLimit: parseNumber(process.env.WORKER_PAGE_LIMIT, 10),
   healthPort: parseNumber(process.env.WORKER_HEALTH_PORT, 5050),
   // Job-level timeout to prevent hanging jobs (in milliseconds)
-  // Default: 60 seconds (includes crawling, scoring, and DB operations)
-  jobTimeoutMs: parseNumber(process.env.WORKER_JOB_TIMEOUT_MS, 60_000),
+  // Default: 90 seconds (crawl 30s + TLS 5s + scoring + DB ops)
+  // Previous 60s was tight with increased crawl budget
+  jobTimeoutMs: parseNumber(process.env.WORKER_JOB_TIMEOUT_MS, 90_000),
   objectStorage: {
     enabled: parseBoolean(process.env.OBJECT_STORAGE_ENABLED, false),
     endpoint: process.env.OBJECT_STORAGE_ENDPOINT,

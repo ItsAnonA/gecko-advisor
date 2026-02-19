@@ -8,6 +8,37 @@ import { objectStorage } from './objectStorage.js';
 import { config } from './config.js';
 import { ProgressThrottle } from './utils/progressThrottle.js';
 
+// Standard bot User-Agent with info URL for site operators
+const BOT_USER_AGENT = 'Mozilla/5.0 (compatible; GeckoAdvisorBot/1.0; +https://geckoadvisor.com/bot)';
+
+/**
+ * Error codes for scan failures.
+ * Stored in Scan.meta for observability and retry decisions.
+ */
+export type ScanErrorCode =
+  | 'SITE_UNREACHABLE'   // No pages could be fetched at all
+  | 'TIMEOUT'            // Fetch timed out (AbortError)
+  | 'DNS_FAILURE'        // Domain doesn't resolve (ENOTFOUND, EAI_AGAIN)
+  | 'CONNECTION_REFUSED' // Server refused connection (ECONNREFUSED)
+  | 'SSL_ERROR'          // TLS/SSL handshake failure
+  | 'BLOCKED'            // HTTP 403 on all pages
+  | 'RATE_LIMITED'       // HTTP 429 on all pages
+  | 'SERVER_ERROR';      // HTTP 5xx on all pages
+
+/** Classify a fetch error into a ScanErrorCode */
+function classifyFetchError(error: unknown): ScanErrorCode {
+  if (!(error instanceof Error)) return 'SITE_UNREACHABLE';
+  const msg = error.message.toLowerCase();
+  const cause = (error as { cause?: { code?: string } }).cause?.code?.toLowerCase() ?? '';
+
+  if (error.name === 'AbortError' || msg.includes('abort')) return 'TIMEOUT';
+  if (cause.includes('enotfound') || cause.includes('eai_again') || msg.includes('enotfound')) return 'DNS_FAILURE';
+  if (cause.includes('econnrefused') || msg.includes('econnrefused')) return 'CONNECTION_REFUSED';
+  if (cause.includes('econnreset') || msg.includes('econnreset')) return 'SITE_UNREACHABLE';
+  if (msg.includes('ssl') || msg.includes('tls') || msg.includes('cert')) return 'SSL_ERROR';
+  return 'SITE_UNREACHABLE';
+}
+
 /**
  * Sanitizes HTML content to prevent XSS attacks by removing dangerous elements and attributes.
  */
@@ -215,23 +246,36 @@ async function loadFixture(hostname: string): Promise<FixtureFetch | null> {
   }
 }
 
-async function fetchPage(curr: string, hostname: string): Promise<FetchResponse | null> {
+/** Result from fetchPage with error classification */
+type FetchResult =
+  | { ok: true; response: FetchResponse; status: number }
+  | { ok: false; errorCode: ScanErrorCode; status?: number };
+
+async function fetchPage(curr: string, hostname: string, timeoutMs: number): Promise<FetchResult> {
   if (process.env.USE_FIXTURES === '1' && hostname.endsWith('.test')) {
     const fixture = await loadFixture(hostname);
-    if (!fixture) return null;
+    if (!fixture) return { ok: false, errorCode: 'SITE_UNREACHABLE' };
     const headers = new Headers({ 'content-type': 'text/html' });
-    return { headers, text: async () => fixture.html } satisfies FetchResponse;
+    return { ok: true, response: { headers, text: async () => fixture.html } satisfies FetchResponse, status: 200 };
   }
 
   try {
     const response = await fetch(curr, {
       redirect: 'follow',
-      headers: { 'user-agent': 'PrivacyAdvisorBot/0.1' },
-      signal: timeoutAbort(5000),
+      headers: { 'user-agent': BOT_USER_AGENT },
+      signal: timeoutAbort(timeoutMs),
     });
-    return response as FetchResponse;
-  } catch {
-    return null;
+
+    // Classify HTTP status errors
+    if (response.status === 403) return { ok: false, errorCode: 'BLOCKED', status: 403 };
+    if (response.status === 429) return { ok: false, errorCode: 'RATE_LIMITED', status: 429 };
+    if (response.status >= 500) return { ok: false, errorCode: 'SERVER_ERROR', status: response.status };
+    // Treat other 4xx (except 404) as unreachable for this page
+    if (response.status >= 400) return { ok: false, errorCode: 'SITE_UNREACHABLE', status: response.status };
+
+    return { ok: true, response: response as FetchResponse, status: response.status };
+  } catch (error) {
+    return { ok: false, errorCode: classifyFetchError(error) };
   }
 }
 
@@ -301,6 +345,67 @@ function createTrackerEvidence(
   };
 }
 
+/** Find the most common error code from fetch attempts */
+function getDominantError(errors: ScanErrorCode[]): ScanErrorCode {
+  if (errors.length === 0) return 'SITE_UNREACHABLE';
+  const counts = new Map<ScanErrorCode, number>();
+  for (const e of errors) {
+    counts.set(e, (counts.get(e) ?? 0) + 1);
+  }
+  let best: ScanErrorCode = 'SITE_UNREACHABLE';
+  let max = 0;
+  for (const [code, count] of counts) {
+    if (count > max) { max = count; best = code; }
+  }
+  return best;
+}
+
+/** Human-readable error messages by error code */
+function getErrorMessage(code: ScanErrorCode): { summary: string; suggestion: string } {
+  switch (code) {
+    case 'TIMEOUT':
+      return {
+        summary: 'Scan timed out. The website took too long to respond.',
+        suggestion: 'The site may be experiencing high load. Try again later.',
+      };
+    case 'DNS_FAILURE':
+      return {
+        summary: 'Domain not found. The website address could not be resolved.',
+        suggestion: 'Please verify the domain name is correct and the website is registered.',
+      };
+    case 'CONNECTION_REFUSED':
+      return {
+        summary: 'Connection refused. The website server is not accepting connections.',
+        suggestion: 'The site may be down for maintenance. Try again later.',
+      };
+    case 'SSL_ERROR':
+      return {
+        summary: 'SSL/TLS error. Could not establish a secure connection.',
+        suggestion: 'The site may have an expired or invalid SSL certificate.',
+      };
+    case 'BLOCKED':
+      return {
+        summary: 'Access denied. The website is blocking our scanner.',
+        suggestion: 'The site restricts automated access. This is common for sites with strict bot protection.',
+      };
+    case 'RATE_LIMITED':
+      return {
+        summary: 'Rate limited. The website is throttling our requests.',
+        suggestion: 'Try again later when the rate limit resets.',
+      };
+    case 'SERVER_ERROR':
+      return {
+        summary: 'Server error. The website returned an internal error.',
+        suggestion: 'The site may be experiencing issues. Try again later.',
+      };
+    default:
+      return {
+        summary: 'Unable to scan this website. The site may be unavailable or not registered.',
+        suggestion: 'Please verify the URL is correct and the website is accessible.',
+      };
+  }
+}
+
 export async function scanSiteJob(
   prisma: PrismaClient,
   scanId: string,
@@ -353,8 +458,8 @@ export async function scanSiteJob(
 
   const visited = new Set<string>();
   const queue: string[] = [u.href];
-  const pagesLimit = 10;
-  const timeBudgetMs = 10_000;
+  const pagesLimit = config.crawlPageLimit;
+  const timeBudgetMs = config.crawlTimeBudgetMs;
   const start = Date.now();
 
   const trackerDomains = new Set(lists.easyprivacy.domains);
@@ -367,6 +472,8 @@ export async function scanSiteJob(
 
   // Track successful page fetches to detect unreachable sites
   let successfulFetches = 0;
+  // Track error codes from fetch attempts for classification
+  const fetchErrors: ScanErrorCode[] = [];
 
   // Crawling phase: 30% - 70% progress
   let crawlProgress = 0;
@@ -380,12 +487,15 @@ export async function scanSiteJob(
     crawlProgress = 30 + Math.floor((visited.size / pagesLimit) * 40);
     await reportProgress(crawlProgress);
 
-    const response = await fetchPage(curr, hostname);
-    if (!response) continue;
+    const result = await fetchPage(curr, hostname, config.requestTimeoutMs);
+    if (!result.ok) {
+      fetchErrors.push(result.errorCode);
+      continue;
+    }
 
     successfulFetches++;
 
-    const { headers } = response;
+    const { headers } = result.response;
     if (!isHeaders(headers)) continue;
 
     // Collect header and cookie issues
@@ -408,7 +518,7 @@ export async function scanSiteJob(
       });
     }
 
-    const rawHtml = await response.text();
+    const rawHtml = await result.response.text();
     const sanitizedHtml = sanitizeHtml(rawHtml);
     const $ = loadHtml(sanitizedHtml);
 
@@ -547,18 +657,23 @@ export async function scanSiteJob(
 
   // Check if site was reachable - if no pages fetched, mark as error
   if (successfulFetches === 0) {
-    logger.warn({ scanId, url: urlInput }, 'Site unreachable - no pages could be fetched');
+    // Determine dominant error code from fetch attempts
+    const dominantError = getDominantError(fetchErrors);
+    const { summary, suggestion } = getErrorMessage(dominantError);
+
+    logger.warn({ scanId, url: urlInput, errorCode: dominantError, fetchErrors }, 'Site unreachable - no pages could be fetched');
     await prisma.scan.update({
       where: { id: scanId },
       data: {
         status: 'error',
         score: null,
         label: null,
-        summary: 'Unable to scan this website. The site may be unavailable, not registered, or blocking our scanner.',
+        summary,
         meta: {
-          error: 'SITE_UNREACHABLE',
-          errorMessage: 'Could not connect to website',
-          suggestion: 'Please verify the URL is correct and the website is accessible.',
+          error: dominantError,
+          errorMessage: summary,
+          suggestion,
+          fetchErrors, // Preserve all error codes for debugging
         } as Prisma.InputJsonValue,
         finishedAt: new Date(),
         progress: 100,
