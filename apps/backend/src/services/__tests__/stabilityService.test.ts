@@ -80,13 +80,23 @@ describe('calculateTrend', () => {
   });
 
   it('detects IMPROVING trend when recent scores are higher', () => {
-    // Recent half (first 2): 90, 88 -> avg 89
-    // Older half (last 2): 60, 55 -> avg 57.5
-    // percentChange = (89 - 57.5) / 57.5 * 100 = ~54.8%
-    const scans = [makeScan(90, 1), makeScan(88, 5), makeScan(60, 20), makeScan(55, 30)];
+    // Recent half (first 2): 82, 80 -> avg 81
+    // Older half (last 2): 74, 72 -> avg 73
+    // percentChange = (81 - 73) / 73 * 100 = ~10.96%
+    // CV = ~0.054 (low variance, clear directional improvement)
+    const scans = [makeScan(82, 1), makeScan(80, 5), makeScan(74, 20), makeScan(72, 30)];
     const result = calculateTrend(scans);
     expect(result.trend).toBe('IMPROVING');
     expect(result.trendStrength).toBeGreaterThan(0);
+  });
+
+  it('detects VOLATILE over IMPROVING when variance is high', () => {
+    // Same improving direction but with extreme swings
+    // Recent half: 90, 88 -> avg 89; Older half: 60, 55 -> avg 57.5
+    // CV = ~0.22 > 0.15 → VOLATILE takes precedence
+    const scans = [makeScan(90, 1), makeScan(88, 5), makeScan(60, 20), makeScan(55, 30)];
+    const result = calculateTrend(scans);
+    expect(result.trend).toBe('VOLATILE');
   });
 
   it('detects DECLINING trend when recent scores are lower', () => {
@@ -102,8 +112,16 @@ describe('calculateTrend', () => {
 
   it('detects VOLATILE trend for high variance', () => {
     // Scores: [90, 10, 90, 10] -> mean=50, stddev very high
-    // coefficientOfVariation > 0.3
+    // coefficientOfVariation > 0.15
     const scans = [makeScan(90, 1), makeScan(10, 10), makeScan(90, 20), makeScan(10, 30)];
+    const result = calculateTrend(scans);
+    expect(result.trend).toBe('VOLATILE');
+  });
+
+  it('detects VOLATILE for moderate variance (CV > 0.15)', () => {
+    // Scores: [85, 55, 80, 50] -> mean=67.5, stddev=~16.0
+    // CV = 16.0 / 67.5 = ~0.237 > 0.15 threshold
+    const scans = [makeScan(85, 1), makeScan(55, 10), makeScan(80, 20), makeScan(50, 30)];
     const result = calculateTrend(scans);
     expect(result.trend).toBe('VOLATILE');
   });
@@ -159,6 +177,37 @@ describe('computeStabilityFromData', () => {
     expect(result.changesLast90d).toBe(4);
     expect(result.confidenceLevel).toBe('medium');
     expect(result.confidenceScore).toBe(0.7);
+  });
+
+  it('reconciles trend to VOLATILE when volatilityIndex >= 40 but trend would be STABLE', () => {
+    // 3 identical scores (STABLE by CV), but many major changes push volatilityIndex >= 40
+    const scans = [makeScan(75, 1), makeScan(75, 10), makeScan(75, 20)];
+    const changes = [
+      makeChange('MAJOR', 5),
+      makeChange('MAJOR', 10),
+      makeChange('MAJOR', 15),
+      makeChange('MAJOR', 20),
+    ];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'high', 1.0);
+
+    // volatility = stddev*5 + changes*2 + majorChanges*10
+    // stddev=0, changes=4, major=4 -> 0 + 8 + 40 = 48
+    expect(result.volatilityIndex).toBe(48);
+    // With volatilityIndex >= 40 and raw trend STABLE, reconciliation overrides to VOLATILE
+    expect(result.trend).toBe('VOLATILE');
+    expect(result.trendStrength).toBeCloseTo(0.48, 2);
+  });
+
+  it('does NOT reconcile when volatilityIndex < 40', () => {
+    const scans = [makeScan(75, 1), makeScan(75, 10), makeScan(75, 20)];
+    const changes = [makeChange('MINOR', 5), makeChange('MINOR', 10)];
+
+    const result = computeStabilityFromData(scans, changes, thirtyDaysAgo, 'high', 1.0);
+
+    // volatility = 0 + 4 + 0 = 4 (well below 40)
+    expect(result.volatilityIndex).toBe(4);
+    expect(result.trend).toBe('STABLE');
   });
 
   it('caps volatility at 100', () => {

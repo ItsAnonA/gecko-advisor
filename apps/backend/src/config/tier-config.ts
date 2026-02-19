@@ -111,7 +111,7 @@ export const SCAN_BUDGET = {
     tierASLAThreshold: 85, // If Tier A SLA drops below 85%
     tierASLAStealPercent: 0.1, // Steal 10% from Tier B (not new domains)
 
-    errorRateThreshold: 0.05, // 5% error rate triggers reduction
+    errorRateThreshold: 0.15, // 15% error rate triggers budget reduction (softer than circuit breaker's 20%)
     errorRateReduction: 0.5, // Reduce budget by 50%
 
     queueDepthThreshold: 100, // Queue depth triggers throttle
@@ -131,10 +131,13 @@ export const SCAN_BUDGET = {
  */
 export const CIRCUIT_BREAKER = {
   // Thresholds that trigger reduction
+  // NOTE: Web crawlers inherently have high error rates (sites block, timeout, captcha).
+  // Previous 5% threshold caused permanent triggering. 20% is realistic baseline.
   thresholds: {
-    errorRate: 0.05, // 5% error rate
-    queueDepth: 100, // pending scans
-    avgDuration: 45, // seconds per scan
+    errorRate: 0.20, // 20% error rate (was 5% - too aggressive for web crawling)
+    queueDepth: 200, // pending scans (was 100 - too low for burst scheduling)
+    avgDuration: 60, // seconds per scan (was 45 - tight for complex sites)
+    minSampleSize: 10, // Minimum scans in window before evaluating error rate
   },
 
   // How much to reduce when triggered

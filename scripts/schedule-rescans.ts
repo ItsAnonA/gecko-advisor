@@ -245,29 +245,44 @@ function makeRescanDecision(
 
 async function scheduleNewDomains(budget: number, dryRun: boolean): Promise<number> {
   const now = new Date();
+  const staleThreshold = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  const newDomains = await prisma.domain.findMany({
-    where: {
-      eligibleForScan: true,
-      lastScannedAt: null,
-      OR: [
-        { scanScheduledAt: null },
-        { scanScheduledAt: { lt: new Date(now.getTime() - 24 * 60 * 60 * 1000) } },
-      ],
-    },
-    orderBy: [{ trancoRank: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
-    take: budget,
-    select: { id: true },
-  });
+  // Schedule new domains with tier priority: A first, then B, then C.
+  // This prevents Tier C from consuming the entire new-domain budget
+  // and ensures high-value domains get their first scan faster.
+  let totalScheduled = 0;
+  let remaining = budget;
 
-  if (newDomains.length > 0 && !dryRun) {
-    await prisma.domain.updateMany({
-      where: { id: { in: newDomains.map((d) => d.id) } },
-      data: { scanScheduledAt: now, rescanPriority: 90 },
+  for (const tier of ['A', 'B', 'C'] as const) {
+    if (remaining <= 0) break;
+
+    const newDomains = await prisma.domain.findMany({
+      where: {
+        indexTier: tier,
+        eligibleForScan: true,
+        lastScannedAt: null,
+        OR: [
+          { scanScheduledAt: null },
+          { scanScheduledAt: { lt: staleThreshold } },
+        ],
+      },
+      orderBy: [{ trancoRank: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
+      take: remaining,
+      select: { id: true },
     });
+
+    if (newDomains.length > 0 && !dryRun) {
+      await prisma.domain.updateMany({
+        where: { id: { in: newDomains.map((d) => d.id) } },
+        data: { scanScheduledAt: now, rescanPriority: tier === 'A' ? 95 : tier === 'B' ? 90 : 80 },
+      });
+    }
+
+    totalScheduled += newDomains.length;
+    remaining -= newDomains.length;
   }
 
-  return newDomains.length;
+  return totalScheduled;
 }
 
 interface TierScheduleResult {
@@ -447,9 +462,9 @@ async function scheduleRescans(dryRun: boolean): Promise<void> {
   }
   console.log('');
 
-  // Schedule new domains
+  // Schedule new domains (tier-prioritized: A > B > C)
   console.log('─'.repeat(60));
-  console.log('NEW DOMAIN SCHEDULING');
+  console.log('NEW DOMAIN SCHEDULING (tier-prioritized: A > B > C)');
   const newScheduled = await scheduleNewDomains(budget.newDomains, dryRun);
   console.log(`  ${dryRun ? 'Would schedule' : 'Scheduled'}: ${newScheduled} new domains`);
 

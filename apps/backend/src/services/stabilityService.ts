@@ -104,8 +104,11 @@ export function calculateTrend(scans: { score: number | null; finishedAt: Date |
   const coefficientOfVariation = mean !== 0 ? stdDev / mean : 0;
 
   // Classify
-  if (coefficientOfVariation > 0.3) {
-    return { trend: 'VOLATILE', trendStrength: Math.min(1, coefficientOfVariation) };
+  // CV > 0.15 = stddev is >15% of mean (e.g., stdDev > 10.5 for mean 70)
+  // Previous threshold of 0.3 was unreachable for normal privacy scores,
+  // requiring stdDev > 21 for a mean of 70 - only extreme oscillation qualified.
+  if (coefficientOfVariation > 0.15) {
+    return { trend: 'VOLATILE', trendStrength: Math.min(1, coefficientOfVariation / 0.3) };
   }
 
   if (percentChange > 5) {
@@ -164,8 +167,19 @@ export function computeStabilityFromData(
   // Calculate stability score (0-100)
   const stabilityScore = Math.max(0, 100 - volatilityIndex);
 
-  // Determine trend
-  const { trend, trendStrength } = calculateTrend(scans);
+  // Determine trend from scan history
+  const { trend: rawTrend, trendStrength: rawTrendStrength } = calculateTrend(scans);
+
+  // Reconcile trend with volatilityIndex.
+  // The volatilityIndex formula (change-frequency-sensitive) can disagree with the
+  // CV-based trend classification. A domain with many small changes may have
+  // volatilityIndex >= 40 but low CV. Override to VOLATILE in this case.
+  let trend = rawTrend;
+  let trendStrength = rawTrendStrength;
+  if (volatilityIndex >= 40 && rawTrend === 'STABLE') {
+    trend = 'VOLATILE' as DomainTrend;
+    trendStrength = Math.min(1, volatilityIndex / 100);
+  }
 
   return {
     volatilityIndex,
@@ -319,8 +333,14 @@ export async function calculateDomainStability(
   // Higher = more stable (inverse of volatility)
   const stabilityScore = Math.max(0, 100 - volatilityIndex);
 
-  // Determine trend
-  const { trend, trendStrength } = calculateTrend(scans);
+  // Determine trend and reconcile with volatilityIndex
+  const { trend: rawTrend, trendStrength: rawTrendStrength } = calculateTrend(scans);
+  let trend = rawTrend;
+  let trendStrength = rawTrendStrength;
+  if (volatilityIndex >= 40 && rawTrend === 'STABLE') {
+    trend = 'VOLATILE' as DomainTrend;
+    trendStrength = Math.min(1, volatilityIndex / 100);
+  }
 
   return {
     volatilityIndex,
@@ -497,8 +517,14 @@ export async function calculateDomainStabilityTiered(
   // Calculate stability score (0-100)
   const stabilityScore = Math.max(0, 100 - volatilityIndex);
 
-  // Determine trend
-  const { trend, trendStrength } = calculateTrend(scans);
+  // Determine trend and reconcile with volatilityIndex
+  const { trend: rawTrend, trendStrength: rawTrendStrength } = calculateTrend(scans);
+  let trend = rawTrend;
+  let trendStrength = rawTrendStrength;
+  if (volatilityIndex >= 40 && rawTrend === 'STABLE') {
+    trend = 'VOLATILE' as DomainTrend;
+    trendStrength = Math.min(1, volatilityIndex / 100);
+  }
 
   return {
     volatilityIndex,

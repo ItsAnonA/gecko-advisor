@@ -65,6 +65,7 @@ interface CircuitBreakerState {
   // Metrics snapshot at trigger
   triggerMetrics?: {
     errorRate: number;
+    totalScans: number;
     queueDepth: number;
     avgDuration: number;
   };
@@ -72,6 +73,7 @@ interface CircuitBreakerState {
 
 interface SystemMetrics {
   errorRate: number;
+  totalScans: number; // Scans in the evaluation window (needed for minSampleSize check)
   queueDepth: number;
   avgDuration: number;
 }
@@ -202,7 +204,7 @@ async function getSystemMetrics(prisma: PrismaClient): Promise<SystemMetrics> {
   `;
   const avgDuration = avgDurationResult[0]?.avg_seconds ?? 0;
 
-  return { errorRate, queueDepth, avgDuration };
+  return { errorRate, totalScans, queueDepth, avgDuration };
 }
 
 interface TierSLAMetrics {
@@ -360,8 +362,14 @@ function evaluateCircuitBreaker(
   const recovery = CIRCUIT_BREAKER.recovery;
 
   // Check if any threshold is exceeded
+  // Error rate check requires minimum sample size to avoid false positives
+  // during low-volume periods (e.g., startup, night hours)
+  const minSampleSize = (thresholds as { minSampleSize?: number }).minSampleSize ?? 10;
+  const errorRateBreached =
+    metrics.totalScans >= minSampleSize &&
+    metrics.errorRate >= thresholds.errorRate;
   const isUnhealthy =
-    metrics.errorRate >= thresholds.errorRate ||
+    errorRateBreached ||
     metrics.queueDepth >= thresholds.queueDepth ||
     metrics.avgDuration >= thresholds.avgDuration;
 
@@ -386,7 +394,7 @@ function evaluateCircuitBreaker(
         step: 0,
         timestamp: now.toISOString(),
         reductionLevel: 1,
-        reason: `triggered: errorRate=${(metrics.errorRate * 100).toFixed(1)}%, queue=${metrics.queueDepth}, duration=${metrics.avgDuration.toFixed(1)}s`,
+        reason: `triggered: errorRate=${(metrics.errorRate * 100).toFixed(1)}% (${metrics.totalScans} scans), queue=${metrics.queueDepth}, duration=${metrics.avgDuration.toFixed(1)}s`,
       });
     }
 
