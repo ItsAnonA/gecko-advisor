@@ -4,6 +4,8 @@ import {
   calculateTrend,
   computeStabilityFromData,
   computeProvisionalFromData,
+  computeScanConfidence,
+  computePercentiles,
   STABILITY_REQUIREMENTS,
 } from '../stabilityService.js';
 
@@ -358,5 +360,115 @@ describe('computeStabilityFromData consistency', () => {
     expect(result.changesLast30d).toBe(changesLast30d);
     expect(result.changesLast90d).toBe(changesLast90d);
     expect(result.majorChangesLast90d).toBe(majorChanges);
+  });
+});
+
+// ============================================================================
+// computeScanConfidence — Laplace-smoothed beta mean
+// ============================================================================
+
+describe('computeScanConfidence', () => {
+  it('returns 0.5 for zero scans (neutral prior)', () => {
+    expect(computeScanConfidence(0, 0)).toBeCloseTo(0.5, 5);
+  });
+
+  it('returns ~0.667 for 1 success, 0 failures', () => {
+    // (1+1)/(1+0+2) = 2/3
+    expect(computeScanConfidence(1, 0)).toBeCloseTo(2 / 3, 5);
+  });
+
+  it('returns ~0.167 for 0 successes, 5 failures', () => {
+    // (0+1)/(0+5+2) = 1/7
+    expect(computeScanConfidence(0, 5)).toBeCloseTo(1 / 7, 5);
+  });
+
+  it('returns ~0.857 for 5 successes, 0 failures', () => {
+    // (5+1)/(5+0+2) = 6/7
+    expect(computeScanConfidence(5, 0)).toBeCloseTo(6 / 7, 5);
+  });
+
+  it('returns ~0.5 for equal successes and failures', () => {
+    // (5+1)/(5+5+2) = 6/12 = 0.5
+    expect(computeScanConfidence(5, 5)).toBeCloseTo(0.5, 5);
+  });
+
+  it('returns < 0.4 for 1 success / 4 failures (acceptance criterion)', () => {
+    // (1+1)/(1+4+2) = 2/7 ≈ 0.286
+    const confidence = computeScanConfidence(1, 4);
+    expect(confidence).toBeLessThan(0.4);
+    expect(confidence).toBeCloseTo(2 / 7, 5);
+  });
+
+  it('returns ≥ 0.85 for 5+ successes / 0 failures (acceptance criterion)', () => {
+    expect(computeScanConfidence(5, 0)).toBeGreaterThanOrEqual(0.85);
+    expect(computeScanConfidence(10, 0)).toBeGreaterThanOrEqual(0.85);
+    expect(computeScanConfidence(20, 0)).toBeGreaterThanOrEqual(0.85);
+  });
+
+  it('returns ~0.5 for 50% failure rate (acceptance criterion)', () => {
+    expect(computeScanConfidence(10, 10)).toBeCloseTo(0.5, 1);
+    expect(computeScanConfidence(50, 50)).toBeCloseTo(0.5, 1);
+  });
+
+  it('is monotonically increasing with more successes', () => {
+    const c1 = computeScanConfidence(1, 2);
+    const c2 = computeScanConfidence(2, 2);
+    const c3 = computeScanConfidence(5, 2);
+    expect(c2).toBeGreaterThan(c1);
+    expect(c3).toBeGreaterThan(c2);
+  });
+
+  it('is monotonically decreasing with more failures', () => {
+    const c1 = computeScanConfidence(5, 0);
+    const c2 = computeScanConfidence(5, 2);
+    const c3 = computeScanConfidence(5, 5);
+    expect(c2).toBeLessThan(c1);
+    expect(c3).toBeLessThan(c2);
+  });
+});
+
+// ============================================================================
+// computePercentiles — nearest-rank percentile computation
+// ============================================================================
+
+describe('computePercentiles', () => {
+  it('returns empty object for empty input', () => {
+    expect(computePercentiles([])).toEqual({});
+  });
+
+  it('returns the single value for all percentiles with 1 element', () => {
+    expect(computePercentiles([42])).toEqual({ 50: 42, 90: 42, 95: 42 });
+  });
+
+  it('computes correct percentiles for small sorted dataset', () => {
+    // 10 values: 1,2,3,4,5,6,7,8,9,10
+    const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const result = computePercentiles(values);
+    expect(result[50]).toBe(5);   // ceil(0.5*10)-1 = 4 → values[4] = 5
+    expect(result[90]).toBe(9);   // ceil(0.9*10)-1 = 8 → values[8] = 9
+    expect(result[95]).toBe(10);  // ceil(0.95*10)-1 = 9 → values[9] = 10
+  });
+
+  it('handles unsorted input', () => {
+    const values = [10, 3, 7, 1, 5, 9, 2, 8, 4, 6];
+    const result = computePercentiles(values);
+    expect(result[50]).toBe(5);
+    expect(result[90]).toBe(9);
+  });
+
+  it('supports custom percentiles', () => {
+    const values = Array.from({ length: 100 }, (_, i) => i + 1); // 1..100
+    const result = computePercentiles(values, [25, 50, 75, 99]);
+    expect(result[25]).toBe(25);
+    expect(result[50]).toBe(50);
+    expect(result[75]).toBe(75);
+    expect(result[99]).toBe(99);
+  });
+
+  it('handles duplicate values', () => {
+    const values = [5, 5, 5, 5, 5, 100];
+    const result = computePercentiles(values);
+    expect(result[50]).toBe(5);
+    expect(result[95]).toBe(100);
   });
 });

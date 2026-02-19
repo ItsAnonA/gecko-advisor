@@ -275,6 +275,18 @@ export default function MethodologyPage() {
                 </tr>
               </thead>
               <tbody className="text-zinc-700">
+                <tr className="border-b border-zinc-100">
+                  <td className="py-3 pr-4 font-mono">v1.1</td>
+                  <td className="py-3 pr-4">February 2026</td>
+                  <td className="py-3">
+                    Stabilization sprint. Added error-weighted scan confidence (Laplace-smoothed
+                    beta mean) to gate stability labels &mdash; domains with high failure rates are
+                    downgraded to provisional. Added P50/P90/P95 latency percentile tracking with
+                    P95 soft alert at 45s. Circuit breaker thresholds recalibrated: error rate
+                    5%&rarr;20%, queue depth 100&rarr;200, avg duration 45s&rarr;60s, with minimum
+                    10-scan sample size to prevent false positives during low-volume periods.
+                  </td>
+                </tr>
                 <tr>
                   <td className="py-3 pr-4 font-mono">v1.0</td>
                   <td className="py-3 pr-4">March 2026</td>

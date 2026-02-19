@@ -13,13 +13,22 @@ import { initSentry, Sentry } from "./sentry.js";
 import { normalizeDomain, isBlockedDomain } from "@gecko-advisor/shared";
 
 /**
+ * Laplace-smoothed beta mean for scan confidence.
+ * Duplicated from stabilityService to avoid cross-package import in worker.
+ */
+function computeScanConfidence(successes: number, failures: number): number {
+  return (successes + 1) / (successes + failures + 2);
+}
+
+/**
  * Upsert a Domain record when a scan completes.
  * This ensures the domain appears in the dynamic sitemap.
  * Also links the Scan to the Domain for volatility tracking.
  */
 async function upsertDomainOnScanComplete(
   scanId: string,
-  url: string
+  url: string,
+  isSuccess = true,
 ): Promise<void> {
   try {
     const domain = normalizeDomain(url);
@@ -58,14 +67,33 @@ async function upsertDomainOnScanComplete(
         // Set historical peak score from first scan
         historicalPeakScore: scan.score ?? undefined,
         historicalPeakDate: scan.score ? (scan.finishedAt ?? new Date()) : undefined,
+        // Error-weighted confidence tracking
+        scanSuccessCount: isSuccess ? 1 : 0,
+        scanFailureCount: isSuccess ? 0 : 1,
+        scanConfidence: computeScanConfidence(isSuccess ? 1 : 0, isSuccess ? 0 : 1),
+        confidenceUpdatedAt: new Date(),
       },
       update: {
         latestScanId: scan.id,
         lastScanned: scan.finishedAt ?? new Date(),
         lastScannedAt: scan.finishedAt ?? new Date(),
         scanCount: { increment: 1 },
+        // Increment success counter for confidence
+        ...(isSuccess && { scanSuccessCount: { increment: 1 } }),
       },
     });
+
+    // Recompute confidence after updating counts
+    if (isSuccess) {
+      const newConfidence = computeScanConfidence(
+        domainRecord.scanSuccessCount, // Already incremented by upsert
+        domainRecord.scanFailureCount,
+      );
+      await prisma.domain.update({
+        where: { id: domainRecord.id },
+        data: { scanConfidence: newConfidence, confidenceUpdatedAt: new Date() },
+      });
+    }
 
     // Link scan to domain for volatility tracking
     await prisma.scan.update({
@@ -92,6 +120,41 @@ async function upsertDomainOnScanComplete(
   } catch (error) {
     // Non-fatal error - log but don't fail the scan
     logger.warn({ error, scanId, url }, 'Failed to upsert domain record');
+  }
+}
+
+/**
+ * Update Domain failure counter on scan error.
+ * Increments scanFailureCount and recomputes confidence.
+ * Non-fatal: logs warning on failure.
+ */
+async function upsertDomainOnScanFailure(url: string): Promise<void> {
+  try {
+    const domain = normalizeDomain(url);
+    if (!domain || domain === 'invalid') return;
+
+    const domainRecord = await prisma.domain.findUnique({
+      where: { domain },
+      select: { id: true, scanSuccessCount: true, scanFailureCount: true },
+    });
+
+    if (!domainRecord) return; // Domain not yet created - skip
+
+    const newFailureCount = domainRecord.scanFailureCount + 1;
+    const newConfidence = computeScanConfidence(domainRecord.scanSuccessCount, newFailureCount);
+
+    await prisma.domain.update({
+      where: { id: domainRecord.id },
+      data: {
+        scanFailureCount: newFailureCount,
+        scanConfidence: newConfidence,
+        confidenceUpdatedAt: new Date(),
+      },
+    });
+
+    logger.debug({ domain, confidence: newConfidence }, 'Domain failure count updated');
+  } catch (error) {
+    logger.warn({ error, url }, 'Failed to update domain failure count (non-fatal)');
   }
 }
 
@@ -194,6 +257,7 @@ export const worker = new Worker<ScanJobData | ReportGenerationJobData>(
     logger.info({ jobId: job.id, scanId, requestId }, 'Starting scan job');
 
     // Update scan to running with progress tracking
+    const scanStartTime = Date.now();
     await prisma.scan.update({
       where: { id: scanId },
       data: {
@@ -207,11 +271,20 @@ export const worker = new Worker<ScanJobData | ReportGenerationJobData>(
       // Pass job for progress updates
       await scanSiteJob(prisma, scanId, url, job);
 
+      // Record wall-clock duration for latency percentile tracking
+      const durationMs = Date.now() - scanStartTime;
+      await prisma.scan.update({
+        where: { id: scanId },
+        data: { durationMs },
+      }).catch((err) => {
+        logger.debug({ err, scanId }, 'Failed to record scan duration');
+      });
+
       // Report 100% progress (scan status is updated atomically in scanner.ts)
       await job.updateProgress(100);
 
-      // Update Domain table for sitemap indexing
-      await upsertDomainOnScanComplete(scanId, url);
+      // Update Domain table for sitemap indexing + confidence tracking
+      await upsertDomainOnScanComplete(scanId, url, true /* isSuccess */);
 
       // Phase 3: Change Intelligence - detect and record privacy changes
       try {
@@ -271,15 +344,20 @@ export const worker = new Worker<ScanJobData | ReportGenerationJobData>(
         ? 'Scan timed out. The site took too long to respond or analyze.'
         : 'Scan failed due to an error during processing.';
 
-      // Update scan status to error with meaningful message
+      // Update scan status to error with meaningful message + duration
+      const durationMs = Date.now() - scanStartTime;
       await prisma.scan.update({
         where: { id: scanId },
         data: {
           status: 'error',
           finishedAt: new Date(),
+          durationMs,
           summary,
         },
       });
+
+      // Update Domain failure counter for confidence tracking
+      await upsertDomainOnScanFailure(url);
 
       throw error;
     }

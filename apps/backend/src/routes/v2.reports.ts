@@ -552,8 +552,15 @@ reportV2Router.get('/domain/:domain', async (req, res) => {
     // Enrich with benchmark data for SEO
     const payload = await enrichReportWithBenchmarks(basePayload);
 
+    // Lookup scanConfidence (do not expose raw success/failure counts)
+    const domainRecord = await prisma.domain.findUnique({
+      where: { domain },
+      select: { scanConfidence: true },
+    });
+
     const archive = await getReportDownloadUrl(scan.id);
-    return res.json(archive ? { ...payload, archive } : payload);
+    const enriched = archive ? { ...payload, archive } : payload;
+    return res.json({ ...enriched, scanConfidence: domainRecord?.scanConfidence ?? null });
   } catch (error) {
     // Real errors (DB failure, code exception) - log as error
     logger.error({ error, domain }, 'Error fetching report by domain');

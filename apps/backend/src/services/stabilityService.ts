@@ -76,6 +76,46 @@ export function calculateStdDev(values: number[]): number {
 }
 
 /**
+ * Compute error-weighted scan confidence using Laplace-smoothed beta mean.
+ *
+ * Returns 0.0–1.0 representing how reliable a domain's scan history is.
+ * Domains with high failure rates get lower confidence, preventing
+ * inflated stability labels.
+ *
+ * Formula: (successes + 1) / (successes + failures + 2)
+ * - 0 successes, 0 failures → 0.5 (neutral prior)
+ * - 5 successes, 0 failures → 0.857
+ * - 1 success, 4 failures  → 0.286
+ */
+export function computeScanConfidence(successes: number, failures: number): number {
+  return (successes + 1) / (successes + failures + 2);
+}
+
+/**
+ * Compute percentiles from an array of numeric values.
+ *
+ * Uses nearest-rank method: p-th percentile is the smallest value
+ * such that at least p% of the data is ≤ that value.
+ *
+ * @param values - Array of numeric values (unsorted is fine)
+ * @param percentiles - Which percentiles to compute (default: [50, 90, 95])
+ * @returns Record mapping percentile → value (empty if no data)
+ */
+export function computePercentiles(
+  values: number[],
+  percentiles: number[] = [50, 90, 95],
+): Record<number, number> {
+  if (values.length === 0) return {};
+  const sorted = [...values].sort((a, b) => a - b);
+  const result: Record<number, number> = {};
+  for (const p of percentiles) {
+    const idx = Math.ceil((p / 100) * sorted.length) - 1;
+    result[p] = sorted[Math.max(0, idx)] ?? 0;
+  }
+  return result;
+}
+
+/**
  * Calculate trend from scan history.
  */
 export function calculateTrend(scans: { score: number | null; finishedAt: Date | null }[]): {
@@ -801,7 +841,7 @@ export async function updateAllDomainStabilityV2(prisma: PrismaClient): Promise<
       orderBy: { id: 'asc' },
       take: BATCH_SIZE,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      select: { id: true, indexTier: true, trancoRank: true },
+      select: { id: true, indexTier: true, trancoRank: true, scanSuccessCount: true, scanFailureCount: true, scanConfidence: true },
     });
 
     if (domains.length === 0) break;
@@ -887,6 +927,24 @@ export async function updateAllDomainStabilityV2(prisma: PrismaClient): Promise<
           const changes = changesByDomain.get(domain.id) ?? [];
           const confidenceLevel: ConfidenceLevel = tier === 'full' ? 'high' : 'medium';
           metrics = computeStabilityFromData(scans, changes, thirtyDaysAgo, confidenceLevel, confidenceMultiplier);
+        }
+
+        // Error-weighted confidence gates:
+        // Downgrade stability tier if scan confidence is too low
+        const domainConfidence = domain.scanConfidence ?? computeScanConfidence(domain.scanSuccessCount, domain.scanFailureCount);
+
+        // Gate 1: suppress high/medium confidence if error-weighted confidence too low
+        if (metrics.confidenceLevel !== 'provisional' && domainConfidence < 0.6) {
+          metrics = { ...metrics, confidenceLevel: 'provisional', confidenceScore: domainConfidence };
+          tier = 'provisional';
+          confidenceMultiplier = STABILITY_REQUIREMENTS.provisional.confidenceMultiplier;
+        }
+
+        // Gate 2: force provisional if fewer than 3 successful scans
+        if (domain.scanSuccessCount < 3 && tier !== 'provisional') {
+          metrics = { ...metrics, confidenceLevel: 'provisional', confidenceScore: domainConfidence };
+          tier = 'provisional';
+          confidenceMultiplier = STABILITY_REQUIREMENTS.provisional.confidenceMultiplier;
         }
 
         upsertOps.push(

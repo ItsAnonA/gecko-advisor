@@ -80,6 +80,12 @@ domainV2Router.get('/domain/:domain', async (req, res) => {
       issues: (scan.issues ?? []) as Parameters<typeof buildReportPayload>[1]['issues'],
     });
 
+    // Lookup scanConfidence (do not expose raw success/failure counts)
+    const domainRecord = await prisma.domain.findUnique({
+      where: { domain },
+      select: { scanConfidence: true },
+    });
+
     // Add canonical URL info for SEO
     const response = {
       ...payload,
@@ -91,6 +97,8 @@ domainV2Router.get('/domain/:domain', async (req, res) => {
       },
       // Phase 2B: Include category if domain has been classified
       category: scan.category || null,
+      // Error-weighted scan confidence (0-1, Laplace-smoothed beta mean)
+      scanConfidence: domainRecord?.scanConfidence ?? null,
     };
 
     return res.json(response);

@@ -94,6 +94,14 @@ interface DailyReport {
   invariantViolations: number;
   criticalViolations: string[];
 
+  // Scan latency percentiles (from durationMs)
+  scanLatency: {
+    p50Ms: number | null;
+    p90Ms: number | null;
+    p95Ms: number | null;
+    sampleCount: number;
+  };
+
   // Errors
   scanErrors: {
     total: number;
@@ -158,7 +166,19 @@ function calculateRedFlags(report: DailyReport): RedFlag[] {
     threshold: '<100 suspensions',
   });
 
-  // 5. Invariant violations
+  // 5. P95 scan latency
+  const p95ThresholdMs = 45_000; // matches CIRCUIT_BREAKER.p95SoftAlertMs
+  const p95Ms = report.scanLatency.p95Ms;
+  if (p95Ms !== null && report.scanLatency.sampleCount >= 10) {
+    flags.push({
+      flag: 'P95 scan latency',
+      status: p95Ms <= p95ThresholdMs ? 'PASS' : 'WARN',
+      value: `${(p95Ms / 1000).toFixed(1)}s (n=${report.scanLatency.sampleCount})`,
+      threshold: `≤${(p95ThresholdMs / 1000).toFixed(0)}s`,
+    });
+  }
+
+  // 6. Invariant violations
   flags.push({
     flag: 'Invariant violations',
     status: report.invariantViolations === 0 ? 'PASS' : 'FAIL',
@@ -304,6 +324,21 @@ async function generateDailyReport(): Promise<DailyReport> {
     _count: true,
   });
 
+  // Scan latency percentiles (last 24h, from durationMs)
+  const latencyResult = await prisma.$queryRaw<
+    { p50_ms: number | null; p90_ms: number | null; p95_ms: number | null; sample_count: number }[]
+  >`
+    SELECT
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY "durationMs") as p50_ms,
+      PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY "durationMs") as p90_ms,
+      PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "durationMs") as p95_ms,
+      COUNT(*)::int as sample_count
+    FROM "Scan"
+    WHERE "finishedAt" >= ${yesterday}
+      AND status = 'done'
+      AND "durationMs" IS NOT NULL
+  `;
+
   // Run invariant checks
   const invariants = await runAllInvariantChecks(prisma);
 
@@ -367,6 +402,13 @@ async function generateDailyReport(): Promise<DailyReport> {
 
     invariantViolations: invariants.criticalViolations.length,
     criticalViolations: invariants.criticalViolations.map((v) => v.invariant),
+
+    scanLatency: {
+      p50Ms: latencyResult[0]?.p50_ms ?? null,
+      p90Ms: latencyResult[0]?.p90_ms ?? null,
+      p95Ms: latencyResult[0]?.p95_ms ?? null,
+      sampleCount: latencyResult[0]?.sample_count ?? 0,
+    },
 
     scanErrors: {
       total: errorCounts.reduce((sum, e) => sum + e._count, 0),
@@ -498,6 +540,20 @@ function printReport(report: DailyReport): void {
   console.log(`  Eligible: ${report.eligibility.eligible.toLocaleString()}`);
   console.log(`  Suspended: ${report.eligibility.suspended.toLocaleString()}`);
   console.log(`  Deprioritized: ${report.eligibility.deprioritized.toLocaleString()}`);
+  console.log('');
+
+  // Scan latency
+  console.log('SCAN LATENCY (24h):');
+  if (report.scanLatency.sampleCount > 0) {
+    const fmt = (ms: number | null) => ms !== null ? `${(ms / 1000).toFixed(1)}s` : 'N/A';
+    console.log(`  P50: ${fmt(report.scanLatency.p50Ms)}  P90: ${fmt(report.scanLatency.p90Ms)}  P95: ${fmt(report.scanLatency.p95Ms)}`);
+    console.log(`  Sample count: ${report.scanLatency.sampleCount}`);
+    if (report.scanLatency.p95Ms !== null && report.scanLatency.p95Ms > 45_000) {
+      console.log('  ⚠️ P95 exceeds 45s soft alert threshold');
+    }
+  } else {
+    console.log('  No latency data (durationMs not yet populated)');
+  }
   console.log('');
 
   // Errors

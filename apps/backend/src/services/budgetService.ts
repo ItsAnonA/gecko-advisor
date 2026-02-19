@@ -76,6 +76,7 @@ interface SystemMetrics {
   totalScans: number; // Scans in the evaluation window (needed for minSampleSize check)
   queueDepth: number;
   avgDuration: number;
+  p95DurationMs: number | null; // P95 scan latency from durationMs (null if no data)
 }
 
 // ============================================================
@@ -204,7 +205,17 @@ async function getSystemMetrics(prisma: PrismaClient): Promise<SystemMetrics> {
   `;
   const avgDuration = avgDurationResult[0]?.avg_seconds ?? 0;
 
-  return { errorRate, totalScans, queueDepth, avgDuration };
+  // P95 scan latency from durationMs (last hour, completed scans with recorded duration)
+  const p95Result = await prisma.$queryRaw<{ p95_ms: number | null }[]>`
+    SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "durationMs") as p95_ms
+    FROM "Scan"
+    WHERE "finishedAt" >= ${hourAgo}
+      AND status = 'done'
+      AND "durationMs" IS NOT NULL
+  `;
+  const p95DurationMs = p95Result[0]?.p95_ms ?? null;
+
+  return { errorRate, totalScans, queueDepth, avgDuration, p95DurationMs };
 }
 
 interface TierSLAMetrics {
@@ -518,6 +529,13 @@ export async function calculateDynamicBudget(
   // Evaluate circuit breaker
   cbState = evaluateCircuitBreaker(metrics, cbState);
   await saveCircuitBreakerState(prisma, cbState);
+
+  // P95 soft alert: warn when scan latency is high (does NOT trigger breaker)
+  if (metrics.p95DurationMs !== null && metrics.p95DurationMs > CIRCUIT_BREAKER.p95SoftAlertMs) {
+    adjustmentReasons.push(
+      `p95_latency_warn_${(metrics.p95DurationMs / 1000).toFixed(1)}s_exceeds_${(CIRCUIT_BREAKER.p95SoftAlertMs / 1000).toFixed(0)}s`
+    );
+  }
 
   // Start with base budget percentages (explicitly typed as number for arithmetic)
   let budget: { newDomains: number; tierA: number; tierB: number; anomaly: number } = {

@@ -169,6 +169,7 @@ describe('extractScanData', () => {
     isProScan: false,
     scannerIp: null,
     domainId: null,
+    durationMs: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

@@ -153,6 +153,9 @@ export const CIRCUIT_BREAKER = {
 
   // State file for persistence across runs
   stateFile: '/tmp/gecko-circuit-breaker-state.json',
+
+  // P95 soft alert (warning only, does not trigger breaker)
+  p95SoftAlertMs: 45_000, // Warn when P95 scan duration exceeds 45s
 } as const;
 
 // ============================================================

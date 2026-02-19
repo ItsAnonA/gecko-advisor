@@ -228,6 +228,9 @@ model Scan {
   isProScan Boolean @default(false) // Track if scan was performed with Pro features
   scannerIp String? // Track anonymous scans for rate limiting
 
+  // Wall-clock scan duration in milliseconds (start to completion/failure)
+  durationMs Int?
+
   // Domain Intelligence Engine: Direct domain link for volatility queries
   domainId String?
   domain   Domain? @relation("DomainScans", fields: [domainId], references: [id], onDelete: SetNull)
@@ -442,6 +445,12 @@ model Domain {
   // Historical peak (for conservative demotion protection)
   historicalPeakScore Int?
   historicalPeakDate  DateTime?
+
+  // === Error-Weighted Confidence (Stabilization Sprint) ===
+  scanConfidence      Float?    // 0.0–1.0, Laplace-smoothed beta mean
+  scanSuccessCount    Int       @default(0)
+  scanFailureCount    Int       @default(0)
+  confidenceUpdatedAt DateTime?
 
   // === Anti-Thrash Tracking (Week 1 Hardening) ===
   lastTierChangedAt   DateTime?         // When tier last changed
