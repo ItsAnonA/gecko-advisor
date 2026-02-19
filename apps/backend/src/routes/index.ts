@@ -21,11 +21,13 @@ import { trackersV2Router } from "./v2.trackers.js";
 import { answersV2Router } from "./v2.answers.js";
 import { similarV2Router } from "./v2.similar.js";
 import { researchV2Router } from "./v2.research.js";
+import { domainV1Router } from "./v1.domain.js";
 
 export const apiV1Router = Router();
 apiV1Router.use('/scan', scanV1Router);
 apiV1Router.use('/scans', scanV1Router);
 apiV1Router.use('/', reportV1Router);
+apiV1Router.use('/', domainV1Router);
 
 export const apiV2Router = Router();
 apiV2Router.use('/scan', scanV2Router);
