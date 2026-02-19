@@ -319,16 +319,31 @@ reportV2Router.get('/reports/recent', async (_req, res) => {
 });
 
 // Stats endpoint - total scans count + domain count for credibility display
+// Also returns lastScanTime, lastChangeDetected for API landing page
 reportV2Router.get('/stats', async (_req, res) => {
   try {
     const stats = await CacheService.getOrSet(
       CACHE_KEYS.STATS,
       async () => {
-        const [totalScans, domainCount] = await Promise.all([
+        const [totalScans, domainCount, lastScan, lastChange] = await Promise.all([
           prisma.scan.count({ where: { status: 'done' } }),
           prisma.domain.count(),
+          prisma.scan.findFirst({
+            where: { status: 'done' },
+            orderBy: { finishedAt: 'desc' },
+            select: { finishedAt: true },
+          }),
+          prisma.domainChange.findFirst({
+            orderBy: { detectedAt: 'desc' },
+            select: { detectedAt: true },
+          }),
         ]);
-        return { totalScans, domainCount };
+        return {
+          totalScans,
+          domainCount,
+          lastScanTime: lastScan?.finishedAt?.toISOString() ?? null,
+          lastChangeDetected: lastChange?.detectedAt?.toISOString() ?? null,
+        };
       },
       CACHE_TTL.STATS
     );

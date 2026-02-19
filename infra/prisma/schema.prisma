@@ -170,6 +170,30 @@ enum StabilityConfidenceTier {
   PROVISIONAL // 1 scan only
 }
 
+// Paid API key tiers
+enum ApiKeyTier {
+  EVALUATION         // $49/mo - 1,000 requests
+  OPERATIONAL        // $149/mo - 10,000 requests
+  BULK_INTELLIGENCE  // $299/mo - dataset access
+  ENTERPRISE         // $999 one-time - unlimited
+}
+
+// Paid API keys for domain risk screening
+model ApiKey {
+  id            String     @id @default(cuid())
+  key           String     @unique // ga_ + 48 hex chars = 51 chars total
+  customerEmail String
+  tier          ApiKeyTier
+  requestCount  Int        @default(0)
+  requestLimit  Int        // -1 = unlimited
+  active        Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  expiresAt     DateTime?
+
+  @@index([key], map: "ApiKey_key_idx")
+  @@index([customerEmail], map: "ApiKey_email_idx")
+}
+
 // New User model for authentication and subscriptions
 model User {
   id            String     @id @default(cuid())
