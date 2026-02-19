@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
  * Only includes indexable domains (score >= 40, status 'done').
  */
 
-import { fetchIndexableDomains } from '@/lib/api';
+import { fetchIndexableDomains, fetchIndexableDomainCount } from '@/lib/api';
 import { SEO_CONSTANTS, normalizeHostname as normalizeDomain, isPublicSuffix } from '@gecko-advisor/shared';
 
 const BASE_URL = SEO_CONSTANTS.BASE_URL;
@@ -29,6 +29,13 @@ export async function GET(_request: Request, { params }: Props) {
   }
 
   const offset = (chunk - 1) * URLS_PER_CHUNK;
+
+  // Bounds check: return 404 for chunks beyond available data
+  // Prevents Google from caching empty sitemaps for stale chunk references
+  const totalCount = await fetchIndexableDomainCount();
+  if (offset >= totalCount && totalCount > 0) {
+    return new Response('Not Found', { status: 404 });
+  }
 
   // Fetch indexable domains from backend (already filtered)
   let domains: Array<{ domain: string; scannedAt?: string }> = [];

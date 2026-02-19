@@ -14,7 +14,12 @@ SPDX-License-Identifier: MIT
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 
 const BASE_URL = SEO_CONSTANTS.BASE_URL;
-const API_URL = process.env.API_INTERNAL_URL || 'http://localhost:5001';
+
+// IMPORTANT: Use getter function to ensure env var is read at RUNTIME, not build time
+// Next.js standalone builds bake top-level constants at build time
+function getApiInternalUrl(): string {
+  return process.env.API_INTERNAL_URL || 'http://localhost:5001';
+}
 
 // Force dynamic generation
 export const dynamic = 'force-dynamic';
@@ -29,7 +34,7 @@ export async function GET() {
   // Fetch categories from API
   let categories: Category[] = [];
   try {
-    const response = await fetch(`${API_URL}/api/v2/categories`, {
+    const response = await fetch(`${getApiInternalUrl()}/api/v2/categories`, {
       next: { revalidate: 3600 },
     });
     if (response.ok) {
