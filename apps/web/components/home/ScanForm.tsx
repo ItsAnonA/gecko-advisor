@@ -150,47 +150,37 @@ export default function ScanForm() {
             </svg>
             No Account Required
           </span>
-          {/* GitHub */}
-          <a
-            href="https://github.com/privacygecko/gecko-advisor"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100 border border-zinc-300 text-xs font-medium text-zinc-700 hover:bg-zinc-200 hover:border-zinc-400 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-            </svg>
-            GitHub
-          </a>
-          {/* Scans count */}
-          {stats && stats.totalScans > 0 && (
-            <Link
-              href="/reports"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-500 border border-advisor-600 text-xs font-medium text-white hover:bg-advisor-600 transition-colors"
-              aria-label={`View all ${formatCount(stats.totalScans)} scan reports`}
-            >
+          {/* Domains monitored */}
+          {stats && stats.domainCount && stats.domainCount > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-500 border border-advisor-600 text-xs font-medium text-white">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
               </svg>
-              {formatCount(stats.totalScans)}+ Scans
-            </Link>
+              {formatCount(stats.domainCount)}+ Domains
+            </span>
           )}
         </div>
+
+        {/* Stats block */}
+        {stats && (
+          <p className="text-sm text-gecko-500 font-medium tracking-wide">
+            {stats.domainCount ? `${formatCount(stats.domainCount)} domains monitored` : ''}{stats.domainCount ? ' \u00b7 ' : ''}{formatCount(stats.totalScans)} findings \u00b7 Daily scanning since 2025
+          </p>
+        )}
 
         {/* Main Headline */}
         <h1 className="leading-tight max-w-4xl mx-auto px-4">
           <span className="block text-4xl sm:text-5xl md:text-6xl font-bold text-gecko-900">
-            Instant Privacy Analysis
+            Domain Intelligence for
           </span>
           <span className="block text-3xl sm:text-4xl md:text-5xl font-bold text-advisor-600 mt-2">
-            for Any Website
+            Vendor Risk &amp; Compliance Teams
           </span>
         </h1>
 
         {/* Subheadline */}
         <p className="text-lg md:text-xl text-gecko-600 mb-4 max-w-2xl mx-auto leading-relaxed px-4">
-          Scan any website to reveal hidden trackers, cookies, and data collection practices.
-          100% free, transparent, and privacy-respecting.
+          Screen vendor domains before onboarding. 142K+ domains monitored daily.
         </p>
       </header>
 
@@ -259,8 +249,8 @@ export default function ScanForm() {
           </div>
         )}
 
-        {/* Scan Button */}
-        <div className="mb-4 flex justify-center">
+        {/* Scan Button + Secondary CTA */}
+        <div className="mb-4 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             onClick={handleScan}
             disabled={loading || (turnstileEnabled && !turnstileToken)}
@@ -300,6 +290,15 @@ export default function ScanForm() {
               )}
             </span>
           </button>
+          <Link
+            href="/domain-intelligence-api"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-advisor-500 text-advisor-600 font-semibold text-base hover:bg-advisor-50 transition-all duration-300"
+          >
+            API Access
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </Link>
         </div>
 
         {/* Help Text */}
@@ -308,75 +307,44 @@ export default function ScanForm() {
         </p>
       </div>
 
-      {/* How It Works Section */}
+      {/* Value Propositions */}
       <section className="max-w-4xl mx-auto mt-8 md:mt-12 mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-gecko-900 mb-4 md:mb-6">
-          How It Works
-        </h2>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
-          {/* Step 1: Scan */}
-          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[200px]">
-            <div className="text-center p-5 rounded-xl border border-gray-200 bg-white shadow-sm w-full h-full flex flex-col hover:shadow-md hover:border-advisor-300 transition-all duration-300">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-md">
-                <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <h3 className="text-base md:text-lg font-bold text-gecko-900 mb-1">
-                Scan the Website
-              </h3>
-              <div className="h-[1px] w-6 bg-light-border mx-auto mb-1"></div>
-              <p className="text-[13px] text-gecko-600 leading-relaxed">
-                Cookies, Trackers, Security Headers
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Column 1: Vendor Screening */}
+          <Link href="/check-domain-risk" className="group text-center p-6 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-advisor-300 transition-all duration-300">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
             </div>
-          </div>
+            <h3 className="text-lg font-bold text-gecko-900 mb-2">Vendor Screening</h3>
+            <p className="text-sm text-gecko-600 leading-relaxed">Screen domains before onboarding vendors, partners, or clients.</p>
+            <span className="inline-block mt-3 text-sm font-semibold text-advisor-600 group-hover:underline">Check a domain &rarr;</span>
+          </Link>
 
-          {/* Arrow */}
-          <div className="text-2xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-8" aria-hidden="true">
-            →
-          </div>
-
-          {/* Step 2: Analyze */}
-          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[200px]">
-            <div className="text-center p-5 rounded-xl border border-gray-200 bg-white shadow-sm w-full h-full flex flex-col hover:shadow-md hover:border-advisor-300 transition-all duration-300">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-md">
-                <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                </svg>
-              </div>
-              <h3 className="text-base md:text-lg font-bold text-gecko-900 mb-1">
-                Analyze the Data
-              </h3>
-              <div className="h-[1px] w-6 bg-light-border mx-auto mb-1"></div>
-              <p className="text-[13px] text-gecko-600 leading-relaxed">
-                Cross-referencing, Detection Engine
-              </p>
+          {/* Column 2: API Integration */}
+          <Link href="/domain-intelligence-api" className="group text-center p-6 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-advisor-300 transition-all duration-300">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
             </div>
-          </div>
+            <h3 className="text-lg font-bold text-gecko-900 mb-2">API Integration</h3>
+            <p className="text-sm text-gecko-600 leading-relaxed">Programmatic access for compliance and security workflows.</p>
+            <span className="inline-block mt-3 text-sm font-semibold text-advisor-600 group-hover:underline">View API docs &rarr;</span>
+          </Link>
 
-          {/* Arrow */}
-          <div className="text-2xl text-gecko-300 rotate-90 md:rotate-0 flex-shrink-0 flex items-center justify-center mt-0 md:mt-8" aria-hidden="true">
-            →
-          </div>
-
-          {/* Step 3: Report */}
-          <div className="flex flex-col items-center justify-start flex-1 max-w-xs h-[200px]">
-            <div className="text-center p-5 rounded-xl border border-gray-200 bg-white shadow-sm w-full h-full flex flex-col hover:shadow-md hover:border-advisor-300 transition-all duration-300">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 hover:shadow-md">
-                <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h3 className="text-base md:text-lg font-bold text-gecko-900 mb-1">
-                Report
-              </h3>
-              <div className="h-[1px] w-6 bg-light-border mx-auto mb-1"></div>
-              <p className="text-[13px] text-gecko-600 leading-relaxed">
-                Privacy Score, Evidence, Recommendations
-              </p>
+          {/* Column 3: Transparent Methodology */}
+          <Link href="/methodology" className="group text-center p-6 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-advisor-300 transition-all duration-300">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
             </div>
-          </div>
+            <h3 className="text-lg font-bold text-gecko-900 mb-2">Transparent Methodology</h3>
+            <p className="text-sm text-gecko-600 leading-relaxed">Published accuracy tracking and open methodology.</p>
+            <span className="inline-block mt-3 text-sm font-semibold text-advisor-600 group-hover:underline">View methodology &rarr;</span>
+          </Link>
         </div>
       </section>
 

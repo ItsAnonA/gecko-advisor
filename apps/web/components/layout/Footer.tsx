@@ -7,94 +7,79 @@ SPDX-License-Identifier: MIT
 import Link from 'next/link';
 import { memo, useState, useEffect } from 'react';
 import { getStats } from '@/lib/api';
+import { footerColumns } from '@/lib/navigation';
 
 /**
- * Footer Component - Minimal Navigation
+ * Footer Component - Multi-Column Navigation with Authority Stats
  *
- * Simplified footer with horizontal navbar layout.
- * Transparent background with subtle top border.
+ * Full-width footer with organized navigation columns and live stats.
+ * Transparent background with backdrop blur.
  *
  * Features:
- * - Horizontal navigation links
- * - Essential pages only (About, FAQ, Roadmap, Security, Legal, Twitter)
- * - Transparent with backdrop blur
- * - Total scans count display
- * - Fully responsive with flex-wrap
+ * - Four-column navigation grid (Products, Solutions, Resources, Company)
+ * - External links open in new tab
+ * - Live domain count and scan count from API
+ * - Fully responsive with grid layout
  */
 const Footer = memo(function Footer() {
   const currentYear = new Date().getFullYear();
-  const [totalScans, setTotalScans] = useState<number | null>(null);
+  const [stats, setStats] = useState<{ totalScans: number; domainCount?: number } | null>(null);
 
-  // Fetch stats on mount
   useEffect(() => {
     getStats()
-      .then((stats) => setTotalScans(stats.totalScans))
-      .catch(() => setTotalScans(null));
+      .then(setStats)
+      .catch(() => setStats(null));
   }, []);
 
-  // Format number with commas for readability
   const formatNumber = (num: number): string => {
     return num.toLocaleString();
   };
 
   return (
     <footer className="backdrop-blur-md bg-white/80 border-t border-gray-200 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <nav className="flex flex-wrap items-center justify-center gap-6 text-base text-gecko-600">
-          <Link
-            href="/about"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            Why We Built This
-          </Link>
-          <Link
-            href="/faq"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            FAQ
-          </Link>
-          <Link
-            href="/roadmap"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            Roadmap
-          </Link>
-          <Link
-            href="/security"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            Security
-          </Link>
-          <Link
-            href="/legal"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            Legal
-          </Link>
-          <Link
-            href="/transparency-reports"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            Transparency
-          </Link>
-          <a
-            href="https://twitter.com/PrivacyGecko"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold hover:text-advisor-600 transition-colors"
-          >
-            Twitter
-          </a>
-        </nav>
-
-        <p className="text-center text-xs text-gecko-500 mt-4">
-          © {currentYear} Gecko Advisor. Open source privacy scanner.
-          {totalScans !== null && totalScans > 0 && (
-            <span className="ml-2 text-advisor-600 font-medium">
-              • {formatNumber(totalScans)} websites scanned
-            </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+          {footerColumns.map((column) => (
+            <div key={column.label}>
+              <h3 className="font-semibold text-gecko-900 mb-3 text-sm">{column.label}</h3>
+              <ul className="space-y-2">
+                {column.items.map((item) => (
+                  <li key={item.href}>
+                    {item.href.startsWith('http') ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-gecko-600 hover:text-advisor-600 transition-colors"
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className="text-sm text-gecko-600 hover:text-advisor-600 transition-colors"
+                      >
+                        {item.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-gray-200 pt-6">
+          <p className="text-center text-xs text-gecko-500">
+            &copy; {currentYear} Gecko Advisor. Open source privacy scanner.
+          </p>
+          {stats && (
+            <p className="text-center text-xs text-gecko-400 mt-2">
+              {stats.domainCount ? `${formatNumber(stats.domainCount)} domains monitored \u00b7 ` : ''}
+              {stats.totalScans > 0 ? `${formatNumber(stats.totalScans)} scans completed \u00b7 ` : ''}
+              Daily scanning since 2025
+            </p>
           )}
-        </p>
+        </div>
       </div>
     </footer>
   );

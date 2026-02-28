@@ -48,6 +48,8 @@ const TITLE_VARIANTS: Record<string, TitleGenerator[]> = {
     (d) => `${d.domain}: ${d.score}/100 Privacy Score - Serious Concerns`,
     (d) => `Privacy Check: ${d.domain} Scores ${d.score}/100 - Problems Detected`,
     (d) => `${d.domain} Privacy Report - Score ${d.score}/100, Critical Issues`,
+    (d) => `${d.domain} Privacy Risk: ${d.score}/100 - ${d.trackerCount} Trackers Found`,
+    (d) => `Tracking Risk Alert: ${d.domain} Scores ${d.score}/100`,
   ],
   fingerprinting: [
     (d) => `${d.domain} Uses Fingerprinting - Privacy Score ${d.score}/100`,
@@ -55,6 +57,8 @@ const TITLE_VARIANTS: Record<string, TitleGenerator[]> = {
     (d) => `Is ${d.domain} Tracking You? Fingerprinting Found`,
     (d) => `${d.domain}: Fingerprinting Active - What It Tracks`,
     (d) => `Warning: ${d.domain} Fingerprints Your Browser (${d.score}/100)`,
+    (d) => `${d.domain} Tracking Risk: Fingerprinting + ${d.trackerCount} Trackers`,
+    (d) => `Domain Risk: ${d.domain} Uses Browser Fingerprinting (${d.score}/100)`,
   ],
   highTrackers: [
     (d) => `${d.domain} Has ${d.trackerCount} Trackers - Privacy Score ${d.score}`,
@@ -62,6 +66,8 @@ const TITLE_VARIANTS: Record<string, TitleGenerator[]> = {
     (d) => `Who's Tracking You on ${d.domain}? ${d.trackerCount} Trackers Found`,
     (d) => `${d.domain} Privacy: ${d.trackerCount} Trackers Detected`,
     (d) => `Privacy Check: ${d.domain} Runs ${d.trackerCount} Trackers`,
+    (d) => `${d.domain} Tracking Risk: ${d.trackerCount} Third-Party Trackers`,
+    (d) => `Domain Risk Report: ${d.domain} - ${d.trackerCount} Trackers`,
   ],
   good: [
     (d) => `${d.domain} Privacy Score: ${d.score}/100 - Above Average`,
@@ -69,6 +75,8 @@ const TITLE_VARIANTS: Record<string, TitleGenerator[]> = {
     (d) => `${d.domain}: Privacy Score ${d.score}/100 - Better Than Most`,
     (d) => `Privacy Analysis: ${d.domain} Scores ${d.score}/100`,
     (d) => `${d.domain} Privacy Report - ${d.score}/100, ${d.trackerCount} Trackers`,
+    (d) => `${d.domain}: Low Tracking Risk - Score ${d.score}/100`,
+    (d) => `Domain Risk Check: ${d.domain} ${d.score}/100 (Low Risk)`,
   ],
   default: [
     (d) => `${d.domain} Privacy Score: ${d.score}/100 - Full Report`,
@@ -76,6 +84,8 @@ const TITLE_VARIANTS: Record<string, TitleGenerator[]> = {
     (d) => `${d.domain}: Privacy Score ${d.score}, ${d.trackerCount} Trackers`,
     (d) => `Privacy Check: ${d.domain} - Score ${d.score}/100`,
     (d) => `${d.domain} Privacy Report - Trackers, Cookies & Score`,
+    (d) => `${d.domain} Domain Risk: ${d.score}/100 - Tracking Analysis`,
+    (d) => `Tracking Report: ${d.domain} - Score ${d.score}, ${d.trackerCount} Trackers`,
   ],
   noScore: [
     (d) => `${d.domain} Privacy Analysis - Free Scan`,
@@ -83,6 +93,8 @@ const TITLE_VARIANTS: Record<string, TitleGenerator[]> = {
     (d) => `${d.domain}: Privacy Report Available`,
     (d) => `Privacy Scan: ${d.domain} - Get Your Report`,
     (d) => `Analyze ${d.domain} Privacy - Free Scanner`,
+    (d) => `${d.domain} Domain Risk Check - Free Analysis`,
+    (d) => `Check ${d.domain} Tracking Risk - Instant Report`,
   ],
 };
 
@@ -130,6 +142,8 @@ const DESCRIPTION_VARIANTS: Record<string, DescriptionGenerator[]> = {
       `Privacy alert: ${d.domain} has serious issues (score: ${d.score}). We found ${d.trackerCount} trackers. Free instant analysis.`,
     (d) =>
       `Is ${d.domain} safe? Our scan found ${d.trackerCount} trackers and scored it ${d.score}/100. Full breakdown inside.`,
+    (d) =>
+      `Domain risk assessment: ${d.domain} scores ${d.score}/100 with ${d.trackerCount} trackers. Review tracking risk and security issues.`,
   ],
   fingerprinting: [
     (d) =>
@@ -162,6 +176,8 @@ const DESCRIPTION_VARIANTS: Record<string, DescriptionGenerator[]> = {
       `How private is ${d.domain}? Our scan found ${d.trackerCount} trackers. Privacy score: ${d.score}/100. Full report.`,
     (d) =>
       `${d.domain} privacy report: ${d.score}/100 score, ${d.trackerCount} trackers, cookies analyzed. Instant free scan.`,
+    (d) =>
+      `Domain risk report for ${d.domain}: score ${d.score}/100, ${d.trackerCount} tracking scripts detected. Free analysis.`,
   ],
   noScore: [
     (d) =>

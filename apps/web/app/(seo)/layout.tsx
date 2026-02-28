@@ -5,11 +5,13 @@ SPDX-License-Identifier: MIT
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { navGroups, ctaLink, footerColumns } from '@/lib/navigation';
 
 /**
  * SEO Layout - Layout for SSR pages with consistent branding
  *
  * Matches the main app Header styling while remaining SSR-friendly.
+ * Uses CSS :focus-within for dropdown navigation (no JS required).
  * Used for /privacy-report/*, /reports, /r/* routes.
  */
 export default function SEOLayout({ children }: { children: React.ReactNode }) {
@@ -38,42 +40,37 @@ export default function SEOLayout({ children }: { children: React.ReactNode }) {
               </div>
             </Link>
 
-            {/* Navigation Links */}
-            <div className="flex items-center gap-4">
+            {/* Navigation Links - SSR-friendly dropdowns via focus-within */}
+            <div className="hidden md:flex items-center gap-4">
+              {navGroups.map((group) => (
+                <div key={group.label} className="relative group" tabIndex={0}>
+                  <span className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gecko-600 hover:text-advisor-600 transition-colors cursor-pointer">
+                    {group.label}
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                  <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
+                    <div className="bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px]">
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className="block px-4 py-2.5 text-sm text-gecko-700 hover:text-advisor-600 hover:bg-gray-50 transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
               <Link
-                href="/about"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gecko-600 hover:text-advisor-600 transition-colors"
+                href={ctaLink.href}
+                className="bg-advisor-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-advisor-600 transition-colors"
               >
-                About
+                {ctaLink.label}
               </Link>
-              <Link
-                href="/blog"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gecko-600 hover:text-advisor-600 transition-colors"
-              >
-                Blog
-              </Link>
-              <Link
-                href="/reports"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gecko-600 hover:text-advisor-600 transition-colors"
-              >
-                Reports
-              </Link>
-              <a
-                href="https://github.com/privacygecko/gecko-advisor"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-zinc-700 hover:text-advisor-600 hover:border-advisor-400 hover:bg-gray-50 transition-all shadow-sm"
-                aria-label="View on GitHub"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="hidden sm:inline font-medium">GitHub</span>
-              </a>
             </div>
           </div>
         </nav>
@@ -86,48 +83,26 @@ export default function SEOLayout({ children }: { children: React.ReactNode }) {
       <footer className="border-t bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/">Home</Link></li>
-                <li><Link href="/privacy-scanner">Scanner</Link></li>
-                <li><Link href="/reports">Reports</Link></li>
-                <li><Link href="/privacy-benchmarks">Benchmarks</Link></li>
-                <li><Link href="/changes">Changes</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/methodology">Methodology</Link></li>
-                <li><Link href="/faq">FAQ</Link></li>
-                <li><Link href="/blog">Blog</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/about">About</Link></li>
-                <li><Link href="/roadmap">Roadmap</Link></li>
-                <li><Link href="/security">Security</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/legal">Terms &amp; Privacy</Link></li>
-                <li><a href="https://github.com/privacygecko/gecko-advisor" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-              </ul>
-            </div>
-
+            {footerColumns.map((column) => (
+              <div key={column.label}>
+                <h3 className="font-semibold mb-4">{column.label}</h3>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  {column.items.map((item) => (
+                    <li key={item.href}>
+                      {item.href.startsWith('http') ? (
+                        <a href={item.href} target="_blank" rel="noopener noreferrer">{item.label}</a>
+                      ) : (
+                        <Link href={item.href}>{item.label}</Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-
           <div className="mt-8 pt-8 border-t text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} Gecko Advisor
+            <p>&copy; {new Date().getFullYear()} Gecko Advisor</p>
+            <p className="mt-2 text-xs text-gray-400">142K+ domains monitored &middot; 7.4M+ findings analyzed &middot; Daily scanning since 2025</p>
           </div>
         </div>
       </footer>

@@ -1082,3 +1082,15 @@ model ShadowScoreComparison {
   @@index([scanId])
   @@index([domainId])
 }
+
+// === Lead Capture: API Sample Requests ===
+model SampleRequest {
+  id        String   @id @default(cuid())
+  domain    String
+  email     String
+  fulfilled Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([fulfilled])
+}
