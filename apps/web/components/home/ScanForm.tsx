@@ -136,13 +136,6 @@ export default function ScanForm() {
       <header className="text-center space-y-4 py-4 md:py-8">
         {/* Trust Signals */}
         <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-4">
-          {/* Open Source */}
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-xs font-medium text-advisor-700">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-            Open Source
-          </span>
           {/* No Account Required */}
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-700">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

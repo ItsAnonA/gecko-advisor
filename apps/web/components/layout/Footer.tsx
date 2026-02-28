@@ -70,7 +70,7 @@ const Footer = memo(function Footer() {
         </div>
         <div className="border-t border-gray-200 pt-6">
           <p className="text-center text-xs text-gecko-500">
-            &copy; {currentYear} Gecko Advisor. Open source privacy scanner.
+            &copy; {currentYear} Gecko Advisor. Domain intelligence platform.
           </p>
           {stats && (
             <p className="text-center text-xs text-gecko-400 mt-2">
