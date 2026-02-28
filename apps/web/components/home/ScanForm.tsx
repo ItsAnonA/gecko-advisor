@@ -133,48 +133,41 @@ export default function ScanForm() {
   return (
     <>
       {/* Hero Section */}
-      <header className="text-center space-y-4 py-4 md:py-8">
-        {/* Trust Signals */}
-        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-4">
-          {/* No Account Required */}
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-700">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            No Account Required
-          </span>
-          {/* Domains monitored */}
-          {stats && stats.domainCount && stats.domainCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-advisor-500 border border-advisor-600 text-xs font-medium text-white">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-              </svg>
-              {formatCount(stats.domainCount)}+ Domains
-            </span>
-          )}
-        </div>
-
-        {/* Stats block */}
-        {stats && (
-          <p className="text-sm text-gecko-500 font-medium tracking-wide">
-            {stats.domainCount ? `${formatCount(stats.domainCount)} domains monitored` : ''}{stats.domainCount ? ' \u00b7 ' : ''}{formatCount(stats.totalScans)} findings \u00b7 Daily scanning since 2025
-          </p>
-        )}
-
+      <header className="text-center py-6 md:py-10 px-4">
         {/* Main Headline */}
-        <h1 className="leading-tight max-w-4xl mx-auto px-4">
-          <span className="block text-4xl sm:text-5xl md:text-6xl font-bold text-gecko-900">
+        <h1 className="leading-[1.1] max-w-4xl mx-auto mb-5">
+          <span className="block font-display text-4xl sm:text-5xl md:text-6xl font-bold text-gecko-900 tracking-tight">
             Domain Intelligence for
           </span>
-          <span className="block text-3xl sm:text-4xl md:text-5xl font-bold text-advisor-600 mt-2">
-            Vendor Risk &amp; Compliance Teams
+          <span className="block font-display text-4xl sm:text-5xl md:text-6xl font-bold text-advisor-600 tracking-tight mt-1">
+            Risk &amp; Compliance
           </span>
         </h1>
 
         {/* Subheadline */}
-        <p className="text-lg md:text-xl text-gecko-600 mb-4 max-w-2xl mx-auto leading-relaxed px-4">
-          Screen vendor domains before onboarding. 142K+ domains monitored daily.
+        <p className="text-lg md:text-xl text-gecko-500 max-w-xl mx-auto leading-relaxed mb-6">
+          Screen vendor domains before onboarding. Detect trackers, assess privacy posture, monitor drift.
         </p>
+
+        {/* Authority stats bar */}
+        {stats && (
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gecko-400 font-medium tabular-nums">
+            {stats.domainCount ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-advisor-500" />
+                {formatCount(stats.domainCount)} domains monitored
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-advisor-400" />
+              {formatCount(stats.totalScans)} scans completed
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-advisor-300" />
+              Daily scanning
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Privacy Scanner Box */}
