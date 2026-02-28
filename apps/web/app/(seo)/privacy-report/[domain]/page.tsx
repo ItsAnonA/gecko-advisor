@@ -26,6 +26,7 @@ import { getReportForDomain, fetchDomainChanges, checkDomainStatus, fetchTopDoma
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SEOSummary } from '@/components/seo/SEOSummary';
 import { InteractiveReport, ChangeHistory, ChangeHistorySkeleton } from '@/components/report';
+import { DomainReportCTA } from '@/components/report/DomainReportCTA';
 
 interface Props {
   params: Promise<{ domain: string }>;
@@ -183,8 +184,8 @@ export default async function ReportPage({ params }: Props) {
             </li>
             <li aria-hidden="true">/</li>
             <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
-              <Link href="/reports" className="hover:text-advisor-600 transition-colors" itemProp="item">
-                <span itemProp="name">Website Privacy Reports</span>
+              <Link href="/domain-privacy-risk" className="hover:text-advisor-600 transition-colors" itemProp="item">
+                <span itemProp="name">Domain Privacy Risk</span>
               </Link>
               <meta itemProp="position" content="2" />
             </li>
@@ -209,6 +210,9 @@ export default async function ReportPage({ params }: Props) {
         <Suspense fallback={<ChangeHistorySkeleton />}>
           <ChangeHistorySection domain={domain} />
         </Suspense>
+
+        {/* Domain Intelligence Resources CTA */}
+        <DomainReportCTA />
       </div>
     </>
   );

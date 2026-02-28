@@ -8,39 +8,35 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { memo, useState, useCallback } from 'react';
+import { navGroups, ctaLink } from '@/lib/navigation';
 
 /**
- * Header Component - Responsive Navigation
+ * Header Component - Responsive Navigation with Dropdown Menus
  *
- * Full-featured header with logo, navigation links, and mobile menu.
+ * Full-featured header with logo, grouped dropdown navigation, and mobile accordion.
  * Transparent background with subtle border.
  *
  * Features:
  * - Gecko Advisor logo (left)
- * - Desktop navigation links
- * - Mobile hamburger menu
+ * - Desktop dropdown navigation groups (hover to open)
+ * - Mobile accordion menu with expandable groups
  * - Active path highlighting
- * - GitHub repository link
+ * - CTA button for API Access
  */
 const Header = memo(function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const toggleMobileMenu = useCallback(() => {
     setMobileMenuOpen((prev) => !prev);
+    setOpenGroup(null);
   }, []);
 
   const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
+    setOpenGroup(null);
   }, []);
-
-  const navLinks = [
-    { href: '/privacy-scanner', label: 'Scanner' },
-    { href: '/reports', label: 'Reports' },
-    { href: '/changes', label: 'Changes' },
-    { href: '/blog', label: 'Blog' },
-    { href: '/about', label: 'About' },
-  ];
 
   return (
     <header className="backdrop-blur-sm bg-white/90 sticky top-0 z-40 border-b border-gray-200">
@@ -66,31 +62,41 @@ const Header = memo(function Header() {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
-                  pathname === link.href
-                    ? 'text-advisor-600'
-                    : 'text-gecko-600 hover:text-advisor-600'
-                }`}
-              >
-                {link.label}
-              </Link>
+          {/* Desktop Navigation - Dropdown Groups */}
+          <div className="hidden md:flex items-center gap-1">
+            {navGroups.map((group) => (
+              <div key={group.label} className="relative group">
+                <button className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gecko-600 hover:text-advisor-600 transition-colors">
+                  {group.label}
+                  <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px]">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-4 py-2.5 text-sm transition-colors ${
+                          pathname === item.href
+                            ? 'text-advisor-600 bg-advisor-50'
+                            : 'text-gecko-700 hover:text-advisor-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ))}
-            <a
-              href="https://github.com/privacygecko/gecko-advisor"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-zinc-700 hover:text-advisor-600 hover:border-advisor-400 hover:bg-gray-50 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none"
-              aria-label="View on GitHub"
+            <Link
+              href={ctaLink.href}
+              className="bg-advisor-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-advisor-600 transition-colors"
             >
-              <GitHubIcon className="w-5 h-5" />
-              <span className="font-medium">GitHub</span>
-            </a>
+              {ctaLink.label}
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -114,36 +120,50 @@ const Header = memo(function Header() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Accordion Groups */}
         {mobileMenuOpen && (
           <div
             id="mobile-menu"
-            className="md:hidden border-t border-gray-200 py-4 space-y-2 animate-fade-in"
+            className="md:hidden border-t border-gray-200 py-4 space-y-1 animate-fade-in"
           >
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={closeMobileMenu}
-                className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors focus-visible:ring-2 focus-visible:ring-advisor-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
-                  pathname === link.href
-                    ? 'bg-advisor-50 text-advisor-600'
-                    : 'text-gecko-600 hover:bg-gray-50 hover:text-advisor-600'
-                }`}
-              >
-                {link.label}
-              </Link>
+            {navGroups.map((group) => (
+              <div key={group.label}>
+                <button
+                  onClick={() => setOpenGroup(openGroup === group.label ? null : group.label)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-base font-medium text-gecko-700"
+                >
+                  {group.label}
+                  <svg className={`w-4 h-4 transition-transform ${openGroup === group.label ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openGroup === group.label && (
+                  <div className="pl-4 pb-2 space-y-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={closeMobileMenu}
+                        className={`block px-4 py-2 text-sm rounded-lg ${
+                          pathname === item.href
+                            ? 'text-advisor-600 bg-advisor-50'
+                            : 'text-gecko-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
-            <a
-              href="https://github.com/privacygecko/gecko-advisor"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={ctaLink.href}
               onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg text-base font-medium text-gecko-600 hover:bg-gray-50 hover:text-advisor-600 transition-colors"
+              className="block mx-4 mt-2 px-4 py-3 text-center bg-advisor-500 text-white rounded-lg font-medium hover:bg-advisor-600 transition-colors"
             >
-              <GitHubIcon className="w-5 h-5" />
-              <span>GitHub</span>
-            </a>
+              {ctaLink.label}
+            </Link>
           </div>
         )}
       </nav>

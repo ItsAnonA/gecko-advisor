@@ -671,6 +671,7 @@ export async function getRecentReports(): Promise<RecentReportsResponse> {
  */
 export interface StatsResponse {
   totalScans: number;
+  domainCount?: number;
 }
 
 export async function getStats(): Promise<StatsResponse> {

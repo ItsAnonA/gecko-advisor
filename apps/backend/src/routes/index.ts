@@ -14,6 +14,7 @@ import { categoriesV2Router } from "./v2.categories.js";
 import { changesV2Router } from "./v2.changes.js";
 import { insightsV2Router } from "./v2.insights.js";
 import { transparencyV2Router } from "./v2.transparency.js";
+import { sampleRequestV2Router } from "./v2.sampleRequest.js";
 
 export const apiV1Router = Router();
 apiV1Router.use('/scan', scanV1Router);
@@ -31,3 +32,4 @@ apiV2Router.use('/', categoriesV2Router);
 apiV2Router.use('/changes', changesV2Router);
 apiV2Router.use('/insights', insightsV2Router);
 apiV2Router.use('/transparency', transparencyV2Router);
+apiV2Router.use('/', sampleRequestV2Router);

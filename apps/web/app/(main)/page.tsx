@@ -15,21 +15,21 @@ import { ScanForm } from '@/components/home';
  * consolidate to the base homepage URL for SEO purposes.
  */
 export const metadata: Metadata = {
-  title: 'Gecko Advisor - Free Website Privacy Scanner',
-  description: 'Scan any website to reveal hidden trackers, cookies, and data collection practices. 100% free, open-source, and privacy-respecting.',
+  title: 'GeckoAdvisor — Domain Intelligence for Vendor Risk & Compliance',
+  description: 'Screen vendor domains before onboarding. Real-time stability, tracker detection, and privacy risk data across 142K+ domains.',
   alternates: {
     canonical: 'https://geckoadvisor.com/',
   },
   openGraph: {
-    title: 'Gecko Advisor - Instant Privacy Analysis for Any Website',
-    description: 'Free open-source privacy scanner. Analyze any site for trackers, cookies, and security issues.',
+    title: 'GeckoAdvisor — Domain Intelligence for Vendor Risk & Compliance',
+    description: 'Screen vendor domains before onboarding. Real-time stability, tracker detection, and privacy risk data across 142K+ domains.',
     type: 'website',
     url: 'https://geckoadvisor.com',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gecko Advisor - Free Website Privacy Scanner',
-    description: 'Scan any website to reveal hidden trackers, cookies, and data collection practices.',
+    title: 'GeckoAdvisor — Domain Intelligence for Vendor Risk & Compliance',
+    description: 'Screen vendor domains before onboarding. Real-time stability, tracker detection, and privacy risk data across 142K+ domains.',
   },
 };
 
