@@ -318,16 +318,17 @@ reportV2Router.get('/reports/recent', async (_req, res) => {
   }
 });
 
-// Stats endpoint - total scans count for credibility display
+// Stats endpoint - total scans count + domain count for credibility display
 reportV2Router.get('/stats', async (_req, res) => {
   try {
     const stats = await CacheService.getOrSet(
       CACHE_KEYS.STATS,
       async () => {
-        const totalScans = await prisma.scan.count({
-          where: { status: 'done' },
-        });
-        return { totalScans };
+        const [totalScans, domainCount] = await Promise.all([
+          prisma.scan.count({ where: { status: 'done' } }),
+          prisma.domain.count(),
+        ]);
+        return { totalScans, domainCount };
       },
       CACHE_TTL.STATS
     );
