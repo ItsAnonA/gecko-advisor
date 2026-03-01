@@ -8,16 +8,18 @@ This file provides guidance for working with the Gecko Advisor codebase.
 
 ## What is Gecko Advisor?
 
-Gecko Advisor is a **free, open-source website privacy scanner** that analyzes any website and provides:
+Gecko Advisor is a **domain intelligence platform for vendor risk and compliance teams**. It provides:
 - **Privacy Score** (0-100) - Deterministic, explainable rating
 - **Evidence-Based Findings** - Cookies, trackers, fingerprinting, security headers
-- **Recommendations** - Actionable steps to improve privacy
+- **Domain Intelligence API** - Programmatic access for compliance workflows
 - **Historical Tracking** - How privacy practices change over time
-- **Domain Intelligence** - Stability scores, predictions, and trend analysis
+- **Stability Metrics** - Volatility index, trend classification, confidence tiers
 
 **Live Site**: https://geckoadvisor.com
 
-**Mission**: 100% free privacy assessment with no user tracking or authentication required.
+**Positioning**: Screen vendor domains before onboarding. B2B domain intelligence for risk, compliance, and security teams.
+
+**Business Model**: Free scanner for individual use, paid API access for programmatic/enterprise use.
 
 ---
 
@@ -133,6 +135,15 @@ Benchmarks Page → Select Category → Category Report → Domain Detail
 | Category Detail | `/privacy-benchmarks/[category]` | Per-category analysis |
 | Changes Feed | `/changes` | Recent privacy changes |
 | Blog | `/blog` | Privacy articles |
+
+### Buyer-Intent / SEO Pages
+| Page | Route | Purpose |
+|------|-------|---------|
+| Domain Intelligence API | `/domain-intelligence-api` | API product page with sample JSON, SampleRequestForm |
+| Domain Risk Checker | `/check-domain-risk` | Interactive domain lookup (uses GET /api/v2/domain/:domain) |
+| Vendor Due Diligence | `/vendor-domain-due-diligence` | Content page: vendor screening guide |
+| Domain Privacy Risk | `/domain-privacy-risk` | Content page: risk assessment with comparison table |
+| Domain Security Guide | `/how-to-evaluate-domain-security` | Content page: 6-point security checklist |
 
 ### Information
 | Page | Route | Purpose |
@@ -417,6 +428,11 @@ queued → running → done
 | GET | `/api/v2/categories` | Industry categories |
 | GET | `/api/v2/blog` | Blog posts |
 
+### Conversion API
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v2/sample-request` | Email capture for API sample data (rate limited: 3/day per email) |
+
 ---
 
 ## Database Schema
@@ -454,6 +470,7 @@ queued → running → done
 | `SystemState` | K/V store for circuit breaker, drift metrics |
 | `SchedulerBatch` | Scheduler idempotency tracking |
 | `DailyReport` | Operational metrics and health data |
+| `SampleRequest` | Email capture for API sample data requests |
 
 ---
 
@@ -494,6 +511,17 @@ queued → running → done
 | `FingerprintingExplainer.tsx` | Fingerprinting explanation |
 | `HighTrackerExplainer.tsx` | Tracker context |
 | `CriticalPrivacyConcerns.tsx` | Critical issues highlight |
+
+### Navigation & Layout
+| Component / File | Purpose |
+|-----------|---------|
+| `lib/navigation.ts` | Shared nav config (navGroups, ctaLink, footerColumns) |
+| `Header.tsx` | Dropdown nav (Products/Solutions/Resources) + API Access CTA |
+| `Footer.tsx` | 4-column footer with live authority stats from API |
+| `(seo)/layout.tsx` | SSR layout with CSS-only dropdowns (`:focus-within`) |
+| `DomainReportCTA.tsx` | CTA links on report pages → API, due diligence, risk checker |
+| `DomainChecker.tsx` | Interactive domain lookup (client component on /check-domain-risk) |
+| `SampleRequestForm.tsx` | Email capture form (POST /api/v2/sample-request) |
 
 ---
 
