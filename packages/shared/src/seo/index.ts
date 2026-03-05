@@ -13,3 +13,4 @@ export * from './normalize.js';
 export * from './index-gating.js';
 export * from './metadata.js';
 export * from './schema.js';
+export * from './trackerSlug.js';

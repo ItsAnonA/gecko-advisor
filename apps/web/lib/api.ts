@@ -905,6 +905,147 @@ export async function getStats(): Promise<StatsResponse> {
 }
 
 // =============================================================================
+// Trackers API (Phase C2)
+// =============================================================================
+
+import type { TrackerDetailData } from '@/components/seo/TrackerPage';
+import type { AnswerPageData } from '@/components/seo/AnswerPage';
+import type { SimilarityData } from '@/components/seo/SimilarityPage';
+
+export type SimilarDomainsResponse = SimilarityData;
+
+export interface TrackerListItem {
+  slug: string;
+  name: string;
+  domainCount: number;
+}
+
+export interface TrackerListResponse {
+  trackers: TrackerListItem[];
+  total: number;
+}
+
+/**
+ * Fetch paginated list of trackers (SSR).
+ */
+export async function fetchTrackerList(
+  limit: number = 500
+): Promise<TrackerListResponse | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/trackers?limit=${limit}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error('Failed to fetch tracker list:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch tracker detail by slug (SSR).
+ */
+export async function fetchTrackerDetail(
+  slug: string
+): Promise<TrackerDetailData | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/trackers/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch tracker detail for ${slug}:`, error);
+    return null;
+  }
+}
+
+// =============================================================================
+// Answers API (Phase C1)
+// =============================================================================
+
+/**
+ * Fetch answer data by slug (SSR).
+ */
+export async function fetchAnswerData(
+  slug: string
+): Promise<AnswerPageData | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/answers/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch answer for ${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all answer slugs (for sitemap).
+ */
+export async function fetchAnswerSlugs(): Promise<Array<{ slug: string; title: string }>> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/answers`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.answers || [];
+  } catch {
+    return [];
+  }
+}
+
+// =============================================================================
+// Similarity API (Phase C3)
+// =============================================================================
+
+/**
+ * Fetch similar domains for a given domain (SSR).
+ */
+export async function fetchSimilarDomains(
+  domain: string
+): Promise<SimilarDomainsResponse | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/similar/${encodeURIComponent(domain)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch similar domains for ${domain}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch eligible domains for similarity sitemap.
+ */
+export async function fetchSimilarEligible(
+  offset: number = 0,
+  limit: number = 1000
+): Promise<{ domains: Array<{ domain: string; lastScanned: string | null }>; total: number }> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/similar/eligible/list?offset=${offset}&limit=${limit}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return { domains: [], total: 0 };
+    return res.json();
+  } catch {
+    return { domains: [], total: 0 };
+  }
+}
+
+// =============================================================================
 // Context API - Contextual interpretations for reports
 // =============================================================================
 

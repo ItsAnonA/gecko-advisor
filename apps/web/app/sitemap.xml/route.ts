@@ -46,6 +46,13 @@ export async function GET() {
     sitemaps.push({ loc: `${BASE_URL}/sitemap-core-c.xml` });
   }
 
+  // Phase C — Query-first SEO pages
+  if (process.env.SITEMAP_PHASE_C === 'true') {
+    sitemaps.push({ loc: `${BASE_URL}/sitemap-trackers.xml` });
+    sitemaps.push({ loc: `${BASE_URL}/sitemap-answers.xml` });
+    sitemaps.push({ loc: `${BASE_URL}/sitemap-similar.xml` });
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemaps
