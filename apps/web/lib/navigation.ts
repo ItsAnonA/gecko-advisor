@@ -38,6 +38,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Highest Privacy Scores', href: '/websites-with-highest-privacy-score' },
       { label: 'Top 100 Privacy', href: '/top-100-websites-privacy' },
       { label: 'Tracker Directory', href: '/trackers' },
+      { label: 'Research Reports', href: '/research' },
     ],
   },
   {

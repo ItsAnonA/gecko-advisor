@@ -51,6 +51,7 @@ export async function GET() {
     sitemaps.push({ loc: `${BASE_URL}/sitemap-trackers.xml` });
     sitemaps.push({ loc: `${BASE_URL}/sitemap-answers.xml` });
     sitemaps.push({ loc: `${BASE_URL}/sitemap-similar.xml` });
+    sitemaps.push({ loc: `${BASE_URL}/sitemap-research.xml` });
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

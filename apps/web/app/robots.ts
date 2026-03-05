@@ -42,6 +42,7 @@ export default function robots(): MetadataRoute.Robots {
           '/trackers/',
           '/answers/',
           '/sites-like/',
+          '/research/',
           '/most-tracked-websites',
           '/websites-with-highest-privacy-score',
           '/websites-with-most-cookies',

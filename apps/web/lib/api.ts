@@ -911,6 +911,7 @@ export async function getStats(): Promise<StatsResponse> {
 import type { TrackerDetailData } from '@/components/seo/TrackerPage';
 import type { AnswerPageData } from '@/components/seo/AnswerPage';
 import type { SimilarityData } from '@/components/seo/SimilarityPage';
+import type { ResearchReportData } from '@/components/seo/ResearchReport';
 
 export type SimilarDomainsResponse = SimilarityData;
 
@@ -959,6 +960,54 @@ export async function fetchTrackerDetail(
     return res.json();
   } catch (error) {
     console.error(`Failed to fetch tracker detail for ${slug}:`, error);
+    return null;
+  }
+}
+
+// =============================================================================
+// Research Reports API (Phase D)
+// =============================================================================
+
+export interface ResearchListItem {
+  slug: string;
+  title: string;
+  subtitle: string;
+  teaser: string;
+  reportType: string;
+}
+
+/**
+ * Fetch list of all research reports (SSR).
+ */
+export async function fetchResearchList(): Promise<ResearchListItem[]> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/research`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.reports || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch a single research report by slug (SSR).
+ */
+export async function fetchResearchReport(
+  slug: string
+): Promise<ResearchReportData | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/research/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch research report for ${slug}:`, error);
     return null;
   }
 }

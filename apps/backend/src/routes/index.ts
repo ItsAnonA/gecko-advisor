@@ -20,6 +20,7 @@ import { rankingsV2Router } from "./v2.rankings.js";
 import { trackersV2Router } from "./v2.trackers.js";
 import { answersV2Router } from "./v2.answers.js";
 import { similarV2Router } from "./v2.similar.js";
+import { researchV2Router } from "./v2.research.js";
 
 export const apiV1Router = Router();
 apiV1Router.use('/scan', scanV1Router);
@@ -43,3 +44,4 @@ apiV2Router.use('/rankings', rankingsV2Router);
 apiV2Router.use('/trackers', trackersV2Router);
 apiV2Router.use('/answers', answersV2Router);
 apiV2Router.use('/similar', similarV2Router);
+apiV2Router.use('/research', researchV2Router);
