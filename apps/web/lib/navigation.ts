@@ -31,6 +31,15 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'Research',
+    items: [
+      { label: 'Privacy Index', href: '/privacy-index' },
+      { label: 'Most Tracked Websites', href: '/most-tracked-websites' },
+      { label: 'Highest Privacy Scores', href: '/websites-with-highest-privacy-score' },
+      { label: 'Top 100 Privacy', href: '/top-100-websites-privacy' },
+    ],
+  },
+  {
     label: 'Resources',
     items: [
       { label: 'Methodology', href: '/methodology' },

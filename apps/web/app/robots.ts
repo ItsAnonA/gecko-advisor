@@ -28,6 +28,7 @@ export default function robots(): MetadataRoute.Robots {
           '/privacy-benchmarks/',
           '/changes',
           '/compare/',
+          '/transparency-reports',
           '/privacy-scanner',
           '/methodology',
           '/faq',
@@ -37,6 +38,12 @@ export default function robots(): MetadataRoute.Robots {
           '/vendor-domain-due-diligence',
           '/domain-privacy-risk',
           '/how-to-evaluate-domain-security',
+          '/privacy-index',
+          '/most-tracked-websites',
+          '/websites-with-highest-privacy-score',
+          '/websites-with-most-cookies',
+          '/top-100-websites-privacy',
+          '/least-private-websites',
         ],
         disallow: [
           // Internal / API endpoints

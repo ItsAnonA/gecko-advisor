@@ -593,6 +593,147 @@ export const fetchNarrativeContext = cache(
 );
 
 // ============================================================================
+// Rankings (Phase B SEO)
+// ============================================================================
+
+export type RankingType = 'most-tracked' | 'highest-score' | 'most-cookies' | 'top-100' | 'least-private';
+
+export interface RankedDomain {
+  rank: number;
+  domain: string;
+  displayName: string;
+  score: number;
+  label: string;
+  trackerCount: number;
+  cookieCount: number;
+  category: string | null;
+  categorySlug: string | null;
+  lastScanned: string | null;
+}
+
+export interface RankingsResponse {
+  type: RankingType;
+  domains: RankedDomain[];
+  stats: {
+    totalDomains: number;
+    avgScore: number;
+    avgTrackerCount: number;
+    avgCookieCount: number;
+    medianScore: number;
+  };
+  categoryBreakdown: Array<{
+    category: string;
+    slug: string;
+    avgValue: number;
+    domainCount: number;
+  }>;
+  generatedAt: string;
+}
+
+export interface PrivacyIndexData {
+  globalStats: {
+    totalDomains: number;
+    avgPrivacyScore: number;
+    medianPrivacyScore: number;
+    avgTrackerCount: number;
+    avgCookieCount: number;
+    totalFindings: number;
+  };
+  categoryBreakdown: Array<{
+    name: string;
+    slug: string;
+    avgScore: number;
+    avgTrackers: number;
+    domainCount: number;
+  }>;
+  scoreDistribution: Array<{ range: string; count: number }>;
+  topTrackers: Array<{ name: string; count: number }>;
+}
+
+export const fetchPrivacyIndexData = cache(
+  async (): Promise<PrivacyIndexData | null> => {
+    try {
+      const [globalRes, indexRes] = await Promise.all([
+        fetch(`${getApiInternalUrl()}/api/v2/rankings/global-stats`, { next: { revalidate: 3600 } }),
+        fetch(`${getApiInternalUrl()}/api/v2/rankings/privacy-index`, { next: { revalidate: 3600 } }),
+      ]);
+
+      if (!globalRes.ok) return null;
+      const stats = await globalRes.json();
+
+      const indexData = indexRes.ok ? await indexRes.json() : {
+        categoryBreakdown: [],
+        scoreDistribution: [],
+        topTrackers: [],
+        totalFindings: 0,
+      };
+
+      return {
+        globalStats: {
+          totalDomains: stats.totalDomains,
+          avgPrivacyScore: stats.avgScore,
+          medianPrivacyScore: stats.medianScore,
+          avgTrackerCount: stats.avgTrackerCount,
+          avgCookieCount: stats.avgCookieCount,
+          totalFindings: indexData.totalFindings || 0,
+        },
+        categoryBreakdown: indexData.categoryBreakdown,
+        scoreDistribution: indexData.scoreDistribution,
+        topTrackers: indexData.topTrackers,
+      };
+    } catch (error) {
+      console.error('Failed to fetch privacy index data:', error);
+      return null;
+    }
+  }
+);
+
+export const fetchRankings = cache(
+  async (type: RankingType, limit: number = 100): Promise<RankingsResponse | null> => {
+    try {
+      const [rankRes, catRes] = await Promise.all([
+        fetch(
+          `${getApiInternalUrl()}/api/v2/rankings/${type}?limit=${limit}`,
+          { next: { revalidate: 3600 } }
+        ),
+        fetch(
+          `${getApiInternalUrl()}/api/v2/rankings/${type}/categories`,
+          { next: { revalidate: 3600 } }
+        ),
+      ]);
+
+      if (!rankRes.ok) return null;
+      const rankData = await rankRes.json();
+
+      const catData = catRes.ok ? await catRes.json() : { categories: [] };
+
+      // Map backend category format to frontend expected format
+      const metricKeyMap: Record<RankingType, string> = {
+        'most-tracked': 'avgTrackerCount',
+        'highest-score': 'avgScore',
+        'most-cookies': 'avgCookieCount',
+        'top-100': 'avgScore',
+        'least-private': 'avgScore',
+      };
+      const metricField = metricKeyMap[type];
+
+      return {
+        ...rankData,
+        categoryBreakdown: (catData.categories || []).map((c: Record<string, unknown>) => ({
+          category: c.categoryName as string,
+          slug: c.categorySlug as string,
+          avgValue: (c[metricField] as number) || 0,
+          domainCount: c.domainCount as number,
+        })),
+      };
+    } catch (error) {
+      console.error(`Failed to fetch rankings ${type}:`, error);
+      return null;
+    }
+  }
+);
+
+// ============================================================================
 // Client-Side API Functions (for Home page, Scan page)
 // ============================================================================
 

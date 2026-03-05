@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
  */
 
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
+import { comparisonPairs } from '@/data/comparison-pairs';
 
 const BASE_URL = SEO_CONSTANTS.BASE_URL;
 
@@ -59,6 +60,13 @@ export async function GET() {
     { loc: '/methodology', priority: '0.7', changefreq: 'monthly' },
     { loc: '/faq', priority: '0.6', changefreq: 'weekly' },
     { loc: '/about', priority: '0.5', changefreq: 'monthly' },
+    // Authority / Research pages (Phase B)
+    { loc: '/privacy-index', priority: '1.0', changefreq: 'weekly' },
+    { loc: '/most-tracked-websites', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/websites-with-highest-privacy-score', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/websites-with-most-cookies', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/top-100-websites-privacy', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/least-private-websites', priority: '0.9', changefreq: 'weekly' },
     // Buyer-intent pages
     { loc: '/domain-intelligence-api', priority: '0.9', changefreq: 'weekly' },
     { loc: '/check-domain-risk', priority: '0.9', changefreq: 'weekly' },
@@ -66,6 +74,15 @@ export async function GET() {
     { loc: '/domain-privacy-risk', priority: '0.8', changefreq: 'monthly' },
     { loc: '/how-to-evaluate-domain-security', priority: '0.8', changefreq: 'monthly' },
   ];
+
+  // Curated comparison pages
+  const comparisonUrls = comparisonPairs.map(
+    (pair) => `  <url>
+    <loc>${BASE_URL}/compare/${pair.domainA}/${pair.domainB}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>`
+  );
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -78,6 +95,7 @@ ${staticPages
   </url>`
   )
   .join('\n')}
+${comparisonUrls.join('\n')}
 ${domains
   .map((d) => {
     const lastmod = d.lastScannedAt
