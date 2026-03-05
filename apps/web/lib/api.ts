@@ -514,6 +514,85 @@ export async function fetchCategorySlugsForStaticParams(): Promise<string[]> {
 }
 
 // ============================================================================
+// Narrative Context (Phase A SEO)
+// ============================================================================
+
+import type {
+  DomainData,
+  CategoryStats,
+  GlobalStats,
+  ScanHistory,
+  DomainSummary as NarrativeDomainSummary,
+} from './generateDomainNarrative';
+
+/**
+ * Full narrative context for a domain page.
+ */
+export interface NarrativeContext {
+  domain: DomainData;
+  scanHistory: ScanHistory[];
+  relatedDomains: NarrativeDomainSummary[];
+  sameTrackerDomains: Record<string, string[]>;
+  categoryStats?: CategoryStats;
+  globalStats?: GlobalStats;
+}
+
+/**
+ * Fetches narrative context for a domain page.
+ * Returns null if domain not found or not enough data.
+ */
+export const fetchNarrativeContext = cache(
+  async (domainName: string): Promise<NarrativeContext | null> => {
+    try {
+      // Fetch domain narrative context and global stats in parallel
+      const [contextRes, globalRes] = await Promise.all([
+        fetch(
+          `${getApiInternalUrl()}/api/v2/domain/${encodeURIComponent(domainName)}/narrative-context`,
+          { next: { revalidate: 3600 } }
+        ),
+        fetch(`${getApiInternalUrl()}/api/v2/stats/global`, {
+          next: { revalidate: 3600 },
+        }),
+      ]);
+
+      if (!contextRes.ok) return null;
+
+      const context = await contextRes.json();
+      const globalStats = globalRes.ok ? await globalRes.json() : null;
+
+      // Fetch category stats if domain has a category
+      let categoryStats: CategoryStats | undefined;
+      if (context.domain?.categoryName) {
+        try {
+          const catSlug = context.domain.categoryName.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
+          const catRes = await fetch(
+            `${getApiInternalUrl()}/api/v2/categories/${encodeURIComponent(catSlug)}/stats`,
+            { next: { revalidate: 3600 } }
+          );
+          if (catRes.ok) {
+            categoryStats = await catRes.json();
+          }
+        } catch {
+          // Category stats are optional
+        }
+      }
+
+      return {
+        domain: context.domain,
+        scanHistory: context.scanHistory || [],
+        relatedDomains: context.relatedDomains || [],
+        sameTrackerDomains: context.sameTrackerDomains || {},
+        categoryStats,
+        globalStats: globalStats || undefined,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch narrative context for ${domainName}:`, error);
+      return null;
+    }
+  }
+);
+
+// ============================================================================
 // Client-Side API Functions (for Home page, Scan page)
 // ============================================================================
 

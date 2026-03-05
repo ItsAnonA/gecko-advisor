@@ -22,11 +22,20 @@ import {
   buildBreadcrumbSchema,
   SEO_CONSTANTS,
 } from '@gecko-advisor/shared';
-import { getReportForDomain, fetchDomainChanges, checkDomainStatus, fetchTopDomainsForStaticParams } from '@/lib/api';
+import { getReportForDomain, fetchDomainChanges, checkDomainStatus, fetchTopDomainsForStaticParams, fetchNarrativeContext } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { SEOSummary } from '@/components/seo/SEOSummary';
+import { NarrativeContent } from '@/components/seo/NarrativeContent';
 import { InteractiveReport, ChangeHistory, ChangeHistorySkeleton } from '@/components/report';
 import { DomainReportCTA } from '@/components/report/DomainReportCTA';
+import {
+  generateDomainNarrative,
+  generateDomainTitle,
+  generateDomainDescription,
+  getDomainDisplayName,
+  type ComparisonLink,
+} from '@/lib/generateDomainNarrative';
+import { getComparisonPairsForDomain, getOtherDomain } from '@/data/comparison-pairs';
 
 interface Props {
   params: Promise<{ domain: string }>;
@@ -57,7 +66,7 @@ async function ChangeHistorySection({ domain }: { domain: string }) {
   return <ChangeHistory domain={domain} changes={changesData.changes} />;
 }
 
-// Generate metadata - uses cached getReportForDomain()
+// Generate metadata - uses cached getReportForDomain() + narrative context
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { domain: encodedDomain } = await params;
   const rawDomain = decodeURIComponent(encodedDomain);
@@ -71,9 +80,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { tier, heading, description, domain } = report;
 
+  // Try narrative-driven titles for quality-tier domains
+  const narrativeCtx = await fetchNarrativeContext(domain);
+  let title = heading;
+  let desc = description;
+
+  if (narrativeCtx && narrativeCtx.domain.scanCount >= 3) {
+    // Use varied titles from narrative engine
+    title = generateDomainTitle(narrativeCtx.domain);
+    if (narrativeCtx.categoryStats) {
+      desc = generateDomainDescription(narrativeCtx.domain, narrativeCtx.categoryStats);
+    }
+  }
+
+  // Freshness signal: article:modified_time from last scan date
+  const lastScanned = narrativeCtx?.scanHistory?.[0]?.date || report.scanData.finishedAt;
+
   return {
-    title: heading,
-    description,
+    title,
+    description: desc,
     alternates: {
       canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
     },
@@ -82,17 +107,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       follow: true,
     },
     openGraph: {
-      title: `${domain} Privacy Score & Security Signals | ${SEO_CONSTANTS.SITE_NAME}`,
-      description,
+      title: `${getDomainDisplayName(domain)} Privacy Score & Tracker Analysis | ${SEO_CONSTANTS.SITE_NAME}`,
+      description: desc,
       url: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
       siteName: SEO_CONSTANTS.SITE_NAME,
       type: 'article',
+      ...(lastScanned && { modifiedTime: new Date(lastScanned).toISOString() }),
     },
     twitter: {
       card: 'summary_large_image',
-      title: heading,
-      description,
+      title,
+      description: desc,
     },
+    // article:modified_time for freshness signal
+    other: lastScanned
+      ? { 'article:modified_time': new Date(lastScanned).toISOString() }
+      : undefined,
   };
 }
 
@@ -137,6 +167,29 @@ export default async function ReportPage({ params }: Props) {
   // data and scanData are guaranteed non-null when report is non-null
   const { data, tier, heading, domain, scanData } = report;
 
+  // Fetch narrative context for quality-tier domains
+  const narrativeCtx = await fetchNarrativeContext(domain);
+  const isQualityTier = narrativeCtx && narrativeCtx.domain.scanCount >= 3;
+
+  // Generate narrative for quality-tier domains (500-900 words)
+  let narrative = null;
+  if (isQualityTier && narrativeCtx.globalStats) {
+    const comparisonPairs = getComparisonPairsForDomain(domain);
+    const comparisonLinks = comparisonPairs.slice(0, 5).map(pair => ({
+      otherDomain: getOtherDomain(pair, domain),
+      otherDisplayName: getDomainDisplayName(getOtherDomain(pair, domain)),
+    }));
+
+    narrative = generateDomainNarrative(
+      narrativeCtx.domain,
+      narrativeCtx.categoryStats || null,
+      narrativeCtx.globalStats,
+      narrativeCtx.scanHistory,
+      narrativeCtx.relatedDomains,
+      comparisonLinks
+    );
+  }
+
   // Build schemas - cast to Record for JSON.stringify in JsonLd component
   const schemas: Record<string, unknown>[] = [
     buildWebPageSchema(scanData, domain) as unknown as Record<string, unknown>,
@@ -146,10 +199,29 @@ export default async function ReportPage({ params }: Props) {
   const faqSchema = buildFAQSchema(scanData, domain, tier);
   if (faqSchema) schemas.push(faqSchema as unknown as Record<string, unknown>);
 
-  // Build SEO content component to embed in Overview tab
-  // Pass benchmark data for market comparison SEO content
-  // Pass topFixes for remediation recommendations SEO content
-  const seoContent = (
+  // TechArticle schema with dateModified for freshness signal
+  const lastScanned = narrativeCtx?.scanHistory?.[0]?.date || scanData.finishedAt;
+  if (lastScanned) {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: `${getDomainDisplayName(domain)} Privacy Report`,
+      dateModified: new Date(lastScanned).toISOString(),
+      author: { '@type': 'Organization', name: 'Gecko Advisor' },
+      publisher: { '@type': 'Organization', name: 'Gecko Advisor' },
+      mainEntityOfPage: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
+    } as Record<string, unknown>);
+  }
+
+  // Build SEO content: NarrativeContent for quality-tier, SEOSummary as fallback
+  const seoContent = narrative ? (
+    <NarrativeContent
+      narrative={narrative}
+      domain={narrativeCtx!.domain}
+      relatedDomains={narrativeCtx!.relatedDomains}
+      sameTrackerDomains={narrativeCtx!.sameTrackerDomains}
+    />
+  ) : (
     <SEOSummary
       scanData={scanData}
       domain={domain}

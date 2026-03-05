@@ -472,6 +472,17 @@ model Domain {
   gscImpressionsWeek4 Int       @default(0)
   gscTopQueryShare    Float?    // % of clicks from top query (0-1)
 
+  // === SEO Phase A: Pre-computed Narrative Fields ===
+  // Computed nightly by scripts/precompute-domain-narrative.ts
+  trackerPercentile       Float?    // 0-100, percentile rank by tracker count within category
+  scorePercentile         Float?    // 0-100, percentile rank by privacy score globally
+  categoryRank            Int?      // Rank within category by privacy score (1 = best)
+  globalRank              Int?      // Rank globally by privacy score
+  hasRareTracker          Boolean   @default(false)  // True if any tracker found on <50 domains
+  rarestTracker           String?   // Name of rarest tracker
+  rarestTrackerDomainCount Int?     // How many other domains have this tracker
+  narrativeComputedAt     DateTime? // When narrative fields were last computed
+
   // Relations
   tierPromotions TierPromotion[]
   scans          Scan[]          @relation("DomainScans") // All scans for volatility analysis

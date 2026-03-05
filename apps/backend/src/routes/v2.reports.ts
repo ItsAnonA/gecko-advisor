@@ -647,6 +647,92 @@ reportV2Router.get('/domains/indexable', async (req, res) => {
   }
 });
 
+// Tiered sitemap endpoint — returns domains for a specific sitemap tier
+// Used by frontend sitemap-core-{a,b,c}.xml routes
+reportV2Router.get('/domains/sitemap-tier', async (req, res) => {
+  try {
+    const tier = req.query.tier as string;
+    const limit = Math.min(5000, Math.max(1, parseInt(req.query.limit as string) || 300));
+
+    if (!tier || !['1a', '1b', '1c', '2'].includes(tier)) {
+      return problem(res, 400, 'Invalid tier. Must be one of: 1a, 1b, 1c, 2');
+    }
+
+    const cacheKey = `sitemap_tier_${tier}_${limit}`;
+    const domains = await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        // Quality tier: scanCount >= 3, ordered by scanCount desc then domain
+        // Tier 1a: top 300 (offset 0)
+        // Tier 1b: next 700 (offset 300)
+        // Tier 1c: remaining quality tier (offset 1000)
+        // Tier 2: 2-scan domains, top by score
+
+        if (tier === '2') {
+          // Tier 2: domains with exactly 2 scans, ordered by score
+          const results = await prisma.domain.findMany({
+            where: {
+              scanCount: 2,
+              latestScanId: { not: null },
+              latestScan: { status: 'done', score: { not: null } },
+            },
+            orderBy: [
+              { latestScan: { score: 'desc' } },
+              { domain: 'asc' },
+            ],
+            take: limit,
+            select: {
+              domain: true,
+              lastScannedAt: true,
+            },
+          });
+          return results.map(d => ({
+            domain: d.domain,
+            lastScannedAt: d.lastScannedAt?.toISOString() || null,
+          }));
+        }
+
+        // Quality tiers (1a, 1b, 1c): scanCount >= 3
+        const offsets: Record<string, number> = {
+          '1a': 0,
+          '1b': 300,
+          '1c': 1000,
+        };
+        const offset = offsets[tier] || 0;
+
+        const results = await prisma.domain.findMany({
+          where: {
+            scanCount: { gte: 3 },
+            latestScanId: { not: null },
+            latestScan: { status: 'done', score: { not: null } },
+          },
+          orderBy: [
+            { scanCount: 'desc' },
+            { domain: 'asc' },
+          ],
+          skip: offset,
+          take: limit,
+          select: {
+            domain: true,
+            lastScannedAt: true,
+          },
+        });
+
+        return results.map(d => ({
+          domain: d.domain,
+          lastScannedAt: d.lastScannedAt?.toISOString() || null,
+        }));
+      },
+      3600 // 1 hour cache
+    );
+
+    res.json({ domains, tier, count: domains.length });
+  } catch (error) {
+    logger.error({ error }, 'Error fetching sitemap tier domains');
+    return problem(res, 500, 'Failed to get tier domains');
+  }
+});
+
 // Analytics endpoint - global benchmarks for market analysis
 reportV2Router.get('/analytics/benchmarks', async (_req, res) => {
   try {
