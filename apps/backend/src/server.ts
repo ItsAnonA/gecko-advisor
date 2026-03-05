@@ -22,6 +22,7 @@ import { ssrBlogRouter } from "./routes/ssr.blog.js";
 import { ssrDomainRouter } from "./routes/ssr.domain.js";
 import { initSentry, Sentry } from "./sentry.js";
 import { problem } from "./problem.js";
+import { lemonSqueezyWebhookRouter } from "./routes/v2.webhooks.lemonsqueezy.js";
 
 const allowedOrigins = config.allowedOrigins;
 const createHttpLogger = pinoHttp as unknown as (options?: PinoHttpOptions) => HttpLogger;
@@ -69,6 +70,10 @@ export function createServer() {
       }),
     }) as unknown as express.RequestHandler
   );
+
+  // LemonSqueezy webhooks need raw body for signature verification.
+  // Mount BEFORE express.json() so the body is not pre-parsed.
+  app.use('/api/v2', lemonSqueezyWebhookRouter);
 
   app.use(express.json({ limit: '200kb' }));
 

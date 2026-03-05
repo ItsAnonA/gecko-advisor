@@ -72,7 +72,7 @@ const TIERS = [
     requests: '1,000 requests/mo',
     desc: 'Test the data against your workflow',
     cta: 'Start Evaluation',
-    href: '#evaluation',
+    href: process.env.NEXT_PUBLIC_LS_CHECKOUT_EVALUATION || '#evaluation',
     highlight: false,
   },
   {
@@ -82,7 +82,7 @@ const TIERS = [
     requests: '10,000 requests/mo',
     desc: 'Production integration for vendor screening',
     cta: 'Go Operational',
-    href: '#operational',
+    href: process.env.NEXT_PUBLIC_LS_CHECKOUT_OPERATIONAL || '#operational',
     highlight: true,
   },
   {
@@ -92,7 +92,7 @@ const TIERS = [
     requests: 'Full dataset access',
     desc: 'Bulk exports for risk modeling',
     cta: 'Get Bulk Access',
-    href: '#bulk',
+    href: process.env.NEXT_PUBLIC_LS_CHECKOUT_BULK || '#bulk',
     highlight: false,
   },
   {
@@ -122,7 +122,7 @@ const FAQ = [
   },
   {
     q: 'How do I authenticate?',
-    a: 'Include your API key as a Bearer token: Authorization: Bearer ga_your_key_here. Keys are provisioned within 24 hours of purchase.',
+    a: 'Include your API key as a Bearer token: Authorization: Bearer ga_your_key_here. Keys are provisioned automatically after payment. View your key and usage at /api-access/dashboard.',
   },
 ];
 
@@ -198,14 +198,9 @@ export default async function ApiAccessPage() {
           Transparency reports
         </Link>
         <span aria-hidden="true">|</span>
-        <a
-          href="https://github.com/privacygecko/gecko-advisor"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-advisor-600 transition-colors underline underline-offset-2"
-        >
-          Open source on GitHub
-        </a>
+        <Link href="/api-access/dashboard" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
+          API Dashboard
+        </Link>
       </section>
 
       {/* Sample API Response */}
@@ -265,7 +260,13 @@ export default async function ApiAccessPage() {
           ))}
         </div>
         <p className="text-center text-sm text-zinc-400 mt-4">
-          Payment via LemonSqueezy. Keys provisioned within 24 hours.
+          Secure payment via LemonSqueezy. Keys provisioned instantly after checkout.
+        </p>
+        <p className="text-center text-sm text-zinc-500 mt-2">
+          Already have an API key?{' '}
+          <Link href="/api-access/dashboard" className="text-advisor-600 hover:text-advisor-700 underline">
+            View your usage dashboard
+          </Link>
         </p>
       </section>
 

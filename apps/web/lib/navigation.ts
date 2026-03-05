@@ -20,6 +20,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Domain Intelligence API', href: '/domain-intelligence-api' },
       { label: 'Domain Risk Checker', href: '/check-domain-risk' },
       { label: 'Privacy Scanner', href: '/privacy-scanner' },
+      { label: 'API Dashboard', href: '/api-access/dashboard' },
     ],
   },
   {

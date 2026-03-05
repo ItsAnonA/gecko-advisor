@@ -190,8 +190,18 @@ model ApiKey {
   createdAt     DateTime   @default(now())
   expiresAt     DateTime?
 
+  // LemonSqueezy payment integration
+  lemonSqueezyCustomerId      String?
+  lemonSqueezySubscriptionId  String?
+  lemonSqueezyOrderId         String?
+  customerName                String?
+  lastResetAt                 DateTime?
+
   @@index([key], map: "ApiKey_key_idx")
   @@index([customerEmail], map: "ApiKey_email_idx")
+  @@index([lemonSqueezySubscriptionId], map: "ApiKey_ls_subscription_idx")
+  @@index([lemonSqueezyOrderId], map: "ApiKey_ls_order_idx")
+  @@index([lemonSqueezyCustomerId], map: "ApiKey_ls_customer_idx")
 }
 
 // New User model for authentication and subscriptions
