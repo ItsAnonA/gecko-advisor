@@ -36,6 +36,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Privacy Rankings', href: '/privacy-index' },
       { label: 'Tracking Technologies', href: '/technologies' },
+      { label: 'Research', href: '/research' },
       { label: 'Methodology', href: '/methodology' },
       { label: 'Transparency Reports', href: '/transparency-reports' },
       { label: 'Blog', href: '/blog' },
@@ -71,6 +72,7 @@ export const footerColumns = [
     items: [
       { label: 'Privacy Rankings', href: '/privacy-index' },
       { label: 'Tracking Technologies', href: '/technologies' },
+      { label: 'Research', href: '/research' },
       { label: 'Methodology', href: '/methodology' },
       { label: 'Transparency', href: '/transparency-reports' },
       { label: 'Blog', href: '/blog' },

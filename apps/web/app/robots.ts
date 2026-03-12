@@ -43,6 +43,10 @@ export default function robots(): MetadataRoute.Robots {
           '/websites-with-most-cookies',
           '/technologies',
           '/technologies/',
+          '/answers/',
+          '/sites-like/',
+          '/research',
+          '/research/',
         ],
         disallow: [
           // Internal / API endpoints

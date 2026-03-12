@@ -1234,3 +1234,141 @@ export async function fetchChangeStats(
     return null;
   }
 }
+
+// =============================================================================
+// Answers API (Phase C - SEO answer pages)
+// =============================================================================
+
+import type { AnswerPageData } from '@/components/seo/AnswerPage';
+
+/**
+ * Fetch answer data by slug (SSR).
+ */
+export async function fetchAnswerData(
+  slug: string
+): Promise<AnswerPageData | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/answers/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch answer for ${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all answer slugs (for sitemap).
+ */
+export async function fetchAnswerSlugs(): Promise<Array<{ slug: string; title: string }>> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/answers`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.answers || [];
+  } catch {
+    return [];
+  }
+}
+
+// =============================================================================
+// Similarity API (Phase C - sites-like pages)
+// =============================================================================
+
+import type { SimilarityData } from '@/components/seo/SimilarityPage';
+
+export type SimilarDomainsResponse = SimilarityData;
+
+/**
+ * Fetch similar domains for a given domain (SSR).
+ */
+export async function fetchSimilarDomains(
+  domain: string
+): Promise<SimilarDomainsResponse | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/similar/${encodeURIComponent(domain)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch similar domains for ${domain}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch eligible domains for similarity sitemap.
+ */
+export async function fetchSimilarEligible(
+  offset: number = 0,
+  limit: number = 1000
+): Promise<{ domains: Array<{ domain: string; lastScanned: string | null }>; total: number }> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/similar/eligible/list?offset=${offset}&limit=${limit}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return { domains: [], total: 0 };
+    return res.json();
+  } catch {
+    return { domains: [], total: 0 };
+  }
+}
+
+// =============================================================================
+// Research API (Phase D - research report pages)
+// =============================================================================
+
+import type { ResearchReportData } from '@/components/seo/ResearchReport';
+
+export interface ResearchListItem {
+  slug: string;
+  title: string;
+  subtitle: string;
+  teaser: string;
+  reportType: string;
+}
+
+/**
+ * Fetch list of all research reports (SSR).
+ */
+export async function fetchResearchList(): Promise<ResearchListItem[]> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/research`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.reports || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch a single research report by slug (SSR).
+ */
+export async function fetchResearchReport(
+  slug: string
+): Promise<ResearchReportData | null> {
+  try {
+    const res = await fetch(
+      `${getApiInternalUrl()}/api/v2/research/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error(`Failed to fetch research report for ${slug}:`, error);
+    return null;
+  }
+}
