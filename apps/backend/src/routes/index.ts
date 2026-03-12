@@ -18,6 +18,8 @@ import { sampleRequestV2Router } from "./v2.sampleRequest.js";
 import { narrativeV2Router } from "./v2.narrative.js";
 import { domainV1Router } from "./v1.domain.js";
 import { apiKeysV2Router } from "./v2.apikeys.js";
+import { rankingsV2Router } from "./v2.rankings.js";
+import { technologiesV2Router } from "./v2.technologies.js";
 
 export const apiV1Router = Router();
 apiV1Router.use('/scan', scanV1Router);
@@ -39,3 +41,5 @@ apiV2Router.use('/transparency', transparencyV2Router);
 apiV2Router.use('/', sampleRequestV2Router);
 apiV2Router.use('/', narrativeV2Router);
 apiV2Router.use('/', apiKeysV2Router);
+apiV2Router.use('/', rankingsV2Router);
+apiV2Router.use('/', technologiesV2Router);

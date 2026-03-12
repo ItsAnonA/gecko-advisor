@@ -37,6 +37,12 @@ export default function robots(): MetadataRoute.Robots {
           '/vendor-domain-due-diligence',
           '/domain-privacy-risk',
           '/how-to-evaluate-domain-security',
+          '/privacy-index',
+          '/most-tracked-websites',
+          '/least-private-websites',
+          '/websites-with-most-cookies',
+          '/technologies',
+          '/technologies/',
         ],
         disallow: [
           // Internal / API endpoints
