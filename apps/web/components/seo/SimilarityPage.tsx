@@ -199,7 +199,7 @@ export function SimilarityPage({ data }: { data: SimilarityData }) {
             {[...allSharedTrackers.values()].slice(0, 20).map((t) => (
               <Link
                 key={t.slug}
-                href={`/trackers/${t.slug}`}
+                href={`/technologies/${t.slug}`}
                 className="inline-flex items-center px-3 py-1.5 bg-zinc-100 hover:bg-advisor-50 border border-zinc-200 hover:border-advisor-300 rounded-full text-sm transition-colors"
               >
                 {t.name}

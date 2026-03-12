@@ -157,7 +157,7 @@ export function AnswerPage({ data }: { data: AnswerPageData }) {
             {data.trackers.map((t) => (
               <Link
                 key={t.slug}
-                href={`/trackers/${t.slug}`}
+                href={`/technologies/${t.slug}`}
                 className="inline-flex items-center px-3 py-1.5 bg-zinc-100 hover:bg-advisor-50 border border-zinc-200 hover:border-advisor-300 rounded-full text-sm transition-colors"
               >
                 {t.name}
@@ -171,7 +171,7 @@ export function AnswerPage({ data }: { data: AnswerPageData }) {
       {data.trackerSlug && (
         <section className="mb-8">
           <Link
-            href={`/trackers/${data.trackerSlug}`}
+            href={`/technologies/${data.trackerSlug}`}
             className="text-advisor-600 hover:underline text-sm"
           >
             View full {data.trackerName} tracker page &rarr;

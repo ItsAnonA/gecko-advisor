@@ -52,7 +52,7 @@ export interface ResearchReportData {
   generatedAt: string;
 
   keyFindings: string[];
-  stats: Record<string, number>;
+  stats?: Record<string, number>;
 
   sampleSize?: number;
   globalComparison?: {
@@ -391,7 +391,7 @@ function TrackerBarChart({ trackers }: { trackers: TrackerInfo[] }) {
           return (
             <div key={tracker.slug} className="flex items-center gap-3">
               <Link
-                href={`/trackers/${tracker.slug}`}
+                href={`/technologies/${tracker.slug}`}
                 className="w-44 text-sm text-advisor-600 hover:text-advisor-700 font-medium truncate shrink-0"
               >
                 {tracker.name}
@@ -644,7 +644,7 @@ export function ResearchReport({ data }: { data: ResearchReportData }) {
       <KeyFindings findings={data.keyFindings} />
 
       {/* ── Stats Dashboard ── */}
-      <StatsDashboard stats={data.stats} globalComparison={data.globalComparison} />
+      {data.stats && <StatsDashboard stats={data.stats} globalComparison={data.globalComparison} />}
 
       {/* ── Grade Distribution (category / cross-category) ── */}
       {data.gradeDistribution && (

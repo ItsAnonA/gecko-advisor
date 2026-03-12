@@ -58,7 +58,7 @@ const GONE_PATTERNS = [
 ];
 
 // Static pages that happen to be 8 characters - exclude from short slug redirect
-const STATIC_PAGES_8_CHARS = new Set(['security', 'checkout', 'settings', 'download', 'features', 'contacts', 'products', 'services', 'register', 'messages', 'feedback', 'archives', 'calendar', 'profiles', 'comments', 'articles']);
+const STATIC_PAGES_8_CHARS = new Set(['security', 'checkout', 'settings', 'download', 'features', 'contacts', 'products', 'services', 'register', 'messages', 'feedback', 'archives', 'calendar', 'profiles', 'comments', 'articles', 'research']);
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
