@@ -6,8 +6,11 @@ SPDX-License-Identifier: MIT
 /**
  * Reports Index Page (SSR)
  *
- * Lists recent privacy reports with pagination.
- * Provides entry points for crawler discovery.
+ * Lists quality-gated privacy reports with tiered pagination.
+ *
+ * Pagination tiers (controls crawl budget):
+ * - page 1-10:  index, follow  (high-value discovery pages)
+ * - page 11+:   noindex, follow (crawlable but not indexed)
  */
 
 import { Metadata } from 'next';
@@ -18,25 +21,39 @@ import { fetchReports } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
+/** Pages 1-10 get indexed; beyond that, noindex but follow links */
+const MAX_INDEXED_PAGE = 10;
+
 interface Props {
   searchParams: Promise<{ page?: string }>;
 }
 
-export const metadata: Metadata = {
-  title: 'Privacy Reports',
-  description:
-    'Browse privacy analysis reports for popular websites. Find out which sites track you and how they handle your data.',
-  alternates: {
-    canonical: `${SEO_CONSTANTS.BASE_URL}/reports`,
-  },
-  openGraph: {
-    title: `Privacy Reports | ${SEO_CONSTANTS.SITE_NAME}`,
-    description: 'Browse privacy analysis reports for popular websites.',
-    url: `${SEO_CONSTANTS.BASE_URL}/reports`,
-    siteName: SEO_CONSTANTS.SITE_NAME,
-    type: 'website',
-  },
-};
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam || '1', 10));
+  const shouldIndex = page <= MAX_INDEXED_PAGE;
+
+  return {
+    title: page === 1 ? 'Privacy Reports' : `Privacy Reports - Page ${page}`,
+    description:
+      'Browse privacy analysis reports for popular websites. Find out which sites track you and how they handle your data.',
+    alternates: {
+      // Canonical only for page 1; deep pages don't self-canonicalize
+      canonical: page === 1 ? `${SEO_CONSTANTS.BASE_URL}/reports` : undefined,
+    },
+    robots: {
+      index: shouldIndex,
+      follow: true, // Always follow links for discovery
+    },
+    openGraph: {
+      title: `Privacy Reports | ${SEO_CONSTANTS.SITE_NAME}`,
+      description: 'Browse privacy analysis reports for popular websites.',
+      url: `${SEO_CONSTANTS.BASE_URL}/reports`,
+      siteName: SEO_CONSTANTS.SITE_NAME,
+      type: 'website',
+    },
+  };
+}
 
 // Revalidate every hour
 export const revalidate = 3600;

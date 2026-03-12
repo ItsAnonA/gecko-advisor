@@ -355,6 +355,41 @@ reportV2Router.get('/stats', async (_req, res) => {
   }
 });
 
+/**
+ * Quality-gated reports query (discovery layer).
+ *
+ * Intentionally looser than sitemap/index-gating:
+ * - Sitemap: strict (score >= 60, complete analysis, isIndexed)
+ * - /reports: moderate (score >= 40, any evidence, no isIndexed gate)
+ *
+ * Discovery depends on DATA QUALITY, not Google history (isIndexed).
+ * This prevents a closed graph where only already-indexed domains
+ * can be re-discovered. Google needs candidates to evaluate —
+ * including some medium-quality pages for ranking contrast.
+ * Individual domain pages handle their own robots via index-gating.ts.
+ */
+const REPORTS_QUALITY_GATE = {
+  MIN_SCORE: 40, // D-grade+ (looser than sitemap's 60 — gives Google contrast)
+  MIN_EVIDENCE: 3, // Looser than sitemap's 5 — allows partial scans into discovery
+  MAX_AGE_DAYS: 90,
+};
+
+function getQualityGateWhere() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - REPORTS_QUALITY_GATE.MAX_AGE_DAYS);
+
+  // No isIndexed filter — discovery should depend on data quality, not index history.
+  // Otherwise new domains never enter Google's evaluation pipeline.
+  return {
+    lastScanned: { gte: cutoff },
+    latestScan: {
+      status: 'done' as const,
+      score: { gte: REPORTS_QUALITY_GATE.MIN_SCORE },
+      evidence: { some: {} },
+    },
+  };
+}
+
 // Paginated reports endpoint for ReportsPage
 reportV2Router.get('/reports/all', async (req, res) => {
   try {
@@ -362,52 +397,42 @@ reportV2Router.get('/reports/all', async (req, res) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 12));
     const skip = (page - 1) * limit;
 
-    // Get total count for pagination
-    const totalCount = await prisma.scan.count({
-      where: { status: 'done' },
-    });
+    const where = getQualityGateWhere();
 
-    const scans = await prisma.scan.findMany({
-      where: { status: 'done' },
-      orderBy: { createdAt: 'desc' },
+    // Get total count for pagination (quality-gated)
+    const totalCount = await prisma.domain.count({ where });
+
+    const domains = await prisma.domain.findMany({
+      where,
+      orderBy: { lastScanned: 'desc' },
       skip,
       take: limit,
       select: {
-        id: true,
-        slug: true,
-        input: true,
-        score: true,
-        label: true,
-        createdAt: true,
-        _count: {
+        domain: true,
+        lastScanned: true,
+        latestScan: {
           select: {
-            evidence: true,
+            slug: true,
+            score: true,
+            label: true,
+            createdAt: true,
+            _count: { select: { evidence: true } },
           },
         },
       },
     });
 
-    const items = scans
-      .map((scan) => {
-        let domain = scan.input;
-        try {
-          const url = new URL(scan.input);
-          // etldPlusOne returns null for bare TLDs, fall back to hostname
-              domain = etldPlusOne(url.hostname) ?? url.hostname;
-        } catch {
-          // ignore
-        }
-        return {
-          slug: scan.slug,
-          score: scan.score ?? 0,
-          label: scan.label ?? 'Moderate Privacy Risk',
-          domain,
-          createdAt: scan.createdAt,
-          evidenceCount: scan._count.evidence,
-        };
-      })
-      // Filter out blocked domains from reports list
-      .filter((item) => !isBlockedDomain(item.domain));
+    const items = domains
+      .filter((d) => d.latestScan && !isBlockedDomain(d.domain))
+      .filter((d) => (d.latestScan?._count?.evidence ?? 0) >= REPORTS_QUALITY_GATE.MIN_EVIDENCE)
+      .map((d) => ({
+        slug: d.latestScan!.slug,
+        score: d.latestScan!.score ?? 0,
+        label: d.latestScan!.label ?? 'Moderate Privacy Risk',
+        domain: d.domain,
+        createdAt: d.latestScan!.createdAt,
+        evidenceCount: d.latestScan!._count.evidence,
+      }));
 
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -435,51 +460,41 @@ reportV2Router.get('/reports', async (req, res) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 12));
     const skip = (page - 1) * limit;
 
-    const totalCount = await prisma.scan.count({
-      where: { status: 'done' },
-    });
+    const where = getQualityGateWhere();
 
-    const scans = await prisma.scan.findMany({
-      where: { status: 'done' },
-      orderBy: { createdAt: 'desc' },
+    const totalCount = await prisma.domain.count({ where });
+
+    const domains = await prisma.domain.findMany({
+      where,
+      orderBy: { lastScanned: 'desc' },
       skip,
       take: limit,
       select: {
-        id: true,
-        slug: true,
-        input: true,
-        score: true,
-        label: true,
-        createdAt: true,
-        _count: {
+        domain: true,
+        lastScanned: true,
+        latestScan: {
           select: {
-            evidence: true,
+            slug: true,
+            score: true,
+            label: true,
+            createdAt: true,
+            _count: { select: { evidence: true } },
           },
         },
       },
     });
 
-    const items = scans
-      .map((scan) => {
-        let domain = scan.input;
-        try {
-          const url = new URL(scan.input);
-          // etldPlusOne returns null for bare TLDs, fall back to hostname
-              domain = etldPlusOne(url.hostname) ?? url.hostname;
-        } catch {
-          // ignore
-        }
-        return {
-          slug: scan.slug,
-          score: scan.score ?? 0,
-          label: scan.label ?? 'Moderate Privacy Risk',
-          domain,
-          createdAt: scan.createdAt,
-          evidenceCount: scan._count.evidence,
-        };
-      })
-      // Filter out blocked domains from reports list
-      .filter((item) => !isBlockedDomain(item.domain));
+    const items = domains
+      .filter((d) => d.latestScan && !isBlockedDomain(d.domain))
+      .filter((d) => (d.latestScan?._count?.evidence ?? 0) >= REPORTS_QUALITY_GATE.MIN_EVIDENCE)
+      .map((d) => ({
+        slug: d.latestScan!.slug,
+        score: d.latestScan!.score ?? 0,
+        label: d.latestScan!.label ?? 'Moderate Privacy Risk',
+        domain: d.domain,
+        createdAt: d.latestScan!.createdAt,
+        evidenceCount: d.latestScan!._count.evidence,
+      }));
 
     const totalPages = Math.ceil(totalCount / limit);
 

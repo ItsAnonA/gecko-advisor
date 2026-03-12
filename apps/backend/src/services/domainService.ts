@@ -118,15 +118,15 @@ export async function upsertDomainOnScanComplete(
 }
 
 /**
- * Index Quality Policy v1.1 (2026-02-13)
+ * Index Quality Policy v1.2 (2026-03-12)
  *
- * Raised thresholds to align with Google's quality filter:
- *   - MIN_SCORE: 40 → 60  (drop "Poor" tier; only Fair+ indexed)
- *   - MIN_EVIDENCE_COUNT: 3 → 5  (filter thin/perfect-score reports)
+ * v1.1 (2026-02-13): Raised MIN_SCORE 40→60, MIN_EVIDENCE_COUNT 3→5
+ * v1.2 (2026-03-12): Added tracker/thirdParty/tls NOT NULL requirement
  *
- * Rationale: GSC showed 9,207 "crawled-not-indexed" pages — Google already
- * rejected our low-quality reports. This aligns our gate with their filter
- * instead of fighting it. Concentrates crawl budget on ~50K strong reports.
+ * Rationale: GSC showed 81K "crawled-not-indexed" — sitemap was exposing
+ * domains that failed the page-level index gate (index-gating.ts requires
+ * trackerCount, thirdPartyCount, tlsGrade for 'full' tier). Aligning
+ * sitemap filter with page-level gate to eliminate crawl waste.
  */
 const INDEX_GATING = {
   // Minimum evidence items for a report to be indexed
@@ -172,7 +172,7 @@ export async function getIndexedDomains(
           ? { gte: INDEX_GATING.MIN_SCORE } // Score must be >= 60 (Fair or better)
           : undefined,
         evidence: {
-          // Has at least MIN_EVIDENCE_COUNT evidence items
+          // Has at least some evidence items
           some: {},
         },
       },
@@ -186,6 +186,11 @@ export async function getIndexedDomains(
           _count: {
             select: { evidence: true },
           },
+          // Include evidence kinds for full-tier validation
+          evidence: {
+            select: { kind: true },
+            distinct: ['kind'],
+          },
         },
       },
     },
@@ -196,10 +201,24 @@ export async function getIndexedDomains(
     skip: offset,
   });
 
-  // Filter by minimum evidence count AND blocklist (post-query filter for accurate count)
+  // Post-query filters:
+  // 1. Minimum evidence count
+  // 2. Blocklist exclusion
+  // 3. Full-tier analysis completeness (tracker + thirdparty + tls evidence must exist)
+  //    This aligns with index-gating.ts which requires trackerCount, thirdPartyCount, tlsGrade
+  const REQUIRED_EVIDENCE_KINDS = new Set(['tracker', 'thirdparty', 'tls']);
+
   const qualityDomains = domains
     .filter((d) => (d.latestScan?._count?.evidence ?? 0) >= INDEX_GATING.MIN_EVIDENCE_COUNT)
-    .filter((d) => !isBlockedDomain(d.domain)) // Exclude adult/blocked content from sitemap
+    .filter((d) => !isBlockedDomain(d.domain))
+    .filter((d) => {
+      // Ensure scan has all required evidence kinds for full index tier
+      const kinds = new Set(d.latestScan?.evidence?.map((e) => e.kind as string) ?? []);
+      for (const required of REQUIRED_EVIDENCE_KINDS) {
+        if (!kinds.has(required)) return false;
+      }
+      return true;
+    })
     .map(({ domain, lastScanned, latestScan }) => ({
       domain,
       lastScanned,
@@ -238,6 +257,8 @@ export async function countIndexedDomains(prisma: PrismaClient): Promise<number>
     },
   });
 
+  // Note: This is an approximation — exact count requires post-query filtering
+  // by evidence count and analysis completeness (see getIndexedDomains).
   return count;
 }
 
