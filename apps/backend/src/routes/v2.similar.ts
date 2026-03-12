@@ -116,7 +116,7 @@ similarV2Router.get('/:domain', async (req, res) => {
         AND d."isIndexed" = true
         AND ABS(s.score - ${source.score}) <= 30
       ORDER BY
-        CASE WHEN d."categoryId" = ${source.category_id}::uuid THEN 0 ELSE 1 END,
+        CASE WHEN ${source.category_id} IS NOT NULL AND d."categoryId" = ${source.category_id}::uuid THEN 0 ELSE 1 END,
         ABS(s.score - ${source.score}) ASC
       LIMIT 100
     `;
