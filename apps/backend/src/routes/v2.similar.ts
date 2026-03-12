@@ -100,26 +100,47 @@ similarV2Router.get('/:domain', async (req, res) => {
     }
 
     // Fetch candidates (same category first, then by score proximity)
-    const candidates = await prisma.$queryRaw<RawCandidateRow[]>`
-      SELECT
-        d.id, d.domain, d."displayName" as display_name,
-        s.score, s.label,
-        d."categoryId" as category_id,
-        c.name as category_name, c.slug as category_slug,
-        d."scanCount" as scan_count
-      FROM "Domain" d
-      JOIN "Scan" s ON d."latestScanId" = s.id
-      LEFT JOIN "Category" c ON d."categoryId" = c.id
-      WHERE d.domain != ${domain}
-        AND s.status = 'done'
-        AND d."scanCount" >= 2
-        AND d."isIndexed" = true
-        AND ABS(s.score - ${source.score}) <= 30
-      ORDER BY
-        CASE WHEN ${source.category_id} IS NOT NULL AND d."categoryId" = ${source.category_id}::uuid THEN 0 ELSE 1 END,
-        ABS(s.score - ${source.score}) ASC
-      LIMIT 100
-    `;
+    // Split query to avoid Prisma sending null::uuid cast which PostgreSQL rejects
+    const candidates = source.category_id
+      ? await prisma.$queryRaw<RawCandidateRow[]>`
+          SELECT
+            d.id, d.domain, d."displayName" as display_name,
+            s.score, s.label,
+            d."categoryId" as category_id,
+            c.name as category_name, c.slug as category_slug,
+            d."scanCount" as scan_count
+          FROM "Domain" d
+          JOIN "Scan" s ON d."latestScanId" = s.id
+          LEFT JOIN "Category" c ON d."categoryId" = c.id
+          WHERE d.domain != ${domain}
+            AND s.status = 'done'
+            AND d."scanCount" >= 2
+            AND d."isIndexed" = true
+            AND ABS(s.score - ${source.score}) <= 30
+          ORDER BY
+            CASE WHEN d."categoryId" = ${source.category_id}::uuid THEN 0 ELSE 1 END,
+            ABS(s.score - ${source.score}) ASC
+          LIMIT 100
+        `
+      : await prisma.$queryRaw<RawCandidateRow[]>`
+          SELECT
+            d.id, d.domain, d."displayName" as display_name,
+            s.score, s.label,
+            d."categoryId" as category_id,
+            c.name as category_name, c.slug as category_slug,
+            d."scanCount" as scan_count
+          FROM "Domain" d
+          JOIN "Scan" s ON d."latestScanId" = s.id
+          LEFT JOIN "Category" c ON d."categoryId" = c.id
+          WHERE d.domain != ${domain}
+            AND s.status = 'done'
+            AND d."scanCount" >= 2
+            AND d."isIndexed" = true
+            AND ABS(s.score - ${source.score}) <= 30
+          ORDER BY
+            ABS(s.score - ${source.score}) ASC
+          LIMIT 100
+        `;
 
     if (candidates.length < MIN_SIMILAR) {
       return problem(res, 404, 'Not enough similar domains found');
