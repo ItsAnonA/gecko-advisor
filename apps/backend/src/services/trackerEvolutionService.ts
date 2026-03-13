@@ -14,6 +14,20 @@ interface TrackerMover {
   net: number;
 }
 
+interface TrackerDomainCounts {
+  tracker_domain: string;
+  domain_count: bigint;
+  tier_a_count: bigint;
+  tier_b_count: bigint;
+  tier_c_count: bigint;
+}
+
+interface TrackerCategoryRow {
+  tracker_domain: string;
+  category: string;
+  count: bigint;
+}
+
 /**
  * Get top growing and declining trackers.
  */
@@ -99,9 +113,105 @@ export async function updateTrackerTrends(
   const periodStart = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
   const now = new Date();
 
+  // --- Step 1: Calculate actual domain counts per tracker from Evidence ---
+  // Uses latest scan per domain only (via latestScanId join) to avoid double-counting
+  const domainCountRows = await prisma.$queryRaw<TrackerDomainCounts[]>`
+    SELECT
+      COALESCE(e.details->>'domain', e.details->>'root') AS tracker_domain,
+      COUNT(DISTINCT d.id) AS domain_count,
+      COUNT(DISTINCT CASE WHEN d."indexTier" = 'A' THEN d.id END) AS tier_a_count,
+      COUNT(DISTINCT CASE WHEN d."indexTier" = 'B' THEN d.id END) AS tier_b_count,
+      COUNT(DISTINCT CASE WHEN d."indexTier" = 'C' THEN d.id END) AS tier_c_count
+    FROM "Evidence" e
+    JOIN "Scan" s ON e."scanId" = s.id
+    JOIN "Domain" d ON s."domainId" = d.id
+    WHERE e.kind = 'tracker'
+      AND s.status = 'done'
+      AND s.id = d."latestScanId"
+      AND COALESCE(e.details->>'domain', e.details->>'root') IS NOT NULL
+    GROUP BY tracker_domain
+  `;
+
+  const domainCountMap = new Map<string, {
+    domainCount: number;
+    tierACount: number;
+    tierBCount: number;
+    tierCCount: number;
+  }>();
+  for (const row of domainCountRows) {
+    domainCountMap.set(row.tracker_domain, {
+      domainCount: Number(row.domain_count),
+      tierACount: Number(row.tier_a_count),
+      tierBCount: Number(row.tier_b_count),
+      tierCCount: Number(row.tier_c_count),
+    });
+  }
+
+  // --- Step 2: Calculate top categories per tracker ---
+  const categoryRows = await prisma.$queryRaw<TrackerCategoryRow[]>`
+    SELECT
+      COALESCE(e.details->>'domain', e.details->>'root') AS tracker_domain,
+      c.name AS category,
+      COUNT(DISTINCT d.id) AS count
+    FROM "Evidence" e
+    JOIN "Scan" s ON e."scanId" = s.id
+    JOIN "Domain" d ON s."domainId" = d.id
+    JOIN "Category" c ON d."categoryId" = c.id
+    WHERE e.kind = 'tracker'
+      AND s.status = 'done'
+      AND s.id = d."latestScanId"
+      AND COALESCE(e.details->>'domain', e.details->>'root') IS NOT NULL
+    GROUP BY tracker_domain, c.name
+    ORDER BY tracker_domain, count DESC
+  `;
+
+  const topCategoriesMap = new Map<string, Array<{ category: string; count: number }>>();
+  for (const row of categoryRows) {
+    const existing = topCategoriesMap.get(row.tracker_domain) || [];
+    // Keep top 5 per tracker (rows are ordered by count DESC)
+    if (existing.length < 5) {
+      existing.push({ category: row.category, count: Number(row.count) });
+      topCategoriesMap.set(row.tracker_domain, existing);
+    }
+  }
+
+  // --- Step 3: Fetch existing TrackerTrend records for domainCountPrev ---
+  const trackerDomains = allTrackers.map((t) => t.tracker);
+  const existingTrends = await prisma.trackerTrend.findMany({
+    where: {
+      trackerDomain: { in: trackerDomains },
+      periodType,
+    },
+    orderBy: { periodStart: 'desc' },
+    select: {
+      trackerDomain: true,
+      domainCount: true,
+      periodStart: true,
+    },
+  });
+
+  // Map tracker -> most recent domainCount (for domainCountPrev)
+  const prevCountMap = new Map<string, number>();
+  for (const trend of existingTrends) {
+    // First match per tracker is the most recent (ordered desc)
+    if (!prevCountMap.has(trend.trackerDomain)) {
+      prevCountMap.set(trend.trackerDomain, trend.domainCount);
+    }
+  }
+
+  // --- Step 4: Upsert with real data ---
   let updated = 0;
 
   for (const tracker of allTrackers) {
+    const counts = domainCountMap.get(tracker.tracker) || {
+      domainCount: 0,
+      tierACount: 0,
+      tierBCount: 0,
+      tierCCount: 0,
+    };
+    const categories = topCategoriesMap.get(tracker.tracker) || [];
+    const domainCountPrev = prevCountMap.get(tracker.tracker) ?? 0;
+
     await prisma.trackerTrend.upsert({
       where: {
         trackerDomain_periodStart_periodType: {
@@ -115,24 +225,28 @@ export async function updateTrackerTrends(
         periodStart,
         periodEnd: now,
         periodType,
-        domainCount: 0, // Would need separate calculation
-        domainCountPrev: 0,
-        // Calculate adoption change as percentage of total activity, not binary ±100
-        // This gives a meaningful rate: net change relative to total tracker activity
+        domainCount: counts.domainCount,
+        domainCountPrev,
         adoptionChange: tracker.additions + tracker.removals > 0
           ? Math.round((tracker.net / (tracker.additions + tracker.removals)) * 100)
           : 0,
         adoptionTrend: tracker.net > 0 ? 'UP' : tracker.net < 0 ? 'DOWN' : 'FLAT',
-        tierACount: 0,
-        tierBCount: 0,
-        tierCCount: 0,
-        topCategories: [],
+        tierACount: counts.tierACount,
+        tierBCount: counts.tierBCount,
+        tierCCount: counts.tierCCount,
+        topCategories: categories,
         newAdoptions: tracker.additions,
         removals: tracker.removals,
         netChange: tracker.net,
       },
       update: {
         periodEnd: now,
+        domainCount: counts.domainCount,
+        domainCountPrev,
+        tierACount: counts.tierACount,
+        tierBCount: counts.tierBCount,
+        tierCCount: counts.tierCCount,
+        topCategories: categories,
         newAdoptions: tracker.additions,
         removals: tracker.removals,
         netChange: tracker.net,
