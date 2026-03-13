@@ -91,7 +91,6 @@ export default function robots(): MetadataRoute.Robots {
           '/*?url=',
           '/*?p=',
         ],
-        crawlDelay: 1,
       },
       // Block AI training crawlers
       {

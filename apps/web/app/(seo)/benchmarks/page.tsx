@@ -19,13 +19,13 @@ import type { BenchmarksResponse } from '@/lib/api';
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: `Website Privacy Benchmarks | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: 'Website Privacy Benchmarks',
   description: 'Explore global privacy statistics for websites. See how sites compare in terms of trackers, cookies, and security across the web.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/benchmarks`,
   },
   openGraph: {
-    title: `Website Privacy Benchmarks | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'Website Privacy Benchmarks',
     description: 'Explore global privacy statistics for websites. See how sites compare in terms of trackers, cookies, and security across the web.',
     url: `${SEO_CONSTANTS.BASE_URL}/benchmarks`,
     siteName: SEO_CONSTANTS.SITE_NAME,

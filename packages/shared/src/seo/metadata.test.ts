@@ -200,9 +200,9 @@ describe('buildOpenGraphData', () => {
     expect(og.title).toContain('example.com');
   });
 
-  it('title contains site name', () => {
+  it('title does not double-append brand name (layout template handles it)', () => {
     const og = buildOpenGraphData(fullData, 'example.com');
-    expect(og.title).toContain('Gecko Advisor');
+    expect(og.title).not.toContain('Gecko Advisor');
   });
 
   it('url is canonical URL', () => {

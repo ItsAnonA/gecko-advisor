@@ -361,7 +361,7 @@ export function buildWebSiteSchema(baseUrl = SEO_CONSTANTS.BASE_URL): Record<str
 /**
  * Builds SoftwareApplication (WebApplication) schema for rich snippets.
  *
- * Describes Gecko Advisor as a free web-based privacy scanning tool.
+ * Describes Gecko Advisor as a domain intelligence platform.
  * Uses WebApplication subtype for browser-based applications.
  *
  * @param baseUrl - Base URL
@@ -376,7 +376,7 @@ export function buildSoftwareApplicationSchema(
     name: SEO_CONSTANTS.SITE_NAME,
     url: baseUrl,
     description:
-      'Free, open-source website privacy scanner. Analyze any site for trackers, cookies, fingerprinting, and security issues with detailed scoring and recommendations.',
+      'Domain intelligence platform for vendor risk and compliance teams. Analyze privacy practices, trackers, cookies, and security headers across any website.',
     applicationCategory: 'SecurityApplication',
     operatingSystem: 'Web',
     offers: {

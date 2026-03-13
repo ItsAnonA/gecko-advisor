@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const finding = data.keyFindings?.[0] || data.subtitle;
 
   return {
-    title: `${data.title} | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: data.title,
     description: finding,
     alternates: { canonical: `${SEO_CONSTANTS.BASE_URL}/research/${slug}` },
     openGraph: {

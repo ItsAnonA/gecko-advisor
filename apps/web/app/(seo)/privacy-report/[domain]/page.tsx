@@ -107,7 +107,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       follow: true,
     },
     openGraph: {
-      title: `${getDomainDisplayName(domain)} Privacy Score & Tracker Analysis | ${SEO_CONSTANTS.SITE_NAME}`,
+      title: `${getDomainDisplayName(domain)} Privacy Score & Tracker Analysis`,
       description: desc,
       url: `${SEO_CONSTANTS.BASE_URL}/privacy-report/${domain}`,
       siteName: SEO_CONSTANTS.SITE_NAME,
@@ -284,7 +284,7 @@ export default async function ReportPage({ params }: Props) {
         </Suspense>
 
         {/* Domain Intelligence Resources CTA */}
-        <DomainReportCTA />
+        <DomainReportCTA domain={domain} />
       </div>
     </>
   );

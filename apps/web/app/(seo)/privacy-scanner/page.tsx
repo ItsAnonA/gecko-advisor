@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-scanner`,
   },
   openGraph: {
-    title: 'Free Website Privacy Scanner | Gecko Advisor',
+    title: 'Free Website Privacy Scanner | Check Any Site for Trackers',
     description:
       'Analyze any website for privacy concerns. Check trackers, cookies, and security headers instantly. 100% free.',
     url: `${SEO_CONSTANTS.BASE_URL}/privacy-scanner`,

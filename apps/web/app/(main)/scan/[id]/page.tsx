@@ -10,7 +10,7 @@ import ScanProgressClient from './ScanProgressClient';
  * Metadata for scan progress page
  */
 export const metadata: Metadata = {
-  title: 'Privacy Scan In Progress - Gecko Advisor',
+  title: 'Privacy Scan In Progress',
   description: 'Your privacy scan is being processed. Results will be available shortly.',
   robots: {
     index: false, // Don't index scan progress pages

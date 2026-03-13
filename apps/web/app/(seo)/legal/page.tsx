@@ -10,14 +10,14 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { LegalTabs } from './LegalTabs';
 
 export const metadata: Metadata = {
-  title: 'Legal | Gecko Advisor',
+  title: 'Legal',
   description:
-    'Terms of Use, Privacy Policy, License, and Cookie Policy for Gecko Advisor - the free, open-source privacy scanner.',
+    'Terms of Use, Privacy Policy, License, and Cookie Policy for Gecko Advisor.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/legal`,
   },
   openGraph: {
-    title: `Legal | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'Legal',
     description: 'Terms of Use, Privacy Policy, License, and Cookie Policy for Gecko Advisor.',
     url: `${SEO_CONSTANTS.BASE_URL}/legal`,
     siteName: SEO_CONSTANTS.SITE_NAME,

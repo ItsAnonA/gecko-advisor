@@ -7,21 +7,21 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Domain Privacy Risk Assessment | GeckoAdvisor',
+  title: 'Domain Privacy Risk Assessment',
   description:
     'Understand domain privacy risk signals — trackers, fingerprinting, cookies, and security configuration. Free domain risk lookup and assessment methodology.',
   alternates: {
     canonical: 'https://geckoadvisor.com/domain-privacy-risk',
   },
   openGraph: {
-    title: 'Domain Privacy Risk Assessment | GeckoAdvisor',
+    title: 'Domain Privacy Risk Assessment',
     description:
       'Understand domain privacy risk signals — trackers, fingerprinting, cookies, and security configuration.',
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Domain Privacy Risk Assessment | GeckoAdvisor',
+    title: 'Domain Privacy Risk Assessment',
     description:
       'Understand domain privacy risk signals — trackers, fingerprinting, cookies, and security configuration.',
   },

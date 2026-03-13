@@ -17,7 +17,7 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { fetchRankings, gradeBg, buildRankingsJsonLd, type CategoryBreakdown, type FreshnessStats } from '@/lib/rankings';
 
 export const metadata: Metadata = {
-  title: `100 Websites with the Most Cookies in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: '100 Websites with the Most Cookies (2026) — Cookie Rankings',
   description:
     'Which websites set the most cookies? See the top 100 websites ranked by cookie count. First-party and third-party cookie analysis from automated privacy scans.',
   robots: { index: true, follow: true },
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/websites-with-most-cookies`,
   },
   openGraph: {
-    title: `100 Websites with the Most Cookies in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: '100 Websites with the Most Cookies (2026) — Cookie Rankings',
     description:
       'Which websites set the most cookies? Top 100 ranked by cookie count.',
     url: `${SEO_CONSTANTS.BASE_URL}/websites-with-most-cookies`,

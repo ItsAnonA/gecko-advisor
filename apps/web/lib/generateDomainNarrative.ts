@@ -374,7 +374,7 @@ const TITLE_VARIANTS = [
 
 export function generateDomainTitle(domain: DomainData): string {
   const variant = pickVariant(domain.name, TITLE_VARIANTS);
-  return `${variant(domain.displayName, domain.trackerCount)} | GeckoAdvisor`;
+  return variant(domain.displayName, domain.trackerCount);
 }
 
 export function generateDomainDescription(

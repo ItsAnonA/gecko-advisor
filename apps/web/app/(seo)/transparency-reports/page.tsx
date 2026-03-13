@@ -8,11 +8,11 @@ import {
 } from '@/lib/transparency-reports';
 
 export const metadata: Metadata = {
-  title: 'Transparency Reports | Gecko Advisor',
+  title: 'Transparency Reports',
   description:
     'Monthly transparency reports showing Gecko Advisor prediction accuracy, retractions, and methodology changes. Every month accounted for — no gaps, no hidden failures.',
   openGraph: {
-    title: 'Transparency Reports | Gecko Advisor',
+    title: 'Transparency Reports',
     description:
       'Monthly transparency reports showing prediction accuracy and retractions.',
     type: 'website',

@@ -18,7 +18,7 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { fetchRankings, gradeBg, buildRankingsJsonLd, type CategoryBreakdown, type FreshnessStats } from '@/lib/rankings';
 
 export const metadata: Metadata = {
-  title: `100 Least Private Websites in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: '100 Least Private Websites (2026) — Privacy Risk Rankings',
   description:
     'Which websites have the worst privacy practices? See the bottom 100 websites ranked by privacy score. Evidence-based analysis of tracking, cookies, and security headers.',
   robots: { index: true, follow: true },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/least-private-websites`,
   },
   openGraph: {
-    title: `100 Least Private Websites in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: '100 Least Private Websites (2026) — Privacy Risk Rankings',
     description:
       'Which websites have the worst privacy practices? Bottom 100 ranked by privacy score.',
     url: `${SEO_CONSTANTS.BASE_URL}/least-private-websites`,

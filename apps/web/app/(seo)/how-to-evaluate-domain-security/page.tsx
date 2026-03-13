@@ -7,21 +7,21 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'How to Evaluate Domain Security | GeckoAdvisor',
+  title: 'How to Evaluate Domain Security: 6-Point Checklist',
   description:
     'A 6-point checklist for evaluating domain security: tracker inventory, configuration stability, infrastructure reliability, volatility scoring, privacy posture, and historical patterns.',
   alternates: {
     canonical: 'https://geckoadvisor.com/how-to-evaluate-domain-security',
   },
   openGraph: {
-    title: 'How to Evaluate Domain Security | GeckoAdvisor',
+    title: 'How to Evaluate Domain Security: 6-Point Checklist',
     description:
       'A 6-point checklist for evaluating domain security: tracker inventory, configuration stability, infrastructure reliability, volatility scoring, privacy posture, and historical patterns.',
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'How to Evaluate Domain Security | GeckoAdvisor',
+    title: 'How to Evaluate Domain Security: 6-Point Checklist',
     description:
       'A 6-point checklist for evaluating domain security: tracker inventory, configuration stability, infrastructure reliability, and more.',
   },

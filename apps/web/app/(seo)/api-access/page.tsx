@@ -10,12 +10,12 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 export const revalidate = 300; // 5-min ISR for live stats
 
 export const metadata: Metadata = {
-  title: 'Domain Risk Screening API | Gecko Advisor',
+  title: 'Domain Risk Screening API',
   description:
     'Screen domains before onboarding vendors, partners, or clients. Privacy scores, tracker counts, stability trends — one API call per domain.',
   alternates: { canonical: 'https://geckoadvisor.com/api-access' },
   openGraph: {
-    title: 'Domain Risk Screening API | Gecko Advisor',
+    title: 'Domain Risk Screening API',
     description:
       'Screen domains before onboarding vendors, partners, or clients. Privacy scores, tracker counts, stability trends — one API call per domain.',
     type: 'website',

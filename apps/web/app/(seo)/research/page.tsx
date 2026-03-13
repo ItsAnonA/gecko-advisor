@@ -13,7 +13,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: `Privacy Research Reports | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: 'Privacy Research Reports',
   description:
     'Original privacy research based on automated analysis of tens of thousands of websites. Industry reports, tracker landscape studies, and cross-category privacy rankings.',
   alternates: { canonical: `${SEO_CONSTANTS.BASE_URL}/research` },

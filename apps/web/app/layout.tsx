@@ -40,7 +40,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || SEO_CONSTANTS.BASE_URL;
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: `${SEO_CONSTANTS.SITE_NAME} - Free Privacy Scanner`,
+    default: 'Domain Intelligence for Vendor Risk & Compliance',
     template: `%s | ${SEO_CONSTANTS.SITE_NAME}`,
   },
   description: SEO_CONSTANTS.DEFAULT_DESCRIPTION,
@@ -63,20 +63,20 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     siteName: SEO_CONSTANTS.SITE_NAME,
-    title: `${SEO_CONSTANTS.SITE_NAME} - Free Privacy Scanner`,
+    title: 'Domain Intelligence for Vendor Risk & Compliance | Gecko Advisor',
     description: SEO_CONSTANTS.DEFAULT_DESCRIPTION,
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Gecko Advisor Privacy Scanner',
+        alt: 'Gecko Advisor - Domain Intelligence Platform',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SEO_CONSTANTS.SITE_NAME} - Free Privacy Scanner`,
+    title: 'Domain Intelligence for Vendor Risk & Compliance | Gecko Advisor',
     description: SEO_CONSTANTS.DEFAULT_DESCRIPTION,
     images: ['/og-image.png'],
   },

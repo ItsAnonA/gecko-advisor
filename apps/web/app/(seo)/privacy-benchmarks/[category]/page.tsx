@@ -110,7 +110,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Category Not Found' };
   }
 
-  const title = `${data.name} Privacy Benchmarks | ${SEO_CONSTANTS.SITE_NAME}`;
+  const title = `${data.name} Privacy Benchmarks`;
   const description = data.benchmarks
     ? `Privacy analysis of ${data.benchmarks.sampleSize.toLocaleString()}+ ${data.name.toLowerCase()} websites. Average privacy score: ${data.benchmarks.avgScore}/100. See best and worst performers.`
     : `Privacy benchmarks for ${data.name.toLowerCase()} websites.`;

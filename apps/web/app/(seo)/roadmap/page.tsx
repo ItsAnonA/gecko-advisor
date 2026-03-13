@@ -9,14 +9,14 @@ import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'Roadmap | Gecko Advisor',
+  title: 'Product Roadmap',
   description:
-    'See what features are coming to Gecko Advisor - browser extensions, mobile apps, scheduled scans, and more privacy tools.',
+    'See what features are coming to Gecko Advisor - API enhancements, stability metrics, scheduled scans, and more domain intelligence tools.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/roadmap`,
   },
   openGraph: {
-    title: `Roadmap | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'Product Roadmap',
     description: 'See what features are coming to Gecko Advisor.',
     url: `${SEO_CONSTANTS.BASE_URL}/roadmap`,
     siteName: SEO_CONSTANTS.SITE_NAME,

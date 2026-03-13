@@ -15,20 +15,20 @@ import { ScanForm } from '@/components/home';
  * consolidate to the base homepage URL for SEO purposes.
  */
 export const metadata: Metadata = {
-  title: 'GeckoAdvisor — Domain Intelligence for Vendor Risk & Compliance',
+  title: 'Domain Intelligence for Vendor Risk & Compliance',
   description: 'Screen vendor domains before onboarding. Real-time stability, tracker detection, and privacy risk data across 142K+ domains.',
   alternates: {
     canonical: 'https://geckoadvisor.com/',
   },
   openGraph: {
-    title: 'GeckoAdvisor — Domain Intelligence for Vendor Risk & Compliance',
+    title: 'Domain Intelligence for Vendor Risk & Compliance | Gecko Advisor',
     description: 'Screen vendor domains before onboarding. Real-time stability, tracker detection, and privacy risk data across 142K+ domains.',
     type: 'website',
     url: 'https://geckoadvisor.com',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'GeckoAdvisor — Domain Intelligence for Vendor Risk & Compliance',
+    title: 'Domain Intelligence for Vendor Risk & Compliance | Gecko Advisor',
     description: 'Screen vendor domains before onboarding. Real-time stability, tracker detection, and privacy risk data across 142K+ domains.',
   },
 };

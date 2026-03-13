@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Prediction Accuracy | Gecko Advisor',
+  title: 'Prediction Accuracy',
   description:
     'Rolling 90-day prediction accuracy for Gecko Advisor privacy insights. Updated monthly with full methodology transparency.',
   openGraph: {
-    title: 'Prediction Accuracy | Gecko Advisor',
+    title: 'Prediction Accuracy',
     description: 'Rolling 90-day accuracy metrics for privacy predictions.',
     type: 'website',
   },

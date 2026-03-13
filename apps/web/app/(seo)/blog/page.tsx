@@ -13,14 +13,14 @@ import { fetchBlogPosts, BlogPostSummary } from '@/lib/api';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Privacy Blog | Gecko Advisor',
+  title: 'Privacy Blog',
   description:
     'Stay informed about online privacy, data protection, and security best practices. Read our latest articles on protecting your digital footprint.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/blog`,
   },
   openGraph: {
-    title: `Privacy Blog | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'Privacy Blog',
     description:
       'Stay informed about online privacy, data protection, and security best practices.',
     url: `${SEO_CONSTANTS.BASE_URL}/blog`,
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Privacy Blog | Gecko Advisor',
+    title: 'Privacy Blog',
     description:
       'Stay informed about online privacy, data protection, and security best practices.',
   },

@@ -22,12 +22,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!post) {
     return {
-      title: 'Post Not Found | Gecko Advisor',
+      title: 'Post Not Found',
       robots: { index: false },
     };
   }
 
-  const title = post.metaTitle || `${post.title} | Gecko Advisor Blog`;
+  const title = post.metaTitle || post.title;
   const description = post.metaDescription || post.excerpt;
   const canonicalUrl = `${SEO_CONSTANTS.BASE_URL}/blog/${post.slug}`;
   const coverImage = post.coverImage

@@ -51,7 +51,17 @@ export async function GET() {
 
   // Static high-priority pages
   const staticPages = [
+    // Authority pages (highest priority — Google uses sitemap ordering as weak signal)
     { loc: '/', priority: '1.0', changefreq: 'daily' },
+    { loc: '/privacy-index', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/most-tracked-websites', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/least-private-websites', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/websites-with-most-cookies', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/technologies', priority: '0.9', changefreq: 'weekly' },
+    { loc: '/api-access', priority: '0.8', changefreq: 'weekly' },
+    { loc: '/research', priority: '0.8', changefreq: 'weekly' },
+    { loc: '/transparency-reports', priority: '0.8', changefreq: 'weekly' },
+    // Discovery pages
     { loc: '/reports', priority: '0.9', changefreq: 'daily' },
     { loc: '/changes', priority: '0.8', changefreq: 'daily' },
     { loc: '/privacy-benchmarks', priority: '0.9', changefreq: 'daily' },

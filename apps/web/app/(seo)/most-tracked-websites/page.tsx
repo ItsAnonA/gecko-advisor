@@ -18,7 +18,7 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { fetchRankings, gradeBg, buildRankingsJsonLd, type CategoryBreakdown, type FreshnessStats } from '@/lib/rankings';
 
 export const metadata: Metadata = {
-  title: `100 Most Tracked Websites in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: '100 Most Tracked Websites (2026) — Tracker Rankings',
   description:
     'Which websites track you the most? See the top 100 websites ranked by number of third-party trackers. Data from automated privacy scans of thousands of domains.',
   robots: { index: true, follow: true },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/most-tracked-websites`,
   },
   openGraph: {
-    title: `100 Most Tracked Websites in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: '100 Most Tracked Websites (2026) — Tracker Rankings',
     description:
       'Which websites track you the most? See the top 100 websites ranked by number of third-party trackers.',
     url: `${SEO_CONSTANTS.BASE_URL}/most-tracked-websites`,

@@ -334,6 +334,68 @@ export default function ScanForm() {
         </div>
       </section>
 
+      {/* Privacy Intelligence Section */}
+      <section className="max-w-4xl mx-auto mb-6 md:mb-8">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-gecko-900 tracking-tight">
+            Explore Our Research
+          </h2>
+          <p className="mt-2 text-sm md:text-base text-gecko-500">
+            Data-driven insights from 205,000+ domain privacy analyses
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            href="/privacy-index"
+            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
+          >
+            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+              Privacy Index
+            </h3>
+            <p className="text-sm text-gecko-500 leading-relaxed">
+              The definitive ranking of website privacy practices
+            </p>
+          </Link>
+
+          <Link
+            href="/most-tracked-websites"
+            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
+          >
+            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+              Most Tracked Websites
+            </h3>
+            <p className="text-sm text-gecko-500 leading-relaxed">
+              Which sites deploy the most third-party trackers
+            </p>
+          </Link>
+
+          <Link
+            href="/technologies"
+            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
+          >
+            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+              Tracking Technologies
+            </h3>
+            <p className="text-sm text-gecko-500 leading-relaxed">
+              Intelligence on every major tracking technology
+            </p>
+          </Link>
+
+          <Link
+            href="/privacy-benchmarks"
+            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
+          >
+            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+              Privacy Benchmarks
+            </h3>
+            <p className="text-sm text-gecko-500 leading-relaxed">
+              How industries compare on privacy practices
+            </p>
+          </Link>
+        </div>
+      </section>
+
       {/* Recent Reports Section */}
       {recentReports.length > 0 && (
         <Card className="max-w-5xl mx-auto">

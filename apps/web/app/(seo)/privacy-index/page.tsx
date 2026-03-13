@@ -18,7 +18,7 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { fetchRankings, gradeBg, buildRankingsJsonLd, type CategoryBreakdown, type FreshnessStats } from '@/lib/rankings';
 
 export const metadata: Metadata = {
-  title: `Privacy Index: 100 Most Private Websites in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: '100 Most Private Websites (2026) — Privacy Index Rankings',
   description:
     'The top 100 websites with the best privacy practices. Ranked by privacy score based on tracker count, security headers, cookie policy, and fingerprinting detection.',
   robots: { index: true, follow: true },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-index`,
   },
   openGraph: {
-    title: `Privacy Index: 100 Most Private Websites in 2026 | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: '100 Most Private Websites (2026) — Privacy Index Rankings',
     description:
       'The top 100 websites with the best privacy practices, ranked by privacy score.',
     url: `${SEO_CONSTANTS.BASE_URL}/privacy-index`,

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = `Compare ${data.similar.length} domains similar to ${data.source.displayName}. See privacy scores, trackers, and side-by-side comparisons.`;
 
   return {
-    title: `${title} | ${SEO_CONSTANTS.SITE_NAME}`,
+    title,
     description,
     alternates: { canonical: `${SEO_CONSTANTS.BASE_URL}/sites-like/${domain}` },
     openGraph: {

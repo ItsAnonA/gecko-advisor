@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!data) return { title: 'Technology Not Found' };
 
   const { technology } = data;
-  const title = `${technology.name} Tracker: Privacy Analysis & Sites Using It | ${SEO_CONSTANTS.SITE_NAME}`;
+  const title = `${technology.name} Tracker: Privacy Analysis & Sites Using It`;
   const description = `${technology.name} is detected on ${data.stats.totalSites.toLocaleString()} websites. See which sites use ${technology.name}, its privacy risk level (${technology.riskLevel}), and adoption trends.`;
 
   return {

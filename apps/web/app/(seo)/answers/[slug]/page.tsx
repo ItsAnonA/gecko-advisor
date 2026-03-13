@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!data || !data.content) return {};
 
   return {
-    title: `${data.title} | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: data.title,
     description: data.content.headline,
     alternates: { canonical: `${SEO_CONSTANTS.BASE_URL}/answers/${slug}` },
     openGraph: {

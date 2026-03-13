@@ -24,7 +24,7 @@ import {
 } from '@/lib/technologies';
 
 export const metadata: Metadata = {
-  title: `Web Tracking Technologies: ${new Date().getFullYear()} Intelligence Report | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: `Web Tracking Technologies: ${new Date().getFullYear()} Intelligence Report`,
   description:
     'Comprehensive database of web tracking technologies. See which trackers are most prevalent, their risk levels, adoption trends, and which websites deploy them.',
   robots: { index: true, follow: true },
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/technologies`,
   },
   openGraph: {
-    title: `Web Tracking Technologies: ${new Date().getFullYear()} Intelligence Report | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: `Web Tracking Technologies: ${new Date().getFullYear()} Intelligence Report`,
     description:
       'Database of web tracking technologies ranked by prevalence. Tracker risk levels, adoption trends, and deployment data.',
     url: `${SEO_CONSTANTS.BASE_URL}/technologies`,

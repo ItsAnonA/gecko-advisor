@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `${domainA} vs ${domainB} Privacy Comparison | ${SEO_CONSTANTS.SITE_NAME}`;
+  const title = `${domainA} vs ${domainB} Privacy Comparison`;
   const description = `Compare privacy practices between ${domainA} (score: ${comparison.domainA.score}) and ${domainB} (score: ${comparison.domainB.score}). ${comparison.summary}`;
 
   return {

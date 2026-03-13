@@ -8,20 +8,20 @@ import Link from 'next/link';
 import { DomainChecker } from '@/components/domain-check/DomainChecker';
 
 export const metadata: Metadata = {
-  title: 'Domain Risk Checker | GeckoAdvisor',
+  title: 'Free Domain Risk Checker',
   description:
     'Check any domain for privacy risk — trackers, fingerprinting, cookies, and security configuration. Free instant lookup across 142K+ monitored domains.',
   alternates: {
     canonical: 'https://geckoadvisor.com/check-domain-risk',
   },
   openGraph: {
-    title: 'Domain Risk Checker | GeckoAdvisor',
+    title: 'Free Domain Risk Checker',
     description: 'Free domain privacy risk lookup. Check any domain for trackers, fingerprinting, and security issues.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Domain Risk Checker | GeckoAdvisor',
+    title: 'Free Domain Risk Checker',
     description: 'Free domain privacy risk lookup. Check any domain for trackers, fingerprinting, and security issues.',
   },
 };

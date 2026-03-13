@@ -10,14 +10,14 @@ import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'About Gecko Advisor',
+  title: 'About',
   description:
     'Learn about Gecko Advisor - a free, open-source privacy scanner that helps you understand how websites track and handle your data.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/about`,
   },
   openGraph: {
-    title: `About | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'About',
     description: 'Learn about Gecko Advisor - a free, open-source privacy scanner.',
     url: `${SEO_CONSTANTS.BASE_URL}/about`,
     siteName: SEO_CONSTANTS.SITE_NAME,

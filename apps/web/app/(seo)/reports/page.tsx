@@ -46,7 +46,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       follow: true, // Always follow links for discovery
     },
     openGraph: {
-      title: `Privacy Reports | ${SEO_CONSTANTS.SITE_NAME}`,
+      title: 'Privacy Reports',
       description: 'Browse privacy analysis reports for popular websites.',
       url: `${SEO_CONSTANTS.BASE_URL}/reports`,
       siteName: SEO_CONSTANTS.SITE_NAME,

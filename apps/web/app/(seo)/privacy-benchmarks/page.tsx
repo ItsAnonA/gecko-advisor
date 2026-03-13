@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 
 export const metadata: Metadata = {
-  title: `Privacy Benchmarks by Industry | ${SEO_CONSTANTS.SITE_NAME}`,
+  title: 'Privacy Benchmarks by Industry',
   description:
     'Compare website privacy practices across industries. See how streaming, e-commerce, SaaS, and news sites handle your data with average scores and tracker analysis.',
   robots: { index: true, follow: true },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONSTANTS.BASE_URL}/privacy-benchmarks`,
   },
   openGraph: {
-    title: `Privacy Benchmarks by Industry | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'Privacy Benchmarks by Industry',
     description:
       'Compare website privacy practices across industries. See how streaming, e-commerce, SaaS, and news sites handle your data.',
     url: `${SEO_CONSTANTS.BASE_URL}/privacy-benchmarks`,

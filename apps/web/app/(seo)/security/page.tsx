@@ -9,14 +9,14 @@ import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'Security | Gecko Advisor',
+  title: 'Security',
   description:
     'Learn about Gecko Advisor security practices, vulnerability disclosure policy, and our commitment to transparency.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/security`,
   },
   openGraph: {
-    title: `Security | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: 'Security',
     description: 'Learn about Gecko Advisor security practices and vulnerability disclosure policy.',
     url: `${SEO_CONSTANTS.BASE_URL}/security`,
     siteName: SEO_CONSTANTS.SITE_NAME,

@@ -20,14 +20,14 @@ import { formatRelativeTime } from '@/lib/dates';
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: 'Privacy Changes Feed | Gecko Advisor',
+  title: 'Privacy Changes Feed',
   description:
     'Track how websites are changing their privacy practices. See which sites are adding or removing trackers, and how privacy scores are evolving.',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/changes`,
   },
   openGraph: {
-    title: 'Privacy Changes Feed | Gecko Advisor',
+    title: 'Privacy Changes Feed',
     description: 'Track how websites are changing their privacy practices in real-time.',
     url: `${SEO_CONSTANTS.BASE_URL}/changes`,
     siteName: SEO_CONSTANTS.SITE_NAME,

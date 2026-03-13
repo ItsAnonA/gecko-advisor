@@ -7,21 +7,21 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Vendor Domain Due Diligence | GeckoAdvisor',
+  title: 'Vendor Domain Due Diligence Guide',
   description:
     'How to screen vendor domains before onboarding. Automated due diligence checks for third-party trackers, security configuration, and privacy risk.',
   alternates: {
     canonical: 'https://geckoadvisor.com/vendor-domain-due-diligence',
   },
   openGraph: {
-    title: 'Vendor Domain Due Diligence | GeckoAdvisor',
+    title: 'Vendor Domain Due Diligence Guide',
     description:
       'Screen vendor domains for privacy risk before onboarding with automated tracker detection and security analysis.',
     type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Vendor Domain Due Diligence | GeckoAdvisor',
+    title: 'Vendor Domain Due Diligence Guide',
     description:
       'Screen vendor domains for privacy risk before onboarding with automated tracker detection and security analysis.',
   },

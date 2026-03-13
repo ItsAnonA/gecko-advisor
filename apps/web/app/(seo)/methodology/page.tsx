@@ -7,11 +7,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'How Privacy Scores Are Calculated | Gecko Advisor Methodology',
+  title: 'How Privacy Scores Are Calculated',
   description:
     'Learn how Gecko Advisor calculates privacy scores by analyzing real network behavior — trackers, third-party requests, cookies, security headers, and TLS configuration.',
   openGraph: {
-    title: 'How Privacy Scores Are Calculated | Gecko Advisor',
+    title: 'How Privacy Scores Are Calculated',
     description:
       'Understanding Gecko Advisor methodology: What we analyze, how we score, and the limitations of automated privacy scanning.',
     type: 'article',

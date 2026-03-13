@@ -16,14 +16,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const report = await getTransparencyReport(slug);
   if (!report) {
-    return { title: 'Report Not Found | Gecko Advisor' };
+    return { title: 'Report Not Found' };
   }
   const monthName = formatSlugAsMonth(slug);
   return {
-    title: `${monthName} Transparency Report | Gecko Advisor`,
+    title: `${monthName} Transparency Report`,
     description: report.keyFinding ?? `Gecko Advisor transparency report for ${monthName}.`,
     openGraph: {
-      title: `${monthName} Transparency Report | Gecko Advisor`,
+      title: `${monthName} Transparency Report`,
       description: report.keyFinding ?? `Monthly transparency report for ${monthName}.`,
       type: 'article',
     },

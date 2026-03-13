@@ -10,9 +10,9 @@ import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
 const faqs = [
   {
-    question: 'Is GeckoAdvisor open source?',
+    question: 'What is Gecko Advisor?',
     answer:
-      'Yes! GeckoAdvisor is fully open source under the MIT license. Our code, methodology, and data sources are public on GitHub. Anyone can audit, contribute, or fork the project. We believe privacy tools should be transparent and community-driven.',
+      'Gecko Advisor is a domain intelligence platform built for vendor risk and compliance teams. We provide automated privacy scoring, tracker detection, and security analysis for any website, helping organizations make informed decisions during vendor onboarding and ongoing monitoring.',
   },
   {
     question: 'What do you check?',
@@ -27,17 +27,17 @@ const faqs = [
   {
     question: 'How accurate are the results?',
     answer:
-      'We use industry-standard databases (EasyPrivacy, WhoTracks.me) with ~95% accuracy for tracker detection. Our methodology is open-source and auditable on GitHub.',
+      'We use industry-standard databases (EasyPrivacy, WhoTracks.me) with ~95% accuracy for tracker detection. Our methodology is documented and transparent, available on our methodology page.',
   },
   {
     question: 'Can I scan my own website?',
     answer:
-      "Absolutely! GeckoAdvisor is perfect for auditing your own site's privacy and security practices. Many developers use it during development to catch privacy issues early.",
+      "Absolutely! Gecko Advisor is perfect for auditing your own site's privacy and security practices. Many developers and compliance teams use it to catch privacy issues before they become vendor risk concerns.",
   },
   {
-    question: 'Is the code open source?',
+    question: 'Is the methodology transparent?',
     answer:
-      'Yes! Our code, methodology, and data sources are all public on GitHub for full transparency. You can review our approach, contribute improvements, or fork the project.',
+      'Yes. Our scoring methodology, detection approach, and data sources are fully documented on our methodology page. We publish accuracy metrics and confidence calibration data so teams can assess our reliability.',
   },
   {
     question: 'How long does a scan take?',
@@ -62,7 +62,7 @@ const faqs = [
   {
     question: 'Can I use this for commercial purposes?',
     answer:
-      'Yes! GeckoAdvisor is licensed under MIT, allowing commercial use. You can integrate it into your workflows, compliance processes, or client audits.',
+      'Yes! Gecko Advisor offers a free scanner for individual use and a paid API for programmatic access. Enterprise teams can integrate domain intelligence into vendor risk workflows, compliance pipelines, and security audits.',
   },
   {
     question: 'How often should I rescan a website?',
@@ -77,7 +77,7 @@ const faqs = [
   {
     question: 'Can I download scan reports?',
     answer:
-      'Currently, reports are web-based only. We plan to add PDF export and API access in future releases. Follow our GitHub for updates.',
+      'Currently, reports are web-based only. Our Domain Intelligence API provides programmatic access to scan data for integration into your existing workflows and tools.',
   },
   {
     question: 'Why did my site get a low score?',
@@ -126,25 +126,25 @@ const breadcrumbSchema = {
 };
 
 export const metadata: Metadata = {
-  title: 'FAQ - Frequently Asked Questions | Gecko Advisor',
+  title: 'Frequently Asked Questions',
   description:
-    "Get answers to common questions about Gecko Advisor's free privacy scanner. Learn how we detect trackers, calculate privacy scores, and protect your data.",
+    "Get answers to common questions about Gecko Advisor's privacy scanner. Learn how we detect trackers, calculate privacy scores, and assess domain risk.",
   keywords:
-    'privacy scanner FAQ, website tracker detection, privacy score explained, open source privacy tool, GDPR compliance checker',
+    'privacy scanner FAQ, website tracker detection, privacy score explained, domain intelligence platform, vendor risk assessment',
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/faq`,
   },
   openGraph: {
-    title: 'FAQ - Frequently Asked Questions | Gecko Advisor',
-    description: "Get answers to common questions about Gecko Advisor's free privacy scanner.",
+    title: 'Frequently Asked Questions',
+    description: "Get answers to common questions about Gecko Advisor's privacy scanner.",
     url: `${SEO_CONSTANTS.BASE_URL}/faq`,
     siteName: SEO_CONSTANTS.SITE_NAME,
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: 'FAQ - Frequently Asked Questions | Gecko Advisor',
-    description: "Get answers to common questions about Gecko Advisor's free privacy scanner.",
+    title: 'Frequently Asked Questions',
+    description: "Get answers to common questions about Gecko Advisor's privacy scanner.",
   },
 };
 

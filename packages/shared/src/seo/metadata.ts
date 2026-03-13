@@ -179,7 +179,7 @@ export function buildOpenGraphData(
   type: 'article' | 'website';
 } {
   return {
-    title: `${domain} Privacy Analysis | ${SEO_CONSTANTS.SITE_NAME}`,
+    title: `${domain} Privacy Analysis`,
     description: buildMetaDescription(scanData, domain),
     url: buildCanonicalUrl(domain, baseUrl),
     siteName: SEO_CONSTANTS.SITE_NAME,

@@ -8,21 +8,21 @@ import Link from 'next/link';
 import { SampleRequestForm } from '@/components/conversion/SampleRequestForm';
 
 export const metadata: Metadata = {
-  title: 'Domain Intelligence API | GeckoAdvisor',
+  title: 'Domain Intelligence API',
   description:
     'Real-time domain risk data for vendor screening and compliance workflows. Programmatic access to privacy scores, tracker detection, and stability metrics across 142K+ domains.',
   alternates: {
     canonical: 'https://geckoadvisor.com/domain-intelligence-api',
   },
   openGraph: {
-    title: 'Domain Intelligence API | GeckoAdvisor',
+    title: 'Domain Intelligence API',
     description:
       'Real-time domain risk data for vendor screening and compliance workflows. Privacy scores, tracker detection, and stability metrics.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Domain Intelligence API | GeckoAdvisor',
+    title: 'Domain Intelligence API',
     description:
       'Real-time domain risk data for vendor screening and compliance workflows.',
   },
