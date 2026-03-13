@@ -109,10 +109,9 @@ technologiesV2Router.get('/v2/technologies', async (_req, res) => {
       where: { periodType: 'WEEKLY' },
     });
 
-    // Get total Tier A domains for prevalence calculation
+    // Get total scanned domains (all tiers) for prevalence calculation
     const totalDomains = await prisma.domain.count({
       where: {
-        indexTier: 'A',
         latestScan: { status: 'done', score: { not: null } },
       },
     });
@@ -187,10 +186,9 @@ technologiesV2Router.get('/v2/technologies/:slug', async (req, res) => {
 
     const trackerDomain = trend.trackerDomain;
 
-    // Get total Tier A domains for prevalence calculation
+    // Get total scanned domains (all tiers) for prevalence calculation
     const totalDomains = await prisma.domain.count({
       where: {
-        indexTier: 'A',
         latestScan: { status: 'done', score: { not: null } },
       },
     });
