@@ -105,7 +105,6 @@ adminRouter.post('/admin/bulk-scan', adminGuard, async (req, res) => {
         progress: 0,
         source: 'admin_bulk',
         scannerIp: req.ip || 'admin',
-        isPublic: true,
         meta: { batchId, adminBulk: true },
       });
 
@@ -562,7 +561,6 @@ adminRouter.post('/admin/scan-queue/process', adminGuard, async (req, res) => {
         progress: 0,
         source: 'scan_queue',
         scannerIp: 'admin',
-        isPublic: true,
         meta: { queueId: item.id, processBatchId },
       });
 

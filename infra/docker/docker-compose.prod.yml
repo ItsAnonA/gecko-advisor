@@ -138,6 +138,9 @@ services:
       SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-noreply@geckoadvisor.com}
       PASSWORD_RESET_URL: ${PASSWORD_RESET_URL:-https://geckoadvisor.com/reset-password}
 
+      # LemonSqueezy Payment Integration (REQUIRED for paid API subscriptions)
+      LEMONSQUEEZY_WEBHOOK_SECRET: ${LEMONSQUEEZY_WEBHOOK_SECRET:-}
+
       # Feature Flags
       USE_FIXTURES: ${USE_FIXTURES:-0}
 

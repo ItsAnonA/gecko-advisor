@@ -42,6 +42,8 @@ services:
       ALLOW_ORIGIN: http://localhost:8080
       FRONTEND_PUBLIC_URL: http://localhost:8080
       BACKEND_PUBLIC_URL: http://localhost:5000
+      # LemonSqueezy (not needed for E2E but keeps parity)
+      LEMONSQUEEZY_WEBHOOK_SECRET: ${LEMONSQUEEZY_WEBHOOK_SECRET:-test-secret}
     expose:
       - "5000"
     depends_on:

@@ -11,6 +11,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
+import crypto from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -61,6 +62,7 @@ async function main() {
 
   // Generate key: ga_ + 48 hex chars = 51 total
   const key = `ga_${randomBytes(24).toString('hex')}`;
+  const dashboardToken = crypto.randomBytes(16).toString('base64url');
   const requestLimit = TIER_LIMITS[tier];
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
@@ -71,17 +73,22 @@ async function main() {
       tier: tier as 'EVALUATION' | 'OPERATIONAL' | 'BULK_INTELLIGENCE' | 'ENTERPRISE',
       requestLimit,
       expiresAt,
+      dashboardToken,
     },
   });
 
   console.log('\n=== API Key Created ===\n');
-  console.log(`  Key:      ${apiKey.key}`);
-  console.log(`  Email:    ${apiKey.customerEmail}`);
-  console.log(`  Tier:     ${apiKey.tier}`);
-  console.log(`  Limit:    ${requestLimit === -1 ? 'Unlimited' : requestLimit.toLocaleString()}`);
-  console.log(`  Expires:  ${expiresAt.toISOString().slice(0, 10)}`);
-  console.log(`  ID:       ${apiKey.id}`);
-  console.log('\n  Test with:');
+  console.log(`  Key:       ${apiKey.key}`);
+  console.log(`  Email:     ${apiKey.customerEmail}`);
+  console.log(`  Tier:      ${apiKey.tier}`);
+  console.log(`  Limit:     ${requestLimit === -1 ? 'Unlimited' : requestLimit.toLocaleString()}`);
+  console.log(`  Expires:   ${expiresAt.toISOString().slice(0, 10)}`);
+  console.log(`  ID:        ${apiKey.id}`);
+  console.log('');
+  console.log('  Dashboard:');
+  console.log(`  https://geckoadvisor.com/api-access/dashboard?token=${dashboardToken}`);
+  console.log('');
+  console.log('  Test API:');
   console.log(`  curl -H "Authorization: Bearer ${apiKey.key}" https://api.geckoadvisor.com/api/v1/domain/google.com`);
   console.log('');
 

@@ -44,6 +44,8 @@ services:
       BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-https://preprodapi.geckoadvisor.com}
       FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-https://preprod.geckoadvisor.com}
       BACKEND_PORT: ${BACKEND_PORT:-5000}
+      # LemonSqueezy Payment Integration
+      LEMONSQUEEZY_WEBHOOK_SECRET: ${LEMONSQUEEZY_WEBHOOK_SECRET:-}
     expose:
       - "5000"
     depends_on:

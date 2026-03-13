@@ -2,7 +2,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { RateLimitService, type RateLimitInfo } from '../services/rateLimitService.js';
 import { prisma } from '../prisma.js';
-import type { SafeUser } from '../services/authService.js';
 
 const rateLimitService = new RateLimitService(prisma);
 
@@ -11,7 +10,6 @@ const rateLimitService = new RateLimitService(prisma);
  */
 export interface RequestWithRateLimit extends Request {
   rateLimit?: RateLimitInfo;
-  user?: SafeUser;
 }
 
 /**
@@ -21,11 +19,7 @@ export interface RequestWithRateLimit extends Request {
  * 1. Burst protection: 1 scan per minute per IP
  * 2. Daily limit: 10 scans per day per IP
  *
- * Pro users with active subscriptions bypass rate limiting.
- *
- * Rate limits are tracked by:
- * - User ID (for authenticated users)
- * - IP address (for anonymous users)
+ * Rate limits are tracked by IP address.
  *
  * Returns 429 error if limit exceeded with:
  * - For burst: retryAfterSeconds
@@ -37,18 +31,7 @@ export const scanRateLimiter = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const user = req.user;
-
-    // If Pro user with active subscription, bypass rate limiting
-    if (
-      user?.subscription === 'PRO' &&
-      user?.subscriptionStatus === 'ACTIVE'
-    ) {
-      return next();
-    }
-
-    // Get identifier: user ID if logged in, IP if anonymous
-    const identifier = user?.id || req.ip || 'unknown';
+    const identifier = req.ip || 'unknown';
 
     // Check rate limit
     const rateLimit = await rateLimitService.checkRateLimit(identifier);

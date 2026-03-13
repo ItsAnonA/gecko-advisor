@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { Router, type Request } from "express";
+import { Router } from "express";
 import { z } from "zod";
 import {
   UrlScanRequestSchema,
@@ -10,7 +10,6 @@ import {
   isBlockedDomain,
   getBlockReason,
 } from "@gecko-advisor/shared";
-import type { SafeUser } from "../services/authService.js";
 import { prisma } from "../prisma.js";
 import { problem } from "../problem.js";
 import { addScanJob, SCAN_PRIORITY, scanQueue } from "../queue.js";
@@ -18,7 +17,6 @@ import { createScanWithSlug } from "../services/slug.js";
 import { findReusableScan } from "../services/dedupe.js";
 import { logger } from "../logger.js";
 import { CacheService, CACHE_KEYS, CACHE_TTL } from "../cache.js";
-import { optionalAuth } from "../middleware/auth.js";
 import { requireTurnstile } from "../middleware/turnstile.js";
 import { scanRateLimiter, rateLimitService } from "../middleware/scanRateLimit.js";
 
@@ -32,14 +30,13 @@ const CachedResponseSchema = ScanQueuedResponseSchema.extend({
 
 export const scanV2Router = Router();
 
-scanV2Router.post(['/', '/url'], optionalAuth, requireTurnstile, scanRateLimiter, async (req, res) => {
+scanV2Router.post(['/', '/url'], requireTurnstile, scanRateLimiter, async (req, res) => {
   const parsed = UrlScanBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return problem(res, 400, 'Invalid Request', parsed.error.flatten());
   }
 
   const { url, force } = parsed.data;
-  const user = (req as Request & { user?: SafeUser }).user;
 
   let normalized: URL;
   try {
@@ -72,8 +69,6 @@ scanV2Router.post(['/', '/url'], optionalAuth, requireTurnstile, scanRateLimiter
   }
 
   try {
-    // Prepare scan data with optional user tracking
-    // All scans are public and free - no PRO tier
     const scanData = {
       targetType: 'url' as const,
       input: url,
@@ -81,12 +76,7 @@ scanV2Router.post(['/', '/url'], optionalAuth, requireTurnstile, scanRateLimiter
       status: 'queued' as const,
       progress: 0,
       source: force ? ('manual_force' as const) : ('manual' as const),
-      // Optional user tracking for scan history
-      userId: user?.id || null,
       scannerIp: req.ip || null,
-      // All scans are public (100% free, no PRO tier)
-      isPublic: true,
-      isProScan: false,
     };
 
     const scan = await createScanWithSlug(prisma, scanData);
@@ -108,7 +98,7 @@ scanV2Router.post(['/', '/url'], optionalAuth, requireTurnstile, scanRateLimiter
     );
 
     // Increment rate limit counter after successful queue
-    const identifier = user?.id || req.ip || 'unknown';
+    const identifier = req.ip || 'unknown';
     await rateLimitService.incrementScan(identifier);
 
     const response = ScanQueuedResponseSchema.parse({
@@ -252,101 +242,3 @@ scanV2Router.post('/address', async (req, res) => {
   res.json(response);
 });
 
-/**
- * Get scan history for authenticated user
- *
- * GET /api/scans/history
- * Requires: Authentication
- * Returns: { scans, daysBack, total }
- *
- * All users: last 90 days (no tier restrictions)
- */
-scanV2Router.get('/history', async (req, res) => {
-  // Import auth middleware dynamically to avoid circular dependency
-  const { requireAuth } = await import('../middleware/auth.js');
-
-  // Apply auth middleware
-  await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: unknown) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-
-  const user = (req as Request & { user?: SafeUser }).user;
-
-  if (!user) {
-    return problem(res, 401, 'Unauthorized', 'User not authenticated');
-  }
-
-  try {
-    // All users get 90 days of history (no tier restrictions)
-    const daysBack = 90;
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
-
-    // Get scan history for user
-    const scans = await prisma.scan.findMany({
-      where: {
-        userId: user.id,
-        createdAt: {
-          gte: cutoffDate,
-        },
-      },
-      select: {
-        id: true,
-        slug: true,
-        targetType: true,
-        input: true,
-        normalizedInput: true,
-        status: true,
-        score: true,
-        label: true,
-        isPublic: true,
-        isProScan: true,
-        source: true,
-        createdAt: true,
-        finishedAt: true,
-        meta: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 100, // Limit to 100 most recent scans
-    });
-
-    logger.debug(
-      {
-        userId: user.id,
-        daysBack,
-        scanCount: scans.length,
-      },
-      'Retrieved scan history'
-    );
-
-    res.json({
-      scans: scans.map((scan) => ({
-        scanId: scan.id,
-        slug: scan.slug,
-        targetType: scan.targetType,
-        url: scan.input,
-        normalizedInput: scan.normalizedInput ?? undefined,
-        status: scan.status,
-        score: scan.score ?? undefined,
-        label: scan.label ?? undefined,
-        isPublic: scan.isPublic,
-        isProScan: scan.isProScan,
-        source: scan.source,
-        batchId: (scan.meta as Record<string, unknown> | null)?.batchId as string | undefined ?? undefined,
-        createdAt: scan.createdAt,
-        finishedAt: scan.finishedAt ?? undefined,
-      })),
-      total: scans.length,
-      daysBack,
-      cutoffDate,
-    });
-  } catch (error) {
-    logger.error({ error, userId: user.id }, 'Failed to get scan history');
-    return problem(res, 500, 'Internal Server Error', 'Failed to get scan history');
-  }
-});

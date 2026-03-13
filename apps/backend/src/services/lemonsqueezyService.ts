@@ -64,7 +64,7 @@ export async function provisionApiKey(
   subscriptionId: string | null,
   customerId: string,
   customerName?: string,
-): Promise<{ key: string; isNew: boolean }> {
+): Promise<{ key: string; dashboardToken: string | null; isNew: boolean }> {
   // Idempotency: check if this order already provisioned a key
   const existing = await prisma.apiKey.findFirst({
     where: { lemonSqueezyOrderId: orderId },
@@ -75,11 +75,12 @@ export async function provisionApiKey(
       { orderId, keyId: existing.id },
       '[LemonSqueezy] Order already provisioned, returning existing key',
     );
-    return { key: existing.key, isNew: false };
+    return { key: existing.key, dashboardToken: existing.dashboardToken, isNew: false };
   }
 
   const requestLimit = TIER_LIMITS[tier] ?? 1_000;
   const key = `ga_${crypto.randomBytes(24).toString('hex')}`;
+  const dashboardToken = crypto.randomBytes(16).toString('base64url');
 
   const apiKey = await prisma.apiKey.create({
     data: {
@@ -88,6 +89,7 @@ export async function provisionApiKey(
       tier,
       requestLimit,
       active: true,
+      dashboardToken,
       lemonSqueezyCustomerId: customerId,
       lemonSqueezySubscriptionId: subscriptionId,
       lemonSqueezyOrderId: orderId,
@@ -101,7 +103,7 @@ export async function provisionApiKey(
     '[LemonSqueezy] New API key provisioned',
   );
 
-  return { key, isNew: true };
+  return { key, dashboardToken, isNew: true };
 }
 
 /**

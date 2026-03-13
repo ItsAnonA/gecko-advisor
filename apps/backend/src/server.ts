@@ -15,7 +15,6 @@ import { performanceMonitor, addPerformanceHeaders } from "./middleware/performa
 import { apiV1Router, apiV2Router } from "./routes/index.js";
 import { adminRouter } from "./routes/admin.js";
 import { docsRouter } from "./routes/docs.js";
-import { authRouter } from "./routes/auth.js";
 import { healthRouter } from "./health.js";
 import { sitemapRouter } from "./routes/sitemap.js";
 import { ssrBlogRouter } from "./routes/ssr.blog.js";
@@ -135,12 +134,6 @@ export function createServer() {
 
   app.use('/api', adminRouter);
 
-  // Auth routes are feature-flagged (ENABLE_AUTH=false by default)
-  // Gecko Advisor's mission is "no auth required" - auth is opt-in for future Pro features
-  if (config.enableAuth) {
-    app.use('/api/auth', authRouter);
-    logger.info('Auth routes enabled (ENABLE_AUTH=true)');
-  }
   app.use('/docs', docsRouter);
 
   // SEO: Dynamic sitemap routes

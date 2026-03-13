@@ -81,32 +81,6 @@ enum IssueSeverity {
   critical
 }
 
-// New enums for Freemium model
-enum Subscription {
-  FREE
-  PRO
-  TEAM
-}
-
-enum SubscriptionStatus {
-  INACTIVE
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  TRIALING
-}
-
-enum AuthMethod {
-  EMAIL
-  WALLET
-  BOTH
-}
-
-enum CheckFrequency {
-  DAILY
-  WEEKLY
-  MONTHLY
-}
 
 // Phase 3: Change Intelligence
 enum ChangeType {
@@ -190,6 +164,9 @@ model ApiKey {
   createdAt     DateTime   @default(now())
   expiresAt     DateTime?
 
+  // Dashboard access token (read-only, for dashboard URL links)
+  dashboardToken String?   @unique
+
   // LemonSqueezy payment integration
   lemonSqueezyCustomerId      String?
   lemonSqueezySubscriptionId  String?
@@ -199,44 +176,13 @@ model ApiKey {
 
   @@index([key], map: "ApiKey_key_idx")
   @@index([customerEmail], map: "ApiKey_email_idx")
+  @@index([dashboardToken], map: "ApiKey_dashboard_token_idx")
   @@index([lemonSqueezySubscriptionId], map: "ApiKey_ls_subscription_idx")
   @@index([lemonSqueezyOrderId], map: "ApiKey_ls_order_idx")
   @@index([lemonSqueezyCustomerId], map: "ApiKey_ls_customer_idx")
 }
 
-// New User model for authentication and subscriptions
-model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  name          String?
-  passwordHash  String? // Optional for email-only accounts
-  emailVerified Boolean    @default(false)
-  authMethod    AuthMethod @default(EMAIL)
-
-  // Subscription
-  subscription       Subscription       @default(FREE)
-  subscriptionStatus SubscriptionStatus @default(INACTIVE)
-  subscriptionEndsAt DateTime?
-
-  // API Access
-  apiKey        String?   @unique
-  apiCallsMonth Int       @default(0)
-  apiResetAt    DateTime?
-
-  // Relations
-  scans                Scan[]
-  watchedUrls          WatchedUrl[]
-  walletLink           WalletLink?
-  passwordResetTokens  PasswordResetToken[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([email])
-  @@index([apiKey])
-}
-
-// Enhanced Scan model with user relations and privacy controls
+// Scan model
 model Scan {
   id              String    @id @default(cuid())
   targetType      ScanTargetType
@@ -255,12 +201,7 @@ model Scan {
   shareMessage    String?
   meta            Json?
 
-  // New Freemium fields
-  userId    String?
-  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  isPublic  Boolean @default(true) // Pro users can make scans private
-  isProScan Boolean @default(false) // Track if scan was performed with Pro features
-  scannerIp String? // Track anonymous scans for rate limiting
+  scannerIp String? // Track scans for rate limiting
 
   // Wall-clock scan duration in milliseconds (start to completion/failure)
   durationMs Int?
@@ -287,9 +228,6 @@ model Scan {
   // Optimized indexes for critical performance paths
   @@index([normalizedInput, status, finishedAt(sort: Desc)], map: "Scan_dedupe_lookup_idx")
   @@index([status, createdAt(sort: Desc)], map: "Scan_recent_reports_idx")
-  // New indexes for Freemium features
-  @@index([userId, createdAt(sort: Desc)], map: "Scan_user_history_idx")
-  @@index([isPublic, createdAt(sort: Desc)], map: "Scan_public_reports_idx")
   @@index([scannerIp, createdAt(sort: Desc)], map: "Scan_ip_ratelimit_idx")
   // Domain Intelligence Engine: Index for volatility queries
   @@index([domainId, status, finishedAt(sort: Desc)], map: "Scan_domain_volatility_idx")
@@ -355,49 +293,6 @@ model RateLimit {
   @@index([identifier, date], map: "RateLimit_lookup_idx")
 }
 
-// Watched URLs for Pro users (monitoring and alerts)
-model WatchedUrl {
-  id             String         @id @default(cuid())
-  userId         String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  url            String
-  lastScore      Int?
-  lastChecked    DateTime?
-  checkFrequency CheckFrequency @default(WEEKLY)
-  alertOnChange  Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-
-  @@unique([userId, url])
-  @@index([lastChecked, checkFrequency], map: "WatchedUrl_schedule_idx")
-}
-
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([tokenHash])
-  @@index([userId, expiresAt], map: "PasswordResetToken_user_idx")
-}
-
-// Wallet authentication linking
-model WalletLink {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Store HASHED wallet address for linking only
-  walletAddressHash String   @unique
-  linkedAt          DateTime @default(now())
-  lastVerified      DateTime @default(now())
-
-  @@index([walletAddressHash])
-}
 
 // Blog post status enum
 enum BlogPostStatus {
