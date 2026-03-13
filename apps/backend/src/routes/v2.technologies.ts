@@ -43,9 +43,16 @@ function trackerDomainToSlug(domain: string): string {
 }
 
 function slugToTrackerDomainCandidates(slug: string): string[] {
-  // Convert hyphens back to dots
-  const base = slug.replace(/-/g, '.');
-  return TLD_CANDIDATES.map((tld) => base + tld);
+  // The slug may have been created by replacing dots with hyphens,
+  // but the original domain may also contain hyphens (e.g. google-analytics.com).
+  // Generate candidates with both interpretations.
+  const dotsOnly = slug.replace(/-/g, '.');
+  const candidates = new Set<string>();
+  for (const tld of TLD_CANDIDATES) {
+    candidates.add(dotsOnly + tld);        // all hyphens → dots
+    candidates.add(slug + tld);             // keep original hyphens
+  }
+  return [...candidates];
 }
 
 function generateDescription(name: string | null, category: string | null): string {
