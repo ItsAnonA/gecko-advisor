@@ -153,3 +153,48 @@ export function buildTechnologyJsonLd(data: TechnologyDetailData, url: string) {
     applicationCategory: `Web ${data.technology.category}`,
   };
 }
+
+/** Build FAQPage JSON-LD from question/answer pairs */
+export function buildFaqPageJsonLd(faqs: Array<{ question: string; answer: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
+/** Build Article JSON-LD for editorial/guide pages */
+export function buildArticleJsonLd(opts: {
+  title: string;
+  description: string;
+  url: string;
+  datePublished?: string;
+  dateModified?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: opts.title,
+    description: opts.description,
+    url: opts.url,
+    author: {
+      '@type': 'Organization',
+      name: 'Gecko Advisor',
+      url: 'https://geckoadvisor.com',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Gecko Advisor',
+      url: 'https://geckoadvisor.com',
+    },
+    ...(opts.datePublished && { datePublished: opts.datePublished }),
+    ...(opts.dateModified && { dateModified: opts.dateModified }),
+  };
+}

@@ -27,8 +27,44 @@ export const metadata: Metadata = {
   },
 };
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Does Gecko Advisor replace BuiltWith?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. BuiltWith is a technology identification platform that tells you what tools a website uses. Gecko Advisor is a privacy risk assessment platform that tells you what privacy impact those tools have on visitors. For technology stack profiling, use BuiltWith. For privacy risk assessment, use Gecko Advisor.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Which is better for vendor screening?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'For privacy-focused vendor screening, Gecko Advisor provides more actionable data with privacy scores, risk factors, and change tracking. BuiltWith identifies technologies but does not assess whether they create privacy risk. For a complete vendor assessment, using both tools provides the most comprehensive view.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does pricing compare?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'BuiltWith offers limited free lookups with Pro plans starting at $295/month. Gecko Advisor provides a free scanner and a REST API starting at $49/month for programmatic privacy risk data.',
+      },
+    },
+  ],
+};
+
 export default function GeckoAdvisorVsBuiltWithPage() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
     <main className="max-w-3xl mx-auto px-4 py-12">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="mb-8">
@@ -240,5 +276,6 @@ export default function GeckoAdvisorVsBuiltWithPage() {
         </footer>
       </article>
     </main>
+    </>
   );
 }

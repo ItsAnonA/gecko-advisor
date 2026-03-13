@@ -44,11 +44,11 @@ interface Props {
 // Revalidate every hour
 export const revalidate = 3600;
 
-// Pre-generate the top 100 most-scanned domains at build time for faster initial loads.
+// Pre-generate the top 500 most-scanned domains at build time for faster initial loads.
 // Falls back to on-demand ISR for all other domains.
 export async function generateStaticParams(): Promise<Array<{ domain: string }>> {
   try {
-    const domains = await fetchTopDomainsForStaticParams(100);
+    const domains = await fetchTopDomainsForStaticParams(500);
     return domains.map((domain) => ({ domain }));
   } catch {
     // On any failure (e.g., API unreachable at build time), return empty array.

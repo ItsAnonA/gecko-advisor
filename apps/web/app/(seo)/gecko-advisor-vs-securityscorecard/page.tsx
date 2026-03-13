@@ -27,8 +27,44 @@ export const metadata: Metadata = {
   },
 };
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Is Gecko Advisor a SecurityScorecard replacement?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. They assess different dimensions of domain risk. SecurityScorecard evaluates network infrastructure security. Gecko Advisor evaluates website-level privacy behavior — trackers, cookies, fingerprinting, security headers. If your concern is specifically privacy and tracker risk, Gecko Advisor provides deeper coverage. If you need broad enterprise security ratings, SecurityScorecard is purpose-built for that.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can I use both tools together?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. Use SecurityScorecard for infrastructure security posture and compliance framework mapping. Use Gecko Advisor for website privacy assessment, tracker detection, and cookie auditing. Together they provide a more complete picture of vendor risk than either tool alone.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does pricing compare?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'SecurityScorecard pricing starts at approximately $25,000/year for enterprise contracts. Gecko Advisor offers a free scanner for individual assessments and a REST API starting at $49/month for programmatic access.',
+      },
+    },
+  ],
+};
+
 export default function GeckoAdvisorVsSecurityScorecardPage() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
     <main className="max-w-3xl mx-auto px-4 py-12">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="mb-8">
@@ -251,5 +287,6 @@ export default function GeckoAdvisorVsSecurityScorecardPage() {
         </footer>
       </article>
     </main>
+    </>
   );
 }

@@ -31,6 +31,11 @@ interface DomainEntry {
   lastScannedAt?: string;
 }
 
+interface TechnologyEntry {
+  slug: string;
+  name: string;
+}
+
 export async function GET() {
   // Fetch top 300 quality-tier domains from backend
   let domains: DomainEntry[] = [];
@@ -46,6 +51,35 @@ export async function GET() {
   } catch (error) {
     console.error('Tier 1a sitemap: failed to fetch domains:', error);
   }
+
+  // Fetch top technology slugs for sitemap
+  let technologies: TechnologyEntry[] = [];
+  try {
+    const techRes = await fetch(
+      `${getApiInternalUrl()}/api/v2/technologies`,
+      { next: { revalidate: 3600 } }
+    );
+    if (techRes.ok) {
+      const techData = await techRes.json();
+      technologies = (techData.technologies || []).slice(0, 50);
+    }
+  } catch (error) {
+    console.error('Tier 1a sitemap: failed to fetch technologies:', error);
+  }
+
+  // Top comparison pairs for sitemap discovery
+  const comparisonPairs = [
+    ['google.com', 'duckduckgo.com'],
+    ['google.com', 'bing.com'],
+    ['facebook.com', 'reddit.com'],
+    ['amazon.com', 'walmart.com'],
+    ['youtube.com', 'vimeo.com'],
+    ['twitter.com', 'reddit.com'],
+    ['netflix.com', 'disneyplus.com'],
+    ['zoom.us', 'meet.google.com'],
+    ['gmail.com', 'proton.me'],
+    ['github.com', 'gitlab.com'],
+  ];
 
   const now = new Date().toISOString();
 
@@ -88,6 +122,24 @@ ${staticPages
     <loc>${BASE_URL}${p.loc}</loc>
     <changefreq>${p.changefreq}</changefreq>
     <priority>${p.priority}</priority>
+  </url>`
+  )
+  .join('\n')}
+${comparisonPairs
+  .map(
+    ([a, b]) => `  <url>
+    <loc>${BASE_URL}/compare/${a}/${b}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`
+  )
+  .join('\n')}
+${technologies
+  .map(
+    (t) => `  <url>
+    <loc>${BASE_URL}/technologies/${t.slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>`
   )
   .join('\n')}

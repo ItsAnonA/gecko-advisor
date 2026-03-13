@@ -20,6 +20,7 @@ import {
   trendIcon,
   categoryColor,
   buildTechnologiesJsonLd,
+  buildFaqPageJsonLd,
   type TechnologyEntry,
 } from '@/lib/technologies';
 
@@ -71,6 +72,25 @@ export default async function TechnologiesPage() {
   const groups = data ? groupByCategory(data.technologies) : {};
   const categories = sortedCategories(groups);
 
+  const faqItems = [
+    {
+      question: 'What is a web tracking technology?',
+      answer: 'A web tracking technology is a third-party script, pixel, or beacon embedded in websites that collects data about visitor behavior. Common examples include analytics platforms (Google Analytics), advertising pixels (Meta Pixel), and session replay tools (Hotjar). These technologies communicate with external servers, creating data flows between the website and the third-party provider.',
+    },
+    {
+      question: 'Which tracking technologies are most common?',
+      answer: data ? `We currently track ${data.totalTrackers} distinct technologies. The most prevalent are typically analytics and advertising platforms from major technology companies, deployed across tens of thousands of websites. Each technology profile page shows the exact number of sites where we detect it.` : 'Analytics and advertising platforms from major technology companies are the most prevalent, deployed across tens of thousands of websites.',
+    },
+    {
+      question: 'How is tracker risk level determined?',
+      answer: 'Risk levels reflect the technology\'s primary purpose and data collection scope. Advertising and ad network technologies are rated High risk because they exist to profile users across sites. Analytics tools are Medium risk because they collect behavioral data. CDN and essential infrastructure technologies are Low risk because they serve functional purposes.',
+    },
+    {
+      question: 'What do adoption trends mean?',
+      answer: 'Adoption trends show whether a technology is being added to more websites (growing), removed from websites (declining), or maintaining its current presence (stable). Declining trends often signal regulatory pressure, browser restrictions, or industry shift toward alternatives.',
+    },
+  ];
+
   return (
     <>
       {data && (
@@ -83,6 +103,12 @@ export default async function TechnologiesPage() {
           }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildFaqPageJsonLd(faqItems)),
+        }}
+      />
 
       <div className="min-h-screen">
         {/* Hero */}

@@ -240,6 +240,111 @@ export const CATEGORY_CONTENT: Record<string, CategoryContent> = {
     methodology:
       'We scan gaming platform websites, launcher pages, and storefronts. Our analysis identifies advertising SDKs and analytics tools common in the gaming industry.',
   },
+
+  'ai-tools': {
+    intro:
+      'AI tools and platforms process user prompts, documents, and conversations that may contain sensitive personal and business data. Our analysis reveals significant differences in how AI providers handle third-party tracking on their public-facing properties.',
+    whyItMatters:
+      'AI platforms often receive your most sensitive thinking — business strategies, personal questions, code, and creative work. Third-party trackers on these platforms can expose your usage patterns and interests to advertising networks. As AI becomes embedded in daily workflows, understanding provider privacy practices is essential for both personal and enterprise use.',
+    keyFindings: [
+      'AI tool marketing sites average 10-18 third-party trackers',
+      'Open-source AI platforms generally deploy fewer trackers than commercial alternatives',
+      'Free-tier AI tools show 2-3x more advertising trackers than paid plans',
+      'Several major AI providers use fingerprinting on their login and marketing pages',
+    ],
+    whatToLookFor: [
+      'Review whether prompts and conversations are used for model training',
+      'Check for enterprise plans with data isolation and no training on inputs',
+      'Verify the platform offers data deletion and export capabilities',
+      'Prefer providers with transparent data retention and processing policies',
+    ],
+    methodology:
+      'We scan AI platform marketing sites, documentation pages, and login flows. Our analysis captures third-party trackers, cookies, and fingerprinting deployed on publicly accessible pages.',
+  },
+
+  crypto: {
+    intro:
+      'Cryptocurrency exchanges and DeFi platforms handle high-value financial transactions while often deploying extensive analytics. Our benchmarks reveal major differences between centralized exchanges and decentralized protocols in their approach to user tracking.',
+    whyItMatters:
+      'Cryptocurrency activity reveals your financial holdings, trading patterns, and investment strategies. Tracking on exchange platforms can link wallet addresses to real identities. For users who value the pseudonymity blockchain offers, understanding platform tracking is critical to maintaining financial privacy.',
+    keyFindings: [
+      'Centralized exchanges average 12-20 third-party trackers on marketing pages',
+      'DeFi protocol interfaces generally deploy fewer trackers than centralized platforms',
+      'KYC-heavy platforms often share data with identity verification third parties',
+      'Crypto news sites and aggregators rival traditional news in tracker counts',
+    ],
+    whatToLookFor: [
+      'Check whether the platform shares transaction data with analytics firms',
+      'Review KYC data retention policies and third-party sharing',
+      'Prefer platforms with clear data breach notification commitments',
+      'Consider hardware wallets and self-custody for maximum privacy',
+    ],
+    methodology:
+      'We scan cryptocurrency platform marketing pages, trading interfaces, and documentation. Our analysis identifies advertising, analytics, and identity verification trackers.',
+  },
+
+  vpn: {
+    intro:
+      'VPN services market themselves on privacy protection, but their own websites often deploy the same trackers they promise to block. Our benchmarks hold VPN providers to the standard they set for themselves, revealing which providers practice what they preach.',
+    whyItMatters:
+      'VPN providers have complete visibility into your browsing traffic. If a VPN marketing site deploys extensive trackers, it raises questions about the provider\'s commitment to privacy as a core value. The gap between marketing claims and observable website behavior is a meaningful trust signal.',
+    keyFindings: [
+      'VPN provider websites average 8-15 third-party trackers',
+      'Affiliate-driven VPN brands often deploy the most aggressive marketing trackers',
+      'Privacy-focused VPNs with no-log audits tend to have cleaner websites',
+      'Several major VPNs use fingerprinting on their own marketing pages',
+    ],
+    whatToLookFor: [
+      'Compare website tracking behavior against the provider\'s privacy claims',
+      'Look for independently audited no-log policies',
+      'Check if the VPN provider uses its own analytics or relies on Google Analytics',
+      'Prefer providers whose website privacy matches their product promises',
+    ],
+    methodology:
+      'We scan VPN provider marketing sites and account pages. We compare each provider\'s tracking footprint against their stated privacy commitments, providing a trust signal beyond marketing claims.',
+  },
+
+  dating: {
+    intro:
+      'Dating platforms collect deeply personal information about relationships, preferences, and identity. Our analysis shows that dating apps and websites deploy some of the highest tracker counts of any category, monetizing sensitive personal data through advertising networks.',
+    whyItMatters:
+      'Dating platforms know your relationship status, sexual orientation, religious preferences, and location patterns. This is among the most intimate data collected online. Tracker exposure can share these signals with advertising networks, creating privacy risks that go far beyond typical web browsing.',
+    keyFindings: [
+      'Dating platforms average 18-30 third-party trackers per page',
+      'Free dating sites deploy 3-5x more trackers than paid alternatives',
+      'Location tracking scripts are nearly universal on dating platforms',
+      'Several major dating apps share data with dozens of advertising partners',
+    ],
+    whatToLookFor: [
+      'Review data sharing policies with advertising and analytics partners',
+      'Check if the platform sells profile data to data brokers',
+      'Prefer paid services that do not rely on advertising for revenue',
+      'Verify location data handling and whether it is shared with third parties',
+    ],
+    methodology:
+      'We scan dating platform marketing sites and public-facing pages. Our analysis identifies advertising, analytics, and location tracking scripts deployed on accessible pages.',
+  },
+
+  banking: {
+    intro:
+      'Online banking platforms balance strict regulatory security requirements with digital marketing needs. Our benchmarks reveal that while authenticated banking portals maintain strong security, bank marketing sites and product pages often deploy extensive third-party tracking.',
+    whyItMatters:
+      'Banking data is among the most sensitive personal information. While core banking operations are regulated, marketing pages and financial product comparisons often share browsing data with advertising networks. Understanding which banks minimize tracking helps protect your financial privacy beyond what regulations require.',
+    keyFindings: [
+      'Bank marketing sites average 10-15 third-party trackers',
+      'Digital-only banks often deploy more marketing trackers than traditional institutions',
+      'Authenticated banking portals show significantly less tracking than marketing pages',
+      'Credit card comparison and application pages frequently include advertising trackers',
+    ],
+    whatToLookFor: [
+      'Verify the bank uses encrypted connections and strong authentication',
+      'Check marketing pages separately from authenticated banking areas',
+      'Review data sharing policies with affiliates and marketing partners',
+      'Prefer banks with clear, minimal data collection on informational pages',
+    ],
+    methodology:
+      'We scan bank marketing sites, product pages, and login flows. Our analysis distinguishes between public-facing marketing tracking and the typically stricter authenticated banking environment.',
+  },
 };
 
 /**

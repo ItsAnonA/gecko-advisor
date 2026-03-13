@@ -23,6 +23,7 @@ import {
   trendIcon,
   categoryColor,
   buildTechnologyJsonLd,
+  buildFaqPageJsonLd,
 } from '@/lib/technologies';
 
 interface Props {
@@ -35,8 +36,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!data) return { title: 'Technology Not Found' };
 
   const { technology } = data;
-  const title = `${technology.name} Tracker: Privacy Analysis & Sites Using It`;
-  const description = `${technology.name} is detected on ${data.stats.totalSites.toLocaleString()} websites. See which sites use ${technology.name}, its privacy risk level (${technology.riskLevel}), and adoption trends.`;
+  const title = `Websites Using ${technology.name} (${data.stats.totalSites.toLocaleString()} Sites) — Privacy & Tracking Analysis`;
+  const description = `${data.stats.totalSites.toLocaleString()} websites use ${technology.name}. See which sites deploy this ${technology.category.toLowerCase()} tracker, its privacy risk level (${technology.riskLevel}), prevalence (${technology.prevalence}%), and adoption trends.`;
 
   return {
     title,
@@ -66,6 +67,25 @@ export default async function TechnologyDetailPage({ params }: Props) {
   const { technology, domains, stats } = data;
   const trend = trendIcon(technology.adoptionTrend);
 
+  const faqItems = [
+    {
+      question: `Does ${technology.name} track users?`,
+      answer: `${technology.name} is a ${technology.category.toLowerCase()} technology that ${technology.riskLevel === 'High' ? 'collects data primarily for advertising and user profiling purposes' : technology.riskLevel === 'Medium' ? 'collects behavioral data such as page views and interactions' : 'serves primarily functional purposes with minimal data collection'}. It is deployed on ${stats.totalSites.toLocaleString()} websites in our dataset.`,
+    },
+    {
+      question: `How many websites use ${technology.name}?`,
+      answer: `We detect ${technology.name} on ${stats.totalSites.toLocaleString()} websites, representing a ${technology.prevalence}% prevalence across our monitored dataset. The adoption trend is currently ${technology.adoptionTrend === 'UP' ? 'growing' : technology.adoptionTrend === 'DOWN' ? 'declining' : 'stable'}.`,
+    },
+    {
+      question: `Is ${technology.name} safe?`,
+      answer: `${technology.name} is classified as ${technology.riskLevel.toLowerCase()} risk. ${technology.riskLevel === 'High' ? 'High-risk technologies exist primarily for user profiling and cross-site tracking.' : technology.riskLevel === 'Medium' ? 'Medium-risk technologies collect behavioral data but typically within a defined scope.' : 'Low-risk technologies serve functional purposes with minimal privacy impact.'} Websites using it have an average privacy score of ${stats.avgScore}/100.`,
+    },
+    {
+      question: `How do I block ${technology.name}?`,
+      answer: `Browser extensions like uBlock Origin and Privacy Badger can block ${technology.name}. Most content blocklist-based tools include ${technology.domain} in their default filter lists. For enterprise environments, DNS-level blocking or firewall rules can prevent connections to ${technology.domain} across all devices on the network.`,
+    },
+  ];
+
   return (
     <>
       <script
@@ -74,6 +94,12 @@ export default async function TechnologyDetailPage({ params }: Props) {
           __html: JSON.stringify(
             buildTechnologyJsonLd(data, `${SEO_CONSTANTS.BASE_URL}/technologies/${slug}`)
           ),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildFaqPageJsonLd(faqItems)),
         }}
       />
 
@@ -100,12 +126,13 @@ export default async function TechnologyDetailPage({ params }: Props) {
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2">
-                {technology.name}
+                Websites Using {technology.name}
               </h1>
               <p className="text-sm text-slate-400 font-mono mb-4">{technology.domain}</p>
               <p className="text-lg text-slate-300 max-w-2xl mb-10">
-                {technology.description} Detected on {stats.totalSites.toLocaleString()} websites
-                in our monitored dataset.
+                {technology.name} is a {technology.category.toLowerCase()} {technology.riskLevel === 'High' ? 'tracker' : 'technology'} deployed
+                on {stats.totalSites.toLocaleString()} websites ({technology.prevalence}% prevalence).
+                See which sites use it, adoption trends, and privacy impact.
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -136,10 +163,10 @@ export default async function TechnologyDetailPage({ params }: Props) {
         {/* Sites Using This Technology */}
         <section className="max-w-5xl mx-auto px-4 py-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Sites Using {technology.name}
+            Top Sites Using {technology.name}
           </h2>
           <p className="text-gray-500 mb-6 text-sm">
-            {stats.totalSites.toLocaleString()} websites deploy {technology.name}. Showing top {domains.length} by relevance. Click any domain for a full privacy report.
+            {stats.totalSites.toLocaleString()} websites use {technology.name}. Sites using this {technology.category.toLowerCase()} technology have an average privacy score of {stats.avgScore}/100 and {stats.avgTrackers} trackers. Click any domain for a full privacy report.
           </p>
 
           {domains.length > 0 ? (

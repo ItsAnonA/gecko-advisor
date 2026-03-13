@@ -27,8 +27,44 @@ export const metadata: Metadata = {
   },
 };
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Is Gecko Advisor a Mozilla Observatory replacement?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'For security header analysis specifically, both tools evaluate similar headers, but Observatory provides more granular CSP recommendations. For overall privacy and security assessment — including trackers, cookies, fingerprinting, and TLS — Gecko Advisor provides substantially broader coverage. Many teams use both.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why would I pay for Gecko Advisor when Observatory is free?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Gecko Advisor\'s free scanner provides the same zero-cost entry point for individual scans. The paid API is for teams needing programmatic access to privacy data for procurement workflows, vendor monitoring at scale, or privacy risk dashboards. Observatory does not offer this level of integration, and its scope is limited to HTTP headers.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Which is more accurate for security headers?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Both tools evaluate core security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy). Observatory provides more detailed CSP analysis. Gecko Advisor shows how security header configuration interacts with overall privacy posture — for example, whether a site has CSP configured but still loads trackers allowed by that policy.',
+      },
+    },
+  ],
+};
+
 export default function GeckoAdvisorVsMozillaObservatoryPage() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
     <main className="max-w-3xl mx-auto px-4 py-12">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="mb-8">
@@ -261,5 +297,6 @@ export default function GeckoAdvisorVsMozillaObservatoryPage() {
         </footer>
       </article>
     </main>
+    </>
   );
 }

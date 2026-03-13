@@ -27,8 +27,67 @@ export const metadata: Metadata = {
   },
 };
 
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Third-Party Risk Management (TPRM) Guide for Domain Privacy',
+  description: 'How to build a domain privacy assessment program that scales from 10 vendors to 10,000.',
+  url: 'https://geckoadvisor.com/third-party-risk-management-guide',
+  author: { '@type': 'Organization', name: 'Gecko Advisor', url: 'https://geckoadvisor.com' },
+  publisher: { '@type': 'Organization', name: 'Gecko Advisor', url: 'https://geckoadvisor.com' },
+  datePublished: '2026-03-13',
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is TPRM?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Third-Party Risk Management (TPRM) is the practice of identifying, assessing, monitoring, and mitigating risks that arise from an organization\'s relationships with external vendors, suppliers, and service providers. It encompasses cybersecurity risk, operational risk, compliance risk, financial risk, and privacy risk.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How often should I reassess vendors?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Assessment frequency should match vendor risk tier. Critical risk vendors warrant weekly automated scanning and quarterly manual review. High risk vendors should be scanned monthly. Medium risk vendors need monthly scans and annual reviews. Low risk vendors can be assessed quarterly.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What privacy signals matter most?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The most significant privacy risk signals are: (1) fingerprinting detection, (2) third-party advertising trackers, (3) third-party cookie count, and (4) missing security headers. A vendor deploying fingerprinting alongside advertising trackers presents substantially more privacy risk than one with only first-party analytics.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How do I automate vendor screening?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The Gecko Advisor API provides programmatic access to domain privacy data. Integrate it into your procurement workflow to automatically scan vendor domains during onboarding, schedule recurring assessments, monitor for privacy regressions, and feed results into your GRC platform.',
+      },
+    },
+  ],
+};
+
 export default function ThirdPartyRiskManagementGuidePage() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
     <main className="max-w-3xl mx-auto px-4 py-12">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="mb-8">
@@ -409,5 +468,6 @@ export default function ThirdPartyRiskManagementGuidePage() {
         </footer>
       </article>
     </main>
+    </>
   );
 }

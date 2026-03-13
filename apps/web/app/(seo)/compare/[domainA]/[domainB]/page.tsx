@@ -23,6 +23,30 @@ interface Props {
 // Revalidate every hour
 export const revalidate = 3600;
 
+/**
+ * High-demand comparison pairs pre-generated for crawl discovery.
+ * These target real search queries like "google vs bing privacy".
+ */
+const TOP_COMPARISON_PAIRS = [
+  ['google.com', 'duckduckgo.com'],
+  ['google.com', 'bing.com'],
+  ['facebook.com', 'reddit.com'],
+  ['amazon.com', 'walmart.com'],
+  ['youtube.com', 'vimeo.com'],
+  ['twitter.com', 'reddit.com'],
+  ['netflix.com', 'disneyplus.com'],
+  ['zoom.us', 'meet.google.com'],
+  ['gmail.com', 'proton.me'],
+  ['github.com', 'gitlab.com'],
+];
+
+export async function generateStaticParams() {
+  return TOP_COMPARISON_PAIRS.map(([a, b]) => ({
+    domainA: a,
+    domainB: b,
+  }));
+}
+
 // Server-side fetch for comparison
 async function getComparison(domainA: string, domainB: string): Promise<DomainComparison | null> {
   try {
@@ -322,20 +346,142 @@ export default async function ComparePage({ params }: Props) {
           </div>
         </div>
 
+        {/* Editorial Analysis */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-6 md:p-8 mb-12">
+          <h2 className="text-xl font-bold text-zinc-900 mb-4">
+            {domainA} vs {domainB}: Privacy Analysis
+          </h2>
+          <div className="prose prose-zinc prose-sm max-w-none">
+            <p>
+              {winner === 'A'
+                ? `${domainA} scores higher with a privacy score of ${a.score}/100 compared to ${domainB}'s ${b.score}/100.`
+                : winner === 'B'
+                ? `${domainB} scores higher with a privacy score of ${b.score}/100 compared to ${domainA}'s ${a.score}/100.`
+                : `Both domains have comparable privacy scores: ${domainA} at ${a.score}/100 and ${domainB} at ${b.score}/100.`
+              }
+              {' '}The score difference of {Math.abs(a.score - b.score)} points reflects measurable differences in tracker deployment, cookie practices, and security configuration.
+            </p>
+
+            <h3>Tracker Comparison</h3>
+            <p>
+              {domainA} deploys {a.trackerCount} {a.trackerCount === 1 ? 'tracker' : 'trackers'} while {domainB} deploys {b.trackerCount}.
+              {commonTrackers.length > 0
+                ? ` They share ${commonTrackers.length} common ${commonTrackers.length === 1 ? 'tracker' : 'trackers'}, suggesting similar advertising or analytics infrastructure.`
+                : ' They share no common trackers, indicating different technology choices.'
+              }
+              {uniqueToA.length > 0 && ` ${domainA} uses ${uniqueToA.length} ${uniqueToA.length === 1 ? 'tracker' : 'trackers'} not found on ${domainB}.`}
+              {uniqueToB.length > 0 && ` ${domainB} uses ${uniqueToB.length} ${uniqueToB.length === 1 ? 'tracker' : 'trackers'} not found on ${domainA}.`}
+            </p>
+
+            <h3>Cookie and Third-Party Behavior</h3>
+            <p>
+              {domainA} sets {a.cookieCount} {a.cookieCount === 1 ? 'cookie' : 'cookies'} and connects to {a.thirdPartyCount} third {a.thirdPartyCount === 1 ? 'party' : 'parties'}, while {domainB} sets {b.cookieCount} {b.cookieCount === 1 ? 'cookie' : 'cookies'} and connects to {b.thirdPartyCount} third {b.thirdPartyCount === 1 ? 'party' : 'parties'}.
+              {(a.hasFingerprinting || b.hasFingerprinting) && (
+                a.hasFingerprinting && b.hasFingerprinting
+                  ? ' Both domains use browser fingerprinting techniques, which can track visitors without cookies.'
+                  : a.hasFingerprinting
+                  ? ` ${domainA} uses browser fingerprinting, while ${domainB} does not — a significant privacy difference.`
+                  : ` ${domainB} uses browser fingerprinting, while ${domainA} does not — a significant privacy difference.`
+              )}
+            </p>
+
+            <h3>Which Is More Private?</h3>
+            <p>
+              {winner === 'A'
+                ? `Based on our analysis, ${domainA} demonstrates better privacy practices than ${domainB}. It uses fewer tracking technologies and provides a more privacy-respecting experience for visitors.`
+                : winner === 'B'
+                ? `Based on our analysis, ${domainB} demonstrates better privacy practices than ${domainA}. It uses fewer tracking technologies and provides a more privacy-respecting experience for visitors.`
+                : `Both domains show comparable privacy practices. Neither has a clear advantage in our assessment, though individual metrics may differ.`
+              }
+              {' '}View the full reports for detailed evidence and recommendations.
+            </p>
+          </div>
+        </div>
+
+        {/* FAQ */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-6 md:p-8 mb-12">
+          <h2 className="text-lg font-semibold text-zinc-900 mb-4">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer py-2">
+                <span className="font-medium text-zinc-900">Is {winner === 'A' ? domainA : winner === 'B' ? domainB : domainA} more private than {winner === 'A' ? domainB : winner === 'B' ? domainA : domainB}?</span>
+                <svg className="w-4 h-4 text-zinc-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <p className="text-sm text-zinc-600 pb-2">
+                {winner === 'tie'
+                  ? `Both domains have comparable privacy scores. ${domainA} scores ${a.score}/100 and ${domainB} scores ${b.score}/100.`
+                  : `${winner === 'A' ? domainA : domainB} has a better privacy score (${winner === 'A' ? a.score : b.score}/100 vs ${winner === 'A' ? b.score : a.score}/100), deploying fewer trackers and demonstrating better privacy practices.`
+                }
+              </p>
+            </details>
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer py-2">
+                <span className="font-medium text-zinc-900">How many trackers does {domainA} use compared to {domainB}?</span>
+                <svg className="w-4 h-4 text-zinc-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <p className="text-sm text-zinc-600 pb-2">
+                {domainA} uses {a.trackerCount} {a.trackerCount === 1 ? 'tracker' : 'trackers'} and {domainB} uses {b.trackerCount}. They share {commonTrackers.length} common {commonTrackers.length === 1 ? 'tracker' : 'trackers'}.
+              </p>
+            </details>
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer py-2">
+                <span className="font-medium text-zinc-900">Does {domainA} or {domainB} use fingerprinting?</span>
+                <svg className="w-4 h-4 text-zinc-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <p className="text-sm text-zinc-600 pb-2">
+                {a.hasFingerprinting && b.hasFingerprinting
+                  ? `Both ${domainA} and ${domainB} use browser fingerprinting techniques to track visitors.`
+                  : a.hasFingerprinting
+                  ? `${domainA} uses fingerprinting while ${domainB} does not.`
+                  : b.hasFingerprinting
+                  ? `${domainB} uses fingerprinting while ${domainA} does not.`
+                  : `Neither ${domainA} nor ${domainB} was detected using browser fingerprinting.`
+                }
+              </p>
+            </details>
+          </div>
+        </div>
+
+        {/* Cross-links */}
+        <div className="grid md:grid-cols-2 gap-4 mb-12">
+          <Link
+            href={`/privacy-report/${a.domain}`}
+            className="block p-5 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all"
+          >
+            <h3 className="font-semibold text-zinc-900 mb-1">Full {domainA} Report</h3>
+            <p className="text-sm text-zinc-500">Detailed privacy analysis with evidence and recommendations.</p>
+          </Link>
+          <Link
+            href={`/privacy-report/${b.domain}`}
+            className="block p-5 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all"
+          >
+            <h3 className="font-semibold text-zinc-900 mb-1">Full {domainB} Report</h3>
+            <p className="text-sm text-zinc-500">Detailed privacy analysis with evidence and recommendations.</p>
+          </Link>
+        </div>
+
         {/* CTA */}
         <div className="text-center bg-white rounded-xl border border-zinc-200 p-8">
           <h3 className="text-xl font-semibold text-zinc-900 mb-2">
-            Want to scan a different site?
+            Compare any two domains
           </h3>
           <p className="text-zinc-600 mb-6">
-            Get a free privacy report for any website in seconds.
+            Get a free privacy comparison for any websites in seconds.
           </p>
-          <Link
-            href="/"
-            className="inline-flex items-center px-6 py-3 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors"
-          >
-            Scan Another Site
-          </Link>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center px-6 py-3 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+            >
+              Scan a Website
+            </Link>
+            <Link
+              href="/api-access"
+              className="inline-flex items-center px-6 py-3 border border-zinc-200 text-zinc-700 font-medium rounded-lg hover:bg-zinc-50 transition-colors"
+            >
+              API Access
+            </Link>
+          </div>
         </div>
       </div>
     </main>
