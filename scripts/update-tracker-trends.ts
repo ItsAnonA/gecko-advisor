@@ -16,11 +16,12 @@
  */
 
 import { PrismaClient, PeriodType } from '@prisma/client';
-import { updateTrackerTrends, getTrackerMovers } from '../apps/backend/src/services/trackerEvolutionService';
+import { updateTrackerTrends, backfillTrackerTrends, getTrackerMovers } from '../apps/backend/src/services/trackerEvolutionService';
 
 const prisma = new PrismaClient();
 const outputJson = process.argv.includes('--json');
 const isMonthly = process.argv.includes('--monthly');
+const isBackfill = process.argv.includes('--backfill');
 const periodType: PeriodType = isMonthly ? 'MONTHLY' : 'WEEKLY';
 
 interface TrackerTrendReport {
@@ -47,10 +48,12 @@ async function main(): Promise<void> {
 
   try {
     if (!outputJson) {
-      console.log('Processing tracker trends...');
+      console.log(isBackfill ? 'Backfilling ALL tracker prevalence data...' : 'Processing tracker trends...');
     }
 
-    const result = await updateTrackerTrends(prisma, periodType);
+    const result = isBackfill
+      ? await backfillTrackerTrends(prisma, periodType)
+      : await updateTrackerTrends(prisma, periodType);
     const movers = await getTrackerMovers(prisma, periodType);
 
     const report: TrackerTrendReport = {
