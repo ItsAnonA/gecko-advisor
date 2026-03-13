@@ -118,7 +118,7 @@ similarV2Router.get('/:domain', async (req, res) => {
             AND d."isIndexed" = true
             AND ABS(s.score - ${source.score}) <= 30
           ORDER BY
-            CASE WHEN d."categoryId" = ${source.category_id}::uuid THEN 0 ELSE 1 END,
+            CASE WHEN d."categoryId" = ${source.category_id} THEN 0 ELSE 1 END,
             ABS(s.score - ${source.score}) ASC
           LIMIT 100
         `
@@ -166,7 +166,7 @@ similarV2Router.get('/:domain', async (req, res) => {
           FROM "Evidence" e
           JOIN "Scan" s ON e."scanId" = s.id
           JOIN "Domain" d ON d."latestScanId" = s.id
-          WHERE d.id = ANY(${candidateIds}::uuid[])
+          WHERE d.id = ANY(${candidateIds})
             AND e.kind IN ('tracker', 'third_party_tracker')
             AND s.status = 'done'
         `
