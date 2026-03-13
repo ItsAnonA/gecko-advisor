@@ -7,6 +7,75 @@
 
 import type { PrismaClient, PeriodType } from '@prisma/client';
 
+/** Well-known tracker metadata for name and category enrichment */
+const TRACKER_META: Record<string, { name: string; category: string }> = {
+  'google-analytics.com': { name: 'Google Analytics', category: 'Analytics' },
+  'doubleclick.net': { name: 'DoubleClick (Google)', category: 'Advertising' },
+  'facebook.net': { name: 'Meta Pixel', category: 'Advertising' },
+  'facebook.com': { name: 'Facebook', category: 'Social Media' },
+  'quantserve.com': { name: 'Quantcast', category: 'Analytics' },
+  'googlesyndication.com': { name: 'Google AdSense', category: 'Advertising' },
+  'googletagmanager.com': { name: 'Google Tag Manager', category: 'Analytics' },
+  'googleadservices.com': { name: 'Google Ads', category: 'Advertising' },
+  'google.com': { name: 'Google', category: 'Essential' },
+  'googleapis.com': { name: 'Google APIs', category: 'CDN' },
+  'gstatic.com': { name: 'Google Static', category: 'CDN' },
+  'cloudflare.com': { name: 'Cloudflare', category: 'CDN' },
+  'cloudflareinsights.com': { name: 'Cloudflare Analytics', category: 'Analytics' },
+  'amazon-adsystem.com': { name: 'Amazon Ads', category: 'Advertising' },
+  'amazonaws.com': { name: 'Amazon AWS', category: 'CDN' },
+  'akamaihd.net': { name: 'Akamai CDN', category: 'CDN' },
+  'akamai.net': { name: 'Akamai', category: 'CDN' },
+  'twitter.com': { name: 'Twitter/X', category: 'Social Media' },
+  'tiktok.com': { name: 'TikTok', category: 'Social Media' },
+  'linkedin.com': { name: 'LinkedIn', category: 'Social Media' },
+  'pinterest.com': { name: 'Pinterest', category: 'Social Media' },
+  'hotjar.com': { name: 'Hotjar', category: 'Analytics' },
+  'criteo.com': { name: 'Criteo', category: 'Advertising' },
+  'criteo.net': { name: 'Criteo', category: 'Advertising' },
+  'outbrain.com': { name: 'Outbrain', category: 'Advertising' },
+  'taboola.com': { name: 'Taboola', category: 'Advertising' },
+  'bing.com': { name: 'Microsoft Bing', category: 'Analytics' },
+  'clarity.ms': { name: 'Microsoft Clarity', category: 'Analytics' },
+  'newrelic.com': { name: 'New Relic', category: 'Analytics' },
+  'segment.io': { name: 'Segment', category: 'Analytics' },
+  'segment.com': { name: 'Segment', category: 'Analytics' },
+  'hubspot.com': { name: 'HubSpot', category: 'Analytics' },
+  'hubspot.net': { name: 'HubSpot', category: 'Analytics' },
+  'intercom.io': { name: 'Intercom', category: 'Analytics' },
+  'snapchat.com': { name: 'Snapchat', category: 'Social Media' },
+  'snap.com': { name: 'Snap', category: 'Advertising' },
+  'rubiconproject.com': { name: 'Rubicon Project', category: 'Advertising' },
+  'adsrvr.org': { name: 'The Trade Desk', category: 'Advertising' },
+  'adnxs.com': { name: 'Xandr (AppNexus)', category: 'Advertising' },
+  'pubmatic.com': { name: 'PubMatic', category: 'Advertising' },
+  'casalemedia.com': { name: 'Index Exchange', category: 'Advertising' },
+  'openx.net': { name: 'OpenX', category: 'Advertising' },
+  'scorecardresearch.com': { name: 'Comscore', category: 'Analytics' },
+  'chartbeat.com': { name: 'Chartbeat', category: 'Analytics' },
+  'chartbeat.net': { name: 'Chartbeat', category: 'Analytics' },
+  'optimizely.com': { name: 'Optimizely', category: 'Analytics' },
+  'mixpanel.com': { name: 'Mixpanel', category: 'Analytics' },
+  'amplitude.com': { name: 'Amplitude', category: 'Analytics' },
+  'sentry.io': { name: 'Sentry', category: 'Analytics' },
+  'datadoghq.com': { name: 'Datadog', category: 'Analytics' },
+  'cloudfront.net': { name: 'Amazon CloudFront', category: 'CDN' },
+  'jsdelivr.net': { name: 'jsDelivr', category: 'CDN' },
+  'cdnjs.cloudflare.com': { name: 'cdnjs', category: 'CDN' },
+  'unpkg.com': { name: 'unpkg', category: 'CDN' },
+  'bootstrapcdn.com': { name: 'Bootstrap CDN', category: 'CDN' },
+  'jquery.com': { name: 'jQuery CDN', category: 'CDN' },
+  'fastly.net': { name: 'Fastly', category: 'CDN' },
+  'wp.com': { name: 'WordPress.com', category: 'Hosting' },
+  'wordpress.com': { name: 'WordPress.com', category: 'Hosting' },
+  'shopify.com': { name: 'Shopify', category: 'Hosting' },
+  'squarespace.com': { name: 'Squarespace', category: 'Hosting' },
+};
+
+function getTrackerMeta(domain: string): { name: string; category: string } | undefined {
+  return TRACKER_META[domain];
+}
+
 interface TrackerMover {
   tracker: string;
   additions: number;
@@ -211,6 +280,7 @@ export async function updateTrackerTrends(
     };
     const categories = topCategoriesMap.get(tracker.tracker) || [];
     const domainCountPrev = prevCountMap.get(tracker.tracker) ?? 0;
+    const meta = getTrackerMeta(tracker.tracker);
 
     await prisma.trackerTrend.upsert({
       where: {
@@ -222,6 +292,8 @@ export async function updateTrackerTrends(
       },
       create: {
         trackerDomain: tracker.tracker,
+        trackerName: meta?.name,
+        trackerCategory: meta?.category,
         periodStart,
         periodEnd: now,
         periodType,
@@ -243,6 +315,8 @@ export async function updateTrackerTrends(
         periodEnd: now,
         domainCount: counts.domainCount,
         domainCountPrev,
+        ...(meta?.name && { trackerName: meta.name }),
+        ...(meta?.category && { trackerCategory: meta.category }),
         tierACount: counts.tierACount,
         tierBCount: counts.tierBCount,
         tierCCount: counts.tierCCount,
@@ -347,6 +421,7 @@ export async function backfillTrackerTrends(
     };
     const categories = topCategoriesMap.get(row.tracker_domain) || [];
     const domainCountPrev = prevCountMap.get(row.tracker_domain) ?? 0;
+    const meta = getTrackerMeta(row.tracker_domain);
 
     await prisma.trackerTrend.upsert({
       where: {
@@ -358,6 +433,8 @@ export async function backfillTrackerTrends(
       },
       create: {
         trackerDomain: row.tracker_domain,
+        trackerName: meta?.name,
+        trackerCategory: meta?.category,
         periodStart,
         periodEnd: now,
         periodType,
@@ -377,6 +454,8 @@ export async function backfillTrackerTrends(
         periodEnd: now,
         domainCount: counts.domainCount,
         domainCountPrev,
+        ...(meta?.name && { trackerName: meta.name }),
+        ...(meta?.category && { trackerCategory: meta.category }),
         tierACount: counts.tierACount,
         tierBCount: counts.tierBCount,
         tierCCount: counts.tierCCount,

@@ -248,8 +248,8 @@ technologiesV2Router.get('/v2/technologies/:slug', async (req, res) => {
       .sort((a, b) => a.score - b.score) // lowest score first (most interesting)
       .slice(0, 100);
 
-    // Calculate stats
-    const totalSites = domainMap.size;
+    // Use TrackerTrend.domainCount for accurate total (Evidence query is capped at 500)
+    const totalSites = trend.domainCount > 0 ? trend.domainCount : domainMap.size;
     const allScores = Array.from(domainMap.values()).map((d) => d.score);
     const allTrackers = Array.from(domainMap.values()).map((d) => d.trackers);
 
