@@ -29,6 +29,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Vendor Due Diligence', href: '/vendor-domain-due-diligence' },
       { label: 'Domain Privacy Risk', href: '/domain-privacy-risk' },
       { label: 'Security Evaluation', href: '/how-to-evaluate-domain-security' },
+      { label: 'TPRM Guide', href: '/third-party-risk-management-guide' },
     ],
   },
   {

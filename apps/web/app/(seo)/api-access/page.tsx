@@ -422,6 +422,25 @@ export default async function ApiAccessPage() {
           ))}
         </div>
       </section>
+
+      {/* Compare section */}
+      <section className="mb-12">
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">How We Compare</h2>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <Link href="/gecko-advisor-vs-securityscorecard" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all">
+            <h3 className="font-semibold text-zinc-900 mb-1 text-sm">vs SecurityScorecard</h3>
+            <p className="text-xs text-zinc-500">Privacy scanning vs enterprise security ratings</p>
+          </Link>
+          <Link href="/gecko-advisor-vs-builtwith" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all">
+            <h3 className="font-semibold text-zinc-900 mb-1 text-sm">vs BuiltWith</h3>
+            <p className="text-xs text-zinc-500">Privacy risk vs technology identification</p>
+          </Link>
+          <Link href="/gecko-advisor-vs-mozilla-observatory" className="block p-5 bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all">
+            <h3 className="font-semibold text-zinc-900 mb-1 text-sm">vs Mozilla Observatory</h3>
+            <p className="text-xs text-zinc-500">Full privacy analysis vs header-only scanning</p>
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

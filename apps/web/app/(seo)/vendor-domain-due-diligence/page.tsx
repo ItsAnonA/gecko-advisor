@@ -121,8 +121,8 @@ export default function VendorDueDiligencePage() {
           <div className="flex flex-wrap gap-4 text-sm">
             <Link href="/check-domain-risk" className="text-emerald-600 hover:text-emerald-700 underline">Check a domain</Link>
             <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
+            <Link href="/third-party-risk-management-guide" className="text-emerald-600 hover:text-emerald-700 underline">TPRM guide</Link>
             <Link href="/methodology" className="text-emerald-600 hover:text-emerald-700 underline">Methodology</Link>
-            <Link href="/transparency-reports" className="text-emerald-600 hover:text-emerald-700 underline">Transparency</Link>
           </div>
         </footer>
       </article>

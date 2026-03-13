@@ -48,6 +48,10 @@ export default function robots(): MetadataRoute.Robots {
           '/sites-like/',
           '/research',
           '/research/',
+          '/gecko-advisor-vs-securityscorecard',
+          '/gecko-advisor-vs-builtwith',
+          '/gecko-advisor-vs-mozilla-observatory',
+          '/third-party-risk-management-guide',
         ],
         disallow: [
           // Internal / API endpoints

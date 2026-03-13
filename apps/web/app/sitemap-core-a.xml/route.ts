@@ -74,6 +74,10 @@ export async function GET() {
     { loc: '/vendor-domain-due-diligence', priority: '0.8', changefreq: 'monthly' },
     { loc: '/domain-privacy-risk', priority: '0.8', changefreq: 'monthly' },
     { loc: '/how-to-evaluate-domain-security', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/gecko-advisor-vs-securityscorecard', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/gecko-advisor-vs-builtwith', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/gecko-advisor-vs-mozilla-observatory', priority: '0.8', changefreq: 'monthly' },
+    { loc: '/third-party-risk-management-guide', priority: '0.8', changefreq: 'monthly' },
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
