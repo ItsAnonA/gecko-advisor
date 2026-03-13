@@ -299,7 +299,7 @@ export default async function MostTrackedWebsitesPage() {
                 Scan a Website
               </Link>
               <Link
-                href="/domain-intelligence-api"
+                href="/api-access"
                 className="inline-block px-6 py-3 bg-transparent text-white font-semibold rounded-lg border border-gray-700 hover:border-gray-500 transition-colors"
               >
                 API Access

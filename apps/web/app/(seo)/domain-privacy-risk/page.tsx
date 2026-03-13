@@ -146,7 +146,7 @@ export default function DomainPrivacyRiskPage() {
             Use the <Link href="/check-domain-risk" className="text-emerald-600 hover:text-emerald-700 underline">Domain Risk Checker</Link> to scan any domain and receive a full privacy risk assessment. The scan runs in under 60 seconds and produces an evidence-based report with specific findings, severity ratings, and actionable recommendations.
           </p>
           <p className="text-zinc-700">
-            For programmatic access, the <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">Domain Intelligence API</Link> provides the same assessment data in a structured format suitable for integration into security dashboards, procurement workflows, and compliance tooling.
+            For programmatic access, the <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">Domain Intelligence API</Link> provides the same assessment data in a structured format suitable for integration into security dashboards, procurement workflows, and compliance tooling.
           </p>
         </section>
 
@@ -164,7 +164,7 @@ export default function DomainPrivacyRiskPage() {
         <footer className="pt-8 border-t border-zinc-200">
           <div className="flex flex-wrap gap-4 text-sm">
             <Link href="/check-domain-risk" className="text-emerald-600 hover:text-emerald-700 underline">Check a domain</Link>
-            <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
+            <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
             <Link href="/methodology" className="text-emerald-600 hover:text-emerald-700 underline">Methodology</Link>
             <Link href="/vendor-domain-due-diligence" className="text-emerald-600 hover:text-emerald-700 underline">Vendor due diligence</Link>
           </div>

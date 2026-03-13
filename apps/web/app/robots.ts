@@ -33,6 +33,7 @@ export default function robots(): MetadataRoute.Robots {
           '/faq',
           '/roadmap',
           '/domain-intelligence-api',
+          '/api-access',
           '/check-domain-risk',
           '/vendor-domain-due-diligence',
           '/domain-privacy-risk',

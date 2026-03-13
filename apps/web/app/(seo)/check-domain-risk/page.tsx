@@ -91,7 +91,7 @@ export default function CheckDomainRiskPage() {
           Integrate domain risk checks into your procurement, compliance, or security workflows.
         </p>
         <Link
-          href="/domain-intelligence-api"
+          href="/api-access"
           className="inline-flex items-center gap-2 text-sm font-semibold text-advisor-600 hover:text-advisor-700 transition-colors"
         >
           Domain Intelligence API
@@ -104,7 +104,7 @@ export default function CheckDomainRiskPage() {
       {/* Footer links */}
       <footer className="pt-8 mt-8 border-t border-zinc-200">
         <div className="flex flex-wrap gap-4 text-sm">
-          <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
+          <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
           <Link href="/vendor-domain-due-diligence" className="text-emerald-600 hover:text-emerald-700 underline">Vendor due diligence</Link>
           <Link href="/methodology" className="text-emerald-600 hover:text-emerald-700 underline">Methodology</Link>
         </div>

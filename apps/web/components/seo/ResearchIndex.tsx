@@ -133,7 +133,7 @@ export function ResearchIndex({ reports }: ResearchIndexProps) {
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link
-            href="/domain-intelligence-api"
+            href="/api-access"
             className="inline-block px-6 py-2.5 bg-advisor-600 text-white rounded-lg hover:bg-advisor-700 transition-colors font-medium"
           >
             Explore the API

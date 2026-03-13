@@ -323,7 +323,7 @@ export default async function PrivacyIndexPage() {
                 Scan Your Website
               </Link>
               <Link
-                href="/domain-intelligence-api"
+                href="/api-access"
                 className="inline-block px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg border border-gray-200 hover:border-emerald-300 transition-colors"
               >
                 API Access

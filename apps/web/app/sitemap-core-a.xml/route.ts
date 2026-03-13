@@ -70,7 +70,6 @@ export async function GET() {
     { loc: '/faq', priority: '0.6', changefreq: 'weekly' },
     { loc: '/about', priority: '0.5', changefreq: 'monthly' },
     // Buyer-intent pages
-    { loc: '/domain-intelligence-api', priority: '0.9', changefreq: 'weekly' },
     { loc: '/check-domain-risk', priority: '0.9', changefreq: 'weekly' },
     { loc: '/vendor-domain-due-diligence', priority: '0.8', changefreq: 'monthly' },
     { loc: '/domain-privacy-risk', priority: '0.8', changefreq: 'monthly' },

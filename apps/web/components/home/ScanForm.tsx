@@ -277,7 +277,7 @@ export default function ScanForm() {
             </span>
           </button>
           <Link
-            href="/domain-intelligence-api"
+            href="/api-access"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-advisor-500 text-advisor-600 font-semibold text-base hover:bg-advisor-50 transition-all duration-300"
           >
             API Access
@@ -309,7 +309,7 @@ export default function ScanForm() {
           </Link>
 
           {/* Column 2: API Integration */}
-          <Link href="/domain-intelligence-api" className="group text-center p-6 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-advisor-300 transition-all duration-300">
+          <Link href="/api-access" className="group text-center p-6 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-advisor-300 transition-all duration-300">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-light-sage border border-advisor-200 flex items-center justify-center">
               <svg className="w-6 h-6 text-advisor-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />

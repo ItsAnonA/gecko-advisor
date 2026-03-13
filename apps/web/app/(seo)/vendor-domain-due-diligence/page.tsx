@@ -98,7 +98,7 @@ export default function VendorDueDiligencePage() {
           </p>
           <ol className="space-y-3 text-zinc-700">
             <li><strong>Scan vendor domains</strong> before signing contracts using the <Link href="/check-domain-risk" className="text-emerald-600 hover:text-emerald-700 underline">Domain Risk Checker</Link></li>
-            <li><strong>Integrate programmatically</strong> with the <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">Domain Intelligence API</Link> in your procurement workflow</li>
+            <li><strong>Integrate programmatically</strong> with the <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">Domain Intelligence API</Link> in your procurement workflow</li>
             <li><strong>Monitor continuously</strong> with daily rescanning to detect changes in vendor privacy practices</li>
             <li><strong>Benchmark against peers</strong> to understand whether vendor practices are above or below industry norms</li>
           </ol>
@@ -120,7 +120,7 @@ export default function VendorDueDiligencePage() {
         <footer className="pt-8 border-t border-zinc-200">
           <div className="flex flex-wrap gap-4 text-sm">
             <Link href="/check-domain-risk" className="text-emerald-600 hover:text-emerald-700 underline">Check a domain</Link>
-            <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
+            <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
             <Link href="/methodology" className="text-emerald-600 hover:text-emerald-700 underline">Methodology</Link>
             <Link href="/transparency-reports" className="text-emerald-600 hover:text-emerald-700 underline">Transparency</Link>
           </div>

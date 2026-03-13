@@ -6,19 +6,26 @@ SPDX-License-Identifier: MIT
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { SampleRequestForm } from '@/components/conversion/SampleRequestForm';
 
 export const revalidate = 300; // 5-min ISR for live stats
 
 export const metadata: Metadata = {
-  title: 'Domain Risk Screening API',
+  title: 'Domain Intelligence API — Pricing & Documentation',
   description:
-    'Screen domains before onboarding vendors, partners, or clients. Privacy scores, tracker counts, stability trends — one API call per domain.',
+    'Real-time domain risk data for vendor screening and compliance workflows. Privacy scores, tracker detection, stability metrics — one API call per domain. Plans from $49/mo.',
   alternates: { canonical: 'https://geckoadvisor.com/api-access' },
   openGraph: {
-    title: 'Domain Risk Screening API',
+    title: 'Domain Intelligence API — Pricing & Documentation',
     description:
-      'Screen domains before onboarding vendors, partners, or clients. Privacy scores, tracker counts, stability trends — one API call per domain.',
+      'Real-time domain risk data for vendor screening and compliance workflows. Privacy scores, tracker detection, stability metrics — one API call per domain.',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Domain Intelligence API — Pricing & Documentation',
+    description:
+      'Real-time domain risk data for vendor screening and compliance workflows.',
   },
 };
 
@@ -49,6 +56,12 @@ function timeAgo(iso: string | null): string {
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
+}
+
+function formatCount(count: number): string {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
 }
 
 const SAMPLE_RESPONSE = `{
@@ -97,8 +110,8 @@ const TIERS = [
   },
   {
     name: 'Enterprise',
-    price: '$999',
-    period: ' one-time',
+    price: '$499',
+    period: '/mo',
     requests: 'Unlimited requests',
     desc: 'Custom SLA, dedicated support, priority scanning',
     cta: 'Contact Us',
@@ -118,11 +131,19 @@ const FAQ = [
   },
   {
     q: 'Can I try before I buy?',
-    a: 'Yes. Email api@geckoadvisor.com with any domain and we\'ll send you the full JSON response within 24 hours. No commitment, no credit card.',
+    a: 'Yes. Use the sample request form on this page to enter any domain and we\'ll send you the full JSON response within 24 hours. No commitment, no credit card.',
   },
   {
     q: 'How do I authenticate?',
     a: 'Include your API key as a Bearer token: Authorization: Bearer ga_your_key_here. Keys are provisioned automatically after payment. View your key and usage at /api-access/dashboard.',
+  },
+  {
+    q: 'What domains are covered?',
+    a: 'Our index covers 142K+ domains and grows daily. If a domain isn\'t in our index, you can request an on-demand scan. Enterprise plans include priority scanning for any domain.',
+  },
+  {
+    q: 'How is the privacy score calculated?',
+    a: 'Scores are deterministic and based on a published methodology: trackers, cookies, fingerprinting, security headers, and TLS configuration. Each category has penalty caps to prevent any single factor from dominating. Full details at /methodology.',
   },
 ];
 
@@ -139,7 +160,7 @@ export default async function ApiAccessPage() {
       />
 
       {/* Hero */}
-      <section className="mb-12">
+      <section className="mb-4">
         <h1 className="text-3xl md:text-4xl font-display font-bold text-zinc-900 mb-4">
           Domain Risk Screening API
         </h1>
@@ -148,6 +169,22 @@ export default async function ApiAccessPage() {
           Privacy scores, tracker counts, stability trends — one API call per domain.
         </p>
       </section>
+
+      {/* Live Stats Badges */}
+      {stats && (
+        <div className="flex flex-wrap gap-3 mb-12">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-advisor-50 border border-advisor-200 text-sm font-medium text-advisor-700">
+            <span className="w-2 h-2 rounded-full bg-advisor-500 animate-pulse" />
+            {formatCount(stats.domainCount || 0)} domains monitored
+          </span>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-zinc-700">
+            {formatCount(stats.totalScans || 0)} scans completed
+          </span>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-zinc-700">
+            Daily scanning
+          </span>
+        </div>
+      )}
 
       {/* Live Status Block */}
       {stats && (
@@ -174,33 +211,81 @@ export default async function ApiAccessPage() {
         </section>
       )}
 
-      {/* Free Sample Offer */}
-      <section className="bg-advisor-50 border border-advisor-200 rounded-2xl p-8 mb-12 text-center">
-        <h2 className="text-xl font-semibold text-zinc-900 mb-2">Try Before You Buy</h2>
-        <p className="text-zinc-600 mb-4">
-          Email us any domain and get the full API response — free, no commitment.
+      {/* The Problem */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-4">The Problem</h2>
+        <p className="text-zinc-700 mb-4">
+          Vendor risk teams manually check dozens of domains during procurement. Security teams lack continuous visibility into third-party privacy practices. Compliance officers can&apos;t prove due diligence without audit trails.
         </p>
-        <a
-          href="mailto:api@geckoadvisor.com?subject=Free%20API%20Sample%20Request&body=Domain%20I%27d%20like%20to%20check%3A%20"
-          className="inline-block bg-advisor-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-advisor-700 transition-colors"
-        >
-          Email api@geckoadvisor.com
-        </a>
+        <p className="text-zinc-700">
+          Manual domain checks don&apos;t scale, and point-in-time assessments miss behavioral changes between reviews.
+        </p>
       </section>
 
-      {/* Trust Block */}
-      <section className="flex flex-wrap gap-4 justify-center mb-12 text-sm text-zinc-500">
-        <Link href="/methodology" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
-          Scoring methodology
-        </Link>
-        <span aria-hidden="true">|</span>
-        <Link href="/transparency-reports" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
-          Transparency reports
-        </Link>
-        <span aria-hidden="true">|</span>
-        <Link href="/api-access/dashboard" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
-          API Dashboard
-        </Link>
+      {/* What the API Provides */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-4">What the API Provides</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="p-5 border border-zinc-200 rounded-lg bg-white">
+            <h3 className="font-semibold text-zinc-900 mb-2">Privacy Score</h3>
+            <p className="text-sm text-zinc-600">Deterministic 0-100 score with letter grade, penalty breakdown by category, and percentile ranking.</p>
+          </div>
+          <div className="p-5 border border-zinc-200 rounded-lg bg-white">
+            <h3 className="font-semibold text-zinc-900 mb-2">Tracker Detection</h3>
+            <p className="text-sm text-zinc-600">Known trackers identified from EasyPrivacy and WhoTracks.me databases. Ad networks, analytics, and fingerprinting scripts.</p>
+          </div>
+          <div className="p-5 border border-zinc-200 rounded-lg bg-white">
+            <h3 className="font-semibold text-zinc-900 mb-2">Stability Metrics</h3>
+            <p className="text-sm text-zinc-600">Volatility index, trend classification, confidence tier, and historical scan data for continuous monitoring.</p>
+          </div>
+          <div className="p-5 border border-zinc-200 rounded-lg bg-white">
+            <h3 className="font-semibold text-zinc-900 mb-2">Change Detection</h3>
+            <p className="text-sm text-zinc-600">Score changes, tracker additions/removals, fingerprinting status changes with severity classification.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* What You Can Do With It */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-4">What You Can Do With It</h2>
+        <div className="space-y-4">
+          <div className="flex gap-4 items-start">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-advisor-50 border border-advisor-200 flex items-center justify-center">
+              <span className="text-advisor-600 font-bold text-sm">1</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900">Automate vendor screening</h3>
+              <p className="text-sm text-zinc-600">Integrate into procurement workflows to check vendor domains before contract signing.</p>
+            </div>
+          </div>
+          <div className="flex gap-4 items-start">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-advisor-50 border border-advisor-200 flex items-center justify-center">
+              <span className="text-advisor-600 font-bold text-sm">2</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900">Build compliance dashboards</h3>
+              <p className="text-sm text-zinc-600">Pull privacy data for internal compliance reporting and audit documentation.</p>
+            </div>
+          </div>
+          <div className="flex gap-4 items-start">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-advisor-50 border border-advisor-200 flex items-center justify-center">
+              <span className="text-advisor-600 font-bold text-sm">3</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900">Monitor vendor privacy drift</h3>
+              <p className="text-sm text-zinc-600">Track changes over time with daily scanning and change detection alerts.</p>
+            </div>
+          </div>
+          <div className="flex gap-4 items-start">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-advisor-50 border border-advisor-200 flex items-center justify-center">
+              <span className="text-advisor-600 font-bold text-sm">4</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900">Enrich security tools</h3>
+              <p className="text-sm text-zinc-600">Feed domain intelligence into SIEMs, SOAR platforms, and GRC tools via REST API.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Sample API Response */}
@@ -208,11 +293,22 @@ export default async function ApiAccessPage() {
         <h2 className="text-xl font-semibold text-zinc-900 mb-4">Sample Response</h2>
         <div className="relative">
           <div className="absolute top-3 right-3 text-xs text-zinc-500 bg-zinc-800 px-2 py-1 rounded font-mono">
-            GET /api/v1/domain/example.com
+            GET /api/v2/domain/example.com
           </div>
           <pre className="bg-zinc-900 text-emerald-400 rounded-xl p-6 font-mono text-sm overflow-x-auto leading-relaxed">
             {SAMPLE_RESPONSE}
           </pre>
+        </div>
+      </section>
+
+      {/* Try Before You Buy */}
+      <section className="bg-advisor-50 border border-advisor-200 rounded-2xl p-8 mb-12">
+        <h2 className="text-xl font-semibold text-zinc-900 mb-2 text-center">Try Before You Buy</h2>
+        <p className="text-zinc-600 mb-6 text-center max-w-lg mx-auto">
+          Enter any domain and get the full API response — free, no commitment, no credit card.
+        </p>
+        <div className="max-w-md mx-auto">
+          <SampleRequestForm />
         </div>
       </section>
 
@@ -268,6 +364,50 @@ export default async function ApiAccessPage() {
             View your usage dashboard
           </Link>
         </p>
+      </section>
+
+      {/* Coverage & Methodology */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-4">Coverage &amp; Methodology</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="text-center p-5 border border-zinc-200 rounded-lg bg-white">
+            <p className="text-3xl font-bold text-advisor-600">{stats ? formatCount(stats.domainCount || 0) : '142K+'}</p>
+            <p className="text-sm text-zinc-600 mt-1">Domains monitored</p>
+          </div>
+          <div className="text-center p-5 border border-zinc-200 rounded-lg bg-white">
+            <p className="text-3xl font-bold text-advisor-600">Daily</p>
+            <p className="text-sm text-zinc-600 mt-1">Scanning frequency</p>
+          </div>
+          <div className="text-center p-5 border border-zinc-200 rounded-lg bg-white">
+            <p className="text-3xl font-bold text-advisor-600">100%</p>
+            <p className="text-sm text-zinc-600 mt-1">Published methodology</p>
+          </div>
+        </div>
+        <p className="text-zinc-700 mt-4">
+          All scores are calculated using a{' '}
+          <Link href="/methodology" className="text-emerald-600 hover:text-emerald-700 underline">
+            published, deterministic methodology
+          </Link>
+          {' '}with penalty caps per category. Accuracy is tracked in monthly{' '}
+          <Link href="/transparency-reports" className="text-emerald-600 hover:text-emerald-700 underline">
+            transparency reports
+          </Link>.
+        </p>
+      </section>
+
+      {/* Trust Links */}
+      <section className="flex flex-wrap gap-4 justify-center mb-12 text-sm text-zinc-500">
+        <Link href="/methodology" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
+          Scoring methodology
+        </Link>
+        <span aria-hidden="true">|</span>
+        <Link href="/transparency-reports" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
+          Transparency reports
+        </Link>
+        <span aria-hidden="true">|</span>
+        <Link href="/api-access/dashboard" className="hover:text-advisor-600 transition-colors underline underline-offset-2">
+          API Dashboard
+        </Link>
       </section>
 
       {/* FAQ */}

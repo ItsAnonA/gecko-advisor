@@ -169,7 +169,7 @@ export function DomainChecker() {
               View full privacy report →
             </Link>
             <Link
-              href="/domain-intelligence-api"
+              href="/api-access"
               className="text-xs text-zinc-500 hover:text-advisor-600 transition-colors"
             >
               Want API access?

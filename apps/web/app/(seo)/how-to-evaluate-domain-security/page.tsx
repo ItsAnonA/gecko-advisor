@@ -135,7 +135,7 @@ export default function HowToEvaluateDomainSecurityPage() {
         <section className="mb-10">
           <h2 className="text-2xl font-semibold text-zinc-900 mb-4">How to Automate This</h2>
           <p className="text-zinc-700 mb-4">
-            Running this checklist manually against every domain is impractical at scale. The <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">Domain Intelligence API</Link> provides programmatic access to all six checklist dimensions:
+            Running this checklist manually against every domain is impractical at scale. The <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">Domain Intelligence API</Link> provides programmatic access to all six checklist dimensions:
           </p>
           <ul className="space-y-2 text-zinc-700">
             <li><strong>Scan endpoints</strong> return tracker counts, fingerprinting detection, cookie analysis, and security header status in a single request</li>
@@ -164,7 +164,7 @@ export default function HowToEvaluateDomainSecurityPage() {
 
         <footer className="pt-8 border-t border-zinc-200">
           <div className="flex flex-wrap gap-4 text-sm">
-            <Link href="/domain-intelligence-api" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
+            <Link href="/api-access" className="text-emerald-600 hover:text-emerald-700 underline">API access</Link>
             <Link href="/check-domain-risk" className="text-emerald-600 hover:text-emerald-700 underline">Check a domain</Link>
             <Link href="/methodology" className="text-emerald-600 hover:text-emerald-700 underline">Methodology</Link>
             <Link href="/vendor-domain-due-diligence" className="text-emerald-600 hover:text-emerald-700 underline">Vendor due diligence</Link>

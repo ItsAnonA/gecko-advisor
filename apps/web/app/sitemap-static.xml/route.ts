@@ -34,7 +34,7 @@ const staticPages: SitemapPage[] = [
   { loc: '/security', priority: '0.5', changefreq: 'monthly' },
   { loc: '/legal', priority: '0.3', changefreq: 'monthly' },
   { loc: '/blog', priority: '0.7', changefreq: 'daily' },
-  { loc: '/domain-intelligence-api', priority: '0.9', changefreq: 'weekly' },
+  { loc: '/api-access', priority: '0.9', changefreq: 'weekly' },
   { loc: '/check-domain-risk', priority: '0.9', changefreq: 'weekly' },
   { loc: '/vendor-domain-due-diligence', priority: '0.8', changefreq: 'monthly' },
   { loc: '/domain-privacy-risk', priority: '0.8', changefreq: 'monthly' },

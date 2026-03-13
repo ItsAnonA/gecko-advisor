@@ -136,7 +136,7 @@ export function DomainReportCTA({ domain }: DomainReportCTAProps) {
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">Domain Intelligence Resources</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <Link
-            href="/domain-intelligence-api"
+            href="/api-access"
             className="group p-4 rounded-lg border border-zinc-200 hover:border-advisor-300 hover:shadow-sm transition-all"
           >
             <h3 className="font-semibold text-zinc-900 text-sm mb-1 group-hover:text-advisor-600 transition-colors">

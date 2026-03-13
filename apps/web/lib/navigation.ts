@@ -17,7 +17,7 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Products',
     items: [
-      { label: 'Domain Intelligence API', href: '/domain-intelligence-api' },
+      { label: 'Domain Intelligence API', href: '/api-access' },
       { label: 'Domain Risk Checker', href: '/check-domain-risk' },
       { label: 'Privacy Scanner', href: '/privacy-scanner' },
       { label: 'API Dashboard', href: '/api-access/dashboard' },
@@ -46,7 +46,7 @@ export const navGroups: NavGroup[] = [
 
 export const ctaLink: NavItem = {
   label: 'API Access',
-  href: '/domain-intelligence-api',
+  href: '/api-access',
 };
 
 export const footerColumns = [
@@ -55,7 +55,7 @@ export const footerColumns = [
     items: [
       { label: 'Home', href: '/' },
       { label: 'Privacy Scanner', href: '/privacy-scanner' },
-      { label: 'Domain Intelligence API', href: '/domain-intelligence-api' },
+      { label: 'Domain Intelligence API', href: '/api-access' },
       { label: 'Domain Risk Checker', href: '/check-domain-risk' },
     ],
   },
