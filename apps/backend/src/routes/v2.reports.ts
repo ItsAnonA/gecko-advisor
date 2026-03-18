@@ -605,12 +605,13 @@ reportV2Router.get('/domains/indexable-count', async (_req, res) => {
     const count = await CacheService.getOrSet(
       'indexable_domains_count',
       async () => {
-        // Count unique domains with completed scans
+        // Count unique domains with completed scans that have required evidence
         const result = await prisma.scan.groupBy({
           by: ['normalizedInput'],
           where: {
             status: 'done',
-            score: { not: null },
+            score: { gte: 40 },
+            evidence: { some: { kind: { in: ['tracker', 'thirdparty', 'tls'] } } },
           },
           _count: true,
         });
@@ -633,10 +634,12 @@ reportV2Router.get('/domains/indexable', async (req, res) => {
     const limit = Math.min(10000, Math.max(1, parseInt(req.query.limit as string) || 100));
 
     // Get unique domains with their most recent scan date
+    // Only include scans with score >= 40 and required evidence to avoid sitemap 404s
     const scans = await prisma.scan.findMany({
       where: {
         status: 'done',
-        score: { not: null },
+        score: { gte: 40 },
+        evidence: { some: { kind: { in: ['tracker', 'thirdparty', 'tls'] } } },
       },
       orderBy: { createdAt: 'desc' },
       distinct: ['normalizedInput'],
@@ -698,13 +701,21 @@ reportV2Router.get('/domains/sitemap-tier', async (req, res) => {
         // Tier 1c: remaining quality tier (offset 1000)
         // Tier 2: 2-scan domains, top by score
 
+        // Shared evidence filter: report page 404s without these evidence kinds
+        // Cast needed because Prisma expects mutable EvidenceKind[]
+        const REQUIRED_EVIDENCE_KINDS: ('tracker' | 'thirdparty' | 'tls')[] = ['tracker', 'thirdparty', 'tls'];
+
         if (tier === '2') {
           // Tier 2: domains with exactly 2 scans, ordered by score
           const results = await prisma.domain.findMany({
             where: {
               scanCount: 2,
               latestScanId: { not: null },
-              latestScan: { status: 'done', score: { not: null } },
+              latestScan: {
+                status: 'done',
+                score: { gte: 40 },
+                evidence: { some: { kind: { in: REQUIRED_EVIDENCE_KINDS } } },
+              },
             },
             orderBy: [
               { latestScan: { score: 'desc' } },
@@ -734,7 +745,11 @@ reportV2Router.get('/domains/sitemap-tier', async (req, res) => {
           where: {
             scanCount: { gte: 3 },
             latestScanId: { not: null },
-            latestScan: { status: 'done', score: { not: null } },
+            latestScan: {
+              status: 'done',
+              score: { gte: 40 },
+              evidence: { some: { kind: { in: REQUIRED_EVIDENCE_KINDS } } },
+            },
           },
           orderBy: [
             { scanCount: 'desc' },

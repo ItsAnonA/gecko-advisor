@@ -113,14 +113,15 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
       return problem(res, 404, 'Category benchmarks not yet calculated');
     }
 
-    // Get top 10 domains by score (Tier A only)
+    // Get top 10 domains by score (Tier A only, with evidence to avoid report 404s)
     const topDomains = await prisma.domain.findMany({
       where: {
         categoryId: category.id,
         indexTier: 'A',
         latestScan: {
           status: 'done',
-          score: { not: null },
+          score: { gte: 1 },
+          evidence: { some: { kind: { in: ['tracker', 'thirdparty', 'tls'] } } },
         },
       },
       select: {
@@ -143,14 +144,15 @@ categoriesV2Router.get('/v2/categories/:slug', async (req, res) => {
       take: 10,
     });
 
-    // Get bottom 10 domains by score (Tier A only)
+    // Get bottom 10 domains by score (Tier A only, with evidence to avoid report 404s)
     const worstDomains = await prisma.domain.findMany({
       where: {
         categoryId: category.id,
         indexTier: 'A',
         latestScan: {
           status: 'done',
-          score: { not: null },
+          score: { gte: 1 },
+          evidence: { some: { kind: { in: ['tracker', 'thirdparty', 'tls'] } } },
         },
       },
       select: {
