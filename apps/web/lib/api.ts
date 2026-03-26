@@ -533,6 +533,8 @@ export interface NarrativeContext {
   scanHistory: ScanHistory[];
   relatedDomains: NarrativeDomainSummary[];
   sameTrackerDomains: Record<string, string[]>;
+  technologyLinks?: Array<{ name: string; slug: string }>;
+  categorySlug?: string | null;
   categoryStats?: CategoryStats;
   globalStats?: GlobalStats;
 }

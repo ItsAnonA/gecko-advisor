@@ -16,6 +16,13 @@ import { problem } from '../problem.js';
 import { logger } from '../logger.js';
 import { CacheService } from '../cache.js';
 
+// TLD suffixes to strip when converting tracker domain to technology page slug
+const TLD_STRIP_REGEX = /\.(com|net|org|io|co|js|tv|me|info|cloud)$/;
+
+function trackerDomainToSlug(domain: string): string {
+  return domain.replace(TLD_STRIP_REGEX, '').replace(/\./g, '-');
+}
+
 export const narrativeV2Router = Router();
 
 // GET /api/v2/stats/global — Global dataset statistics
@@ -251,13 +258,13 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
             },
           }),
 
-          // Tracker evidence from latest scan
+          // Tracker evidence from latest scan (include details.domain for technology links)
           prisma.evidence.findMany({
             where: {
               scanId: domain.latestScanId!,
               kind: 'tracker',
             },
-            select: { title: true },
+            select: { title: true, details: true },
           }),
 
           // Cookie evidence from latest scan
@@ -272,17 +279,22 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
             },
           }),
 
-          // Related domains in same category (5 closest by score)
+          // Related domains in same category (15 closest by score, ranked by tier + depth)
           domain.categoryId
             ? prisma.domain.findMany({
                 where: {
                   categoryId: domain.categoryId,
                   id: { not: domain.id },
                   scanCount: { gte: 2 },
+                  isIndexed: true,
                   latestScan: { status: 'done', score: { not: null } },
                 },
-                orderBy: { latestScan: { score: 'desc' } },
-                take: 5,
+                orderBy: [
+                  { tierScore: 'desc' },
+                  { scanCount: 'desc' },
+                  { latestScan: { score: 'desc' } },
+                ],
+                take: 15,
                 select: {
                   domain: true,
                   displayName: true,
@@ -340,9 +352,9 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
           }
         }
 
-        // Same-tracker domains (top 3 trackers, 2 domains each)
+        // Same-tracker domains (top 5 trackers, 4 domains each — strengthens crawl graph)
         const sameTrackerDomains: Record<string, string[]> = {};
-        const topTrackers = trackerNames.slice(0, 3);
+        const topTrackers = trackerNames.slice(0, 5);
         if (topTrackers.length > 0) {
           for (const trackerName of topTrackers) {
             const others = await prisma.$queryRaw<Array<{ domain: string }>>`
@@ -354,7 +366,8 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
                 AND e.title = ${trackerName}
                 AND s.id = d."latestScanId"
                 AND d.domain != ${domainName}
-              LIMIT 2
+                AND d."isIndexed" = true
+              LIMIT 4
             `;
             sameTrackerDomains[trackerName] = others.map(o => o.domain);
           }
@@ -398,6 +411,26 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
             trackerCount: 0, // Not needed for link blocks
           })),
           sameTrackerDomains,
+          // Cluster anchors: technology page links derived from tracker domains
+          technologyLinks: (() => {
+            const seen = new Set<string>();
+            const links: Array<{ name: string; slug: string }> = [];
+            for (const ev of trackerEvidence) {
+              const details = ev.details as Record<string, unknown> | null;
+              const trackerDomain = details?.domain as string | undefined;
+              if (!trackerDomain) continue;
+              const slug = trackerDomainToSlug(trackerDomain);
+              if (seen.has(slug)) continue;
+              seen.add(slug);
+              links.push({ name: ev.title, slug });
+              if (links.length >= 5) break; // Top 5 trackers → technology pages
+            }
+            return links;
+          })(),
+          // Category slug for upward linking
+          categorySlug: domain.category?.name
+            ? domain.category.name.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')
+            : null,
         };
       },
       3600 // 1 hour

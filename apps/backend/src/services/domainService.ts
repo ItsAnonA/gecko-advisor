@@ -352,40 +352,36 @@ export async function countTieredSitemapDomains(prisma: PrismaClient): Promise<{
 
 /**
  * Get related/similar domains for internal linking.
- * Returns domains with similar privacy scores (within ±15 points).
+ * Returns domains with similar privacy scores (within ±20 points),
+ * ranked by tier authority and scan depth.
  */
 export async function getRelatedDomains(
   prisma: PrismaClient,
   currentDomain: string,
   currentScore: number,
-  limit = 5
+  limit = 10
 ): Promise<Array<{ domain: string; score: number }>> {
-  const scoreMin = Math.max(40, currentScore - 15); // Don't go below minimum index threshold
-  const scoreMax = Math.min(100, currentScore + 15);
+  const scoreMin = Math.max(20, currentScore - 20);
+  const scoreMax = Math.min(100, currentScore + 20);
 
   const related = await prisma.domain.findMany({
     where: {
       domain: { not: currentDomain },
       isIndexed: true,
+      scanCount: { gte: 2 },
       latestScan: {
         status: 'done',
-        score: {
-          gte: scoreMin,
-          lte: scoreMax,
-        },
+        score: { gte: scoreMin, lte: scoreMax },
       },
     },
     select: {
       domain: true,
-      latestScan: {
-        select: {
-          score: true,
-        },
-      },
+      latestScan: { select: { score: true } },
     },
-    orderBy: {
-      lastScanned: 'desc', // Most recent first
-    },
+    orderBy: [
+      { tierScore: 'desc' },
+      { scanCount: 'desc' },
+    ],
     take: limit,
   });
 

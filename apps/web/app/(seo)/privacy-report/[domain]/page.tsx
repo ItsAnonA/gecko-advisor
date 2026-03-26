@@ -220,6 +220,8 @@ export default async function ReportPage({ params }: Props) {
       domain={narrativeCtx!.domain}
       relatedDomains={narrativeCtx!.relatedDomains}
       sameTrackerDomains={narrativeCtx!.sameTrackerDomains}
+      technologyLinks={narrativeCtx!.technologyLinks}
+      categorySlug={narrativeCtx!.categorySlug}
     />
   ) : (
     <SEOSummary

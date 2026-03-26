@@ -30,14 +30,21 @@ import {
 } from '@/lib/generateDomainNarrative';
 import { getComparisonPairsForDomain, getOtherDomain } from '@/data/comparison-pairs';
 
+interface TechnologyLink {
+  name: string;
+  slug: string;
+}
+
 interface Props {
   narrative: DomainNarrative;
   domain: DomainData;
   relatedDomains: DomainSummary[];
   sameTrackerDomains: Record<string, string[]>;
+  technologyLinks?: TechnologyLink[];
+  categorySlug?: string | null;
 }
 
-export function NarrativeContent({ narrative, domain, relatedDomains, sameTrackerDomains }: Props) {
+export function NarrativeContent({ narrative, domain, relatedDomains, sameTrackerDomains, technologyLinks, categorySlug }: Props) {
   const comparisonPairs = getComparisonPairsForDomain(domain.name);
 
   function renderSection(key: SectionKey) {
@@ -226,22 +233,28 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
       {/* Target: 20-30 internal links per quality-tier domain page */}
       {/* ============================================================ */}
 
-      {/* Link Block 1: Similar Sites (same category, closest score) */}
+      {/* Link Block 1: Similar Sites (same category, ranked by relevance) */}
       {relatedDomains.length > 0 && (
         <section className="mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
           <h3 className="text-lg font-semibold text-gecko-800 mb-3">
-            Sites Similar to {domain.displayName}
+            {domain.categoryName
+              ? `${domain.categoryName} Sites Similar to ${domain.displayName}`
+              : `Sites Similar to ${domain.displayName}`}
           </h3>
-          <ul className="space-y-2">
+          <p className="text-sm text-zinc-600 mb-3">
+            {relatedDomains.length} domains with similar privacy profiles
+            {domain.categoryName ? ` in the ${domain.categoryName} category` : ''}.
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
             {relatedDomains.map(d => (
-              <li key={d.domain} className="flex items-center justify-between">
+              <li key={d.domain} className="flex items-center justify-between py-1">
                 <Link
                   href={`/privacy-report/${d.domain}`}
-                  className="text-advisor-600 hover:text-advisor-700 underline"
+                  className="text-advisor-600 hover:text-advisor-700 underline truncate"
                 >
                   {d.displayName || d.domain}
                 </Link>
-                <span className="text-sm text-zinc-500">Score: {d.privacyScore}</span>
+                <span className="text-sm text-zinc-500 shrink-0 ml-2">Score: {d.privacyScore}</span>
               </li>
             ))}
           </ul>
@@ -283,7 +296,56 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
         </section>
       )}
 
-      {/* Link Block 3: Sites Using Same Trackers */}
+      {/* Link Block 3: Cluster Anchors — upward links to category + technology pages */}
+      {(categorySlug || (technologyLinks && technologyLinks.length > 0)) && (
+        <section className="mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
+          <h3 className="text-lg font-semibold text-gecko-800 mb-3">
+            {domain.displayName} Privacy Context
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {/* Category hub link */}
+            {categorySlug && domain.categoryName && (
+              <Link
+                href={`/privacy-benchmarks/${categorySlug}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full text-sm text-advisor-600 hover:text-advisor-700 hover:border-advisor-300 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                {domain.categoryName} Benchmark
+              </Link>
+            )}
+            {/* Technology entity page links */}
+            {technologyLinks?.map(tech => (
+              <Link
+                key={tech.slug}
+                href={`/technologies/${tech.slug}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full text-sm text-advisor-600 hover:text-advisor-700 hover:border-advisor-300 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                {tech.name}
+              </Link>
+            ))}
+            {/* Authority page links */}
+            <Link
+              href="/privacy-index"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full text-sm text-zinc-600 hover:text-advisor-700 hover:border-advisor-300 transition-colors"
+            >
+              Privacy Index
+            </Link>
+            <Link
+              href="/most-tracked-websites"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full text-sm text-zinc-600 hover:text-advisor-700 hover:border-advisor-300 transition-colors"
+            >
+              Most Tracked Websites
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Link Block 4: Sites Using Same Trackers */}
       {Object.keys(sameTrackerDomains).length > 0 && (
         <section className="mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
           <h3 className="text-lg font-semibold text-gecko-800 mb-3">

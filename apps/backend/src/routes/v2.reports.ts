@@ -70,7 +70,16 @@ async function enrichReportWithBenchmarks(payload: ReturnType<typeof buildReport
 }
 
 /**
- * Get related domains for report, filtered by category and tier
+ * Get related domains for report — ranked by semantic relevance + hierarchy.
+ *
+ * Two rings of links:
+ *   Ring 1 (12): Same category, score-proximate, ranked by relevance
+ *   Ring 2 (8):  Lower-tier domains in same category (pushes crawl depth DOWN)
+ *
+ * Ring 2 ensures links flow top→mid→tail, not just sideways.
+ * For Tier A domains: ring 2 pulls from B/C tiers
+ * For Tier B domains: ring 2 pulls from C tier
+ * For Tier C domains: ring 2 is skipped (no lower tier to link to)
  */
 async function getRelatedDomainsForReport(
   prismaClient: typeof prisma,
@@ -78,56 +87,112 @@ async function getRelatedDomainsForReport(
   score: number
 ): Promise<Array<{ domain: string; score: number; categoryName?: string }>> {
   try {
-    // Get domain record to check for category
+    const normalized = normalizeDomain(domain);
+
     const domainRecord = await prismaClient.domain.findUnique({
-      where: { domain: normalizeDomain(domain) },
-      include: { category: true },
+      where: { domain: normalized },
+      select: { indexTier: true, category: { select: { id: true, name: true } } },
     });
 
     if (!domainRecord?.category) {
-      // No category - use global related domains
-      return getRelatedDomains(prismaClient, domain, score, 5);
+      return getRelatedDomains(prismaClient, domain, score, 10);
     }
 
-    // Get related domains in same category
-    const scoreMin = Math.max(40, score - 15);
-    const scoreMax = Math.min(100, score + 15);
+    const categoryId = domainRecord.category.id;
+    const currentTier = domainRecord.indexTier;
+    const scoreMin = Math.max(20, score - 25);
+    const scoreMax = Math.min(100, score + 25);
 
-    const related = await prismaClient.domain.findMany({
+    // Ring 1: Same-tier or higher, score-proximate (the "sideways" cluster)
+    const ring1Promise = prismaClient.domain.findMany({
       where: {
-        domain: { not: normalizeDomain(domain) },
-        categoryId: domainRecord.category.id,
+        domain: { not: normalized },
+        categoryId,
         isIndexed: true,
-        // Prefer Tier A/B domains
-        indexTier: { in: ['A', 'B'] },
-        latestScan: {
-          status: 'done',
-          score: {
-            gte: scoreMin,
-            lte: scoreMax,
-          },
-        },
+        scanCount: { gte: 2 },
+        latestScan: { status: 'done', score: { gte: scoreMin, lte: scoreMax } },
       },
       select: {
         domain: true,
-        category: {
-          select: { name: true },
-        },
-        latestScan: {
-          select: { score: true },
-        },
+        indexTier: true,
+        scanCount: true,
+        tierScore: true,
+        category: { select: { name: true } },
+        latestScan: { select: { score: true } },
       },
-      orderBy: { latestScan: { score: 'desc' } },
-      take: 5,
+      orderBy: [{ tierScore: 'desc' }, { scanCount: 'desc' }],
+      take: 30,
     });
 
-    return related
-      .filter(d => d.latestScan?.score !== null)
-      .map(d => ({
+    // Ring 2: Hierarchical links — flow DOWN for high-tier, flow UP for low-tier
+    // Tier A → links to B/C (downward push)
+    // Tier B → links to C (downward) + A (upward anchor)
+    // Tier C → links to A/B (upward anchor for cluster reciprocity)
+    const ring2Tiers: string[] =
+      currentTier === 'A' ? ['B', 'C'] :
+      currentTier === 'B' ? ['A', 'C'] :
+      /* C */ ['A', 'B'];
+
+    const ring2Promise = prismaClient.domain.findMany({
+      where: {
+        domain: { not: normalized },
+        categoryId,
+        isIndexed: true,
+        indexTier: { in: ring2Tiers as ('A' | 'B' | 'C')[] },
+        latestScan: { status: 'done', score: { gte: 30 } },
+      },
+      select: {
+        domain: true,
+        indexTier: true,
+        scanCount: true,
+        tierScore: true,
+        category: { select: { name: true } },
+        latestScan: { select: { score: true } },
+      },
+      orderBy: [{ tierScore: 'desc' }, { scanCount: 'desc' }],
+      take: 15,
+    });
+
+    const [ring1Raw, ring2Raw] = await Promise.all([ring1Promise, ring2Promise]);
+
+    // Rank ring 1 by composite relevance
+    const tierWeight: Record<string, number> = { A: 3, B: 2, C: 1 };
+    function rankCandidate(d: typeof ring1Raw[number]) {
+      const s = d.latestScan?.score ?? 0;
+      const scoreDist = Math.abs(s - score);
+      const proximity = 1 - Math.min(scoreDist, 25) / 25;
+      const authority = (tierWeight[d.indexTier] || 1) / 3;
+      const depth = Math.min(d.scanCount / 10, 1);
+      return proximity * 0.5 + authority * 0.3 + depth * 0.2;
+    }
+
+    const ring1 = ring1Raw
+      .filter(d => d.latestScan?.score != null)
+      .map(d => ({ ...d, relevance: rankCandidate(d) }))
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, 12);
+
+    // Ring 2: dedupe against ring 1, take up to 8
+    const ring1Domains = new Set(ring1.map(d => d.domain));
+    const ring2 = ring2Raw
+      .filter(d => d.latestScan?.score != null && !ring1Domains.has(d.domain))
+      .slice(0, 8);
+
+    // Combine: ring 1 first (quality cluster), then ring 2 (downward links)
+    const combined = [
+      ...ring1.map(d => ({
         domain: d.domain,
         score: d.latestScan!.score!,
         categoryName: d.category?.name,
-      }));
+      })),
+      ...ring2.map(d => ({
+        domain: d.domain,
+        score: d.latestScan!.score!,
+        categoryName: d.category?.name,
+      })),
+    ];
+
+    return combined;
   } catch (error) {
     logger.warn({ error, domain }, 'Failed to get related domains for report');
     return [];
