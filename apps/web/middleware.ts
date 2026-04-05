@@ -45,7 +45,7 @@ const GONE_PATTERNS = [
   // Credential / config fishing
   /^\/\.env/,
   /^\/\.git(?:\/|$)/,
-  /^\/\.well-known\/(?!change-password|security\.txt)/,
+  /^\/\.well-known\/(?!acme-challenge|change-password|security\.txt)/,
 
   // File extensions that should never exist
   /\.php$/i,
