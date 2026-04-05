@@ -15,9 +15,87 @@ import { prisma } from '../prisma.js';
 import { problem } from '../problem.js';
 import { logger } from '../logger.js';
 import { CacheService } from '../cache.js';
+import { analyzeTrackerPurposes } from '@gecko-advisor/shared';
 
 // TLD suffixes to strip when converting tracker domain to technology page slug
 const TLD_STRIP_REGEX = /\.(com|net|org|io|co|js|tv|me|info|cloud)$/;
+
+// ── Cookie Persistence Analysis ──
+
+type PersistenceBand = 'session-only' | 'short-lived' | 'mixed' | 'long-lived';
+
+interface CookiePersistence {
+  sessionCount: number;
+  shortLivedCount: number;   // < 24h
+  mediumLivedCount: number;  // 1-30 days
+  longLivedCount: number;    // > 30 days
+  maxDaysObserved: number;
+  persistenceBand: PersistenceBand;
+}
+
+function parseCookiePersistence(cookieEvidence: Array<{ details: unknown }>): CookiePersistence {
+  let sessionCount = 0;
+  let shortLivedCount = 0;
+  let mediumLivedCount = 0;
+  let longLivedCount = 0;
+  let maxDaysObserved = 0;
+
+  for (const ev of cookieEvidence) {
+    const details = ev.details as Record<string, unknown> | null;
+    const cookieStr = (details?.cookie as string) || '';
+    const days = extractCookieDays(cookieStr);
+
+    if (days === null) {
+      sessionCount++;
+    } else if (days < 1) {
+      shortLivedCount++;
+    } else if (days <= 30) {
+      mediumLivedCount++;
+    } else {
+      longLivedCount++;
+    }
+
+    if (days !== null && days > maxDaysObserved) {
+      maxDaysObserved = Math.round(days);
+    }
+  }
+
+  const total = cookieEvidence.length || 1;
+  let persistenceBand: PersistenceBand;
+  if (total === 0 || sessionCount === total) {
+    persistenceBand = 'session-only';
+  } else if (longLivedCount / total > 0.5) {
+    persistenceBand = 'long-lived';
+  } else if (shortLivedCount / total > 0.5 || (sessionCount + shortLivedCount) / total > 0.7) {
+    persistenceBand = 'short-lived';
+  } else {
+    persistenceBand = 'mixed';
+  }
+
+  return { sessionCount, shortLivedCount, mediumLivedCount, longLivedCount, maxDaysObserved, persistenceBand };
+}
+
+function extractCookieDays(cookieStr: string): number | null {
+  const lower = cookieStr.toLowerCase();
+
+  // Try max-age first (seconds)
+  const maxAgeMatch = lower.match(/max-age\s*=\s*(\d+)/);
+  if (maxAgeMatch) {
+    return parseInt(maxAgeMatch[1]!, 10) / 86400;
+  }
+
+  // Try expires
+  const expiresMatch = cookieStr.match(/expires\s*=\s*([^;]+)/i);
+  if (expiresMatch) {
+    const expiresDate = new Date(expiresMatch[1]!.trim());
+    if (!isNaN(expiresDate.getTime())) {
+      return (expiresDate.getTime() - Date.now()) / (1000 * 86400);
+    }
+  }
+
+  // No expiry = session cookie
+  return null;
+}
 
 function trackerDomainToSlug(domain: string): string {
   return domain.replace(TLD_STRIP_REGEX, '').replace(/\./g, '-');
@@ -110,6 +188,7 @@ narrativeV2Router.get('/categories/:slug/stats', async (req, res) => {
             categoryName: category.name,
             slug: category.slug,
             avgPrivacyScore: 0,
+            medianPrivacyScore: 0,
             avgTrackerCount: 0,
             avgCookieCount: 0,
             totalDomains: 0,
@@ -125,12 +204,14 @@ narrativeV2Router.get('/categories/:slug/stats', async (req, res) => {
         // Aggregate stats using raw query for efficiency
         const agg = await prisma.$queryRaw<Array<{
           avg_score: number;
+          median_score: number;
           avg_trackers: number;
           avg_cookies: number;
           zero_tracker_count: number;
         }>>`
           SELECT
             AVG(s.score)::float as avg_score,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY s.score)::float as median_score,
             AVG(tc.count)::float as avg_trackers,
             AVG(cc.count)::float as avg_cookies,
             COUNT(CASE WHEN tc.count = 0 THEN 1 END)::int as zero_tracker_count
@@ -165,12 +246,13 @@ narrativeV2Router.get('/categories/:slug/stats', async (req, res) => {
 
         const topDomain = domains[0]!;
         const bottomDomain = domains[domains.length - 1]!;
-        const stats = agg[0] || { avg_score: 0, avg_trackers: 0, avg_cookies: 0, zero_tracker_count: 0 };
+        const stats = agg[0] || { avg_score: 0, median_score: 0, avg_trackers: 0, avg_cookies: 0, zero_tracker_count: 0 };
 
         return {
           categoryName: category.name,
           slug: category.slug,
           avgPrivacyScore: Math.round((stats.avg_score || 0) * 10) / 10,
+          medianPrivacyScore: Math.round(stats.median_score || 0),
           avgTrackerCount: Math.round((stats.avg_trackers || 0) * 10) / 10,
           avgCookieCount: Math.round((stats.avg_cookies || 0) * 10) / 10,
           totalDomains: domains.length,
@@ -352,6 +434,29 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
           }
         }
 
+        // ── Tracker purpose analysis ──
+        const trackerDomainsList: string[] = [];
+        for (const ev of trackerEvidence) {
+          const details = ev.details as Record<string, unknown> | null;
+          const td = details?.domain as string | undefined;
+          if (td) trackerDomainsList.push(td);
+        }
+        const purposeAnalysis = analyzeTrackerPurposes(trackerDomainsList);
+
+        // ── Cookie persistence analysis ──
+        const cookiePersistence = parseCookiePersistence(cookieEvidence);
+
+        // ── Category quartile (from scorePercentile already on Domain model) ──
+        let categoryQuartile: string | null = null;
+        let scoreDeltaVsCategoryMedian: number | null = null;
+        const pct = domain.scorePercentile;
+        if (pct !== null && pct !== undefined) {
+          if (pct >= 75) categoryQuartile = 'top';
+          else if (pct >= 50) categoryQuartile = 'upper';
+          else if (pct >= 25) categoryQuartile = 'lower';
+          else categoryQuartile = 'bottom';
+        }
+
         // Same-tracker domains (top 5 trackers, 4 domains each — strengthens crawl graph)
         const sameTrackerDomains: Record<string, string[]> = {};
         const topTrackers = trackerNames.slice(0, 5);
@@ -397,6 +502,10 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
               name: e.title,
               globalDomainCount: globalCountMap.get(e.title) || 0,
             })),
+            purposeAnalysis,
+            cookiePersistence,
+            categoryQuartile,
+            scoreDeltaVsCategoryMedian,
           },
           scanHistory: scanHistory.map(s => ({
             date: s.finishedAt?.toISOString() || '',
@@ -404,12 +513,20 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
             trackerCount: (trackersByScan.get(s.id) || []).length,
             trackers: trackersByScan.get(s.id) || [],
           })),
-          relatedDomains: relatedDomains.map(d => ({
-            domain: d.domain,
-            displayName: d.displayName || d.domain,
-            privacyScore: d.latestScan?.score || 0,
-            trackerCount: 0, // Not needed for link blocks
-          })),
+          relatedDomains: relatedDomains.map(d => {
+            const relScore = d.latestScan?.score || 0;
+            const myScore = domain.latestScan?.score || 0;
+            const scoreDiff = Math.abs(relScore - myScore);
+            const relationReason = scoreDiff <= 10
+              ? 'same-category-similar-score' as const
+              : 'same-category' as const;
+            return {
+              domain: d.domain,
+              displayName: d.displayName || d.domain,
+              privacyScore: relScore,
+              relationReason,
+            };
+          }),
           sameTrackerDomains,
           // Cluster anchors: technology page links derived from tracker domains
           technologyLinks: (() => {

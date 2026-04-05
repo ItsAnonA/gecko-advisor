@@ -13,3 +13,4 @@ export * from './blocklist/index.js';
 export * from './domain.js';
 export * from './cache.js';
 export * from './bot-detection.js';
+export * from './tracker-classification.js';

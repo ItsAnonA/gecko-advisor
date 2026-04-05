@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 /**
  * Narrative Content Component (Phase A - SEO Architecture)
  *
- * Renders the full narrative for domain report pages.
- * Section ordering is deterministic per domain (via pickVariant).
- * Conditional sections only appear when data triggers them.
+ * Renders verdict-first narratives for domain report pages.
+ * Layout order: verdict → intro → H2 sections → about → links → freshness.
  *
  * Server component — no client-side JS.
  */
@@ -26,7 +25,7 @@ import {
   getCookieSectionTitle,
   getComparisonSectionTitle,
   getHistorySectionTitle,
-  getSafetySectionTitle,
+  getProfileSectionTitle,
 } from '@/lib/generateDomainNarrative';
 import { getComparisonPairsForDomain, getOtherDomain } from '@/data/comparison-pairs';
 
@@ -44,6 +43,40 @@ interface Props {
   categorySlug?: string | null;
 }
 
+function getScoreColor(score: number): string {
+  if (score >= 80) return 'text-emerald-700';
+  if (score >= 60) return 'text-sky-700';
+  if (score >= 40) return 'text-amber-700';
+  return 'text-red-700';
+}
+
+function getScoreBorderColor(score: number): string {
+  if (score >= 80) return 'border-emerald-300';
+  if (score >= 60) return 'border-sky-300';
+  if (score >= 40) return 'border-amber-300';
+  return 'border-red-300';
+}
+
+function getScoreBgColor(score: number): string {
+  if (score >= 80) return 'bg-emerald-50';
+  if (score >= 60) return 'bg-sky-50';
+  if (score >= 40) return 'bg-amber-50';
+  return 'bg-red-50';
+}
+
+function getRelationLabel(reason: string | undefined, categoryName: string | null): string {
+  switch (reason) {
+    case 'same-category-similar-score':
+      return categoryName ? `Similar privacy score in ${categoryName}` : 'Similar privacy score';
+    case 'same-tracker-stack':
+      return 'Overlapping tracker stack';
+    case 'same-category':
+      return categoryName ? `${categoryName} site` : 'Same category';
+    default:
+      return categoryName ? `${categoryName} site` : 'Related';
+  }
+}
+
 export function NarrativeContent({ narrative, domain, relatedDomains, sameTrackerDomains, technologyLinks, categorySlug }: Props) {
   const comparisonPairs = getComparisonPairsForDomain(domain.name);
 
@@ -56,21 +89,18 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
               {getTrackerSectionTitle(domain)}
             </h2>
             <p className="text-gecko-700 leading-relaxed">{narrative.trackerSection}</p>
-            {/* Conditional: Rare tracker (appears after trackers) */}
             {narrative.rareTrackerSection && (
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gecko-800 mb-2">Rare Tracker Detection</h3>
                 <p className="text-gecko-700 leading-relaxed">{narrative.rareTrackerSection}</p>
               </div>
             )}
-            {/* Conditional: Tracker distribution */}
             {narrative.trackerDistributionSection && (
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gecko-800 mb-2">Tracker Distribution</h3>
                 <p className="text-gecko-700 leading-relaxed">{narrative.trackerDistributionSection}</p>
               </div>
             )}
-            {/* Conditional: Zero tracker */}
             {narrative.zeroTrackerSection && (
               <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
                 <h3 className="text-lg font-medium text-emerald-800 mb-1">Zero Tracker Profile</h3>
@@ -87,7 +117,6 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
               {getCookieSectionTitle(domain)}
             </h2>
             <p className="text-gecko-700 leading-relaxed">{narrative.cookieSection}</p>
-            {/* Conditional: High cookie count */}
             {narrative.highCookieSection && (
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <h3 className="text-lg font-medium text-amber-800 mb-1">High Cookie Count</h3>
@@ -104,7 +133,6 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
               {getComparisonSectionTitle(domain)}
             </h2>
             <p className="text-gecko-700 leading-relaxed">{narrative.comparisonSection}</p>
-            {/* Conditional: Category rank (top 10) */}
             {narrative.categoryRankSection && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="text-lg font-medium text-blue-800 mb-1">{domain.displayName} Category Rank</h3>
@@ -121,21 +149,18 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
               {getHistorySectionTitle(domain)}
             </h2>
             <p className="text-gecko-700 leading-relaxed">{narrative.historySection}</p>
-            {/* Conditional: Recent changes (appears after history) */}
             {narrative.recentChangesSection && (
               <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                 <h3 className="text-lg font-medium text-orange-800 mb-1">Recent Changes Detected</h3>
                 <p className="text-orange-700 leading-relaxed">{narrative.recentChangesSection}</p>
               </div>
             )}
-            {/* Conditional: Score improvement */}
             {narrative.scoreImproveSection && (
               <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
                 <h3 className="text-lg font-medium text-emerald-800 mb-1">Score Improvement</h3>
                 <p className="text-emerald-700 leading-relaxed">{narrative.scoreImproveSection}</p>
               </div>
             )}
-            {/* Conditional: Score decline */}
             {narrative.scoreDeclineSection && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <h3 className="text-lg font-medium text-red-800 mb-1">Score Decline</h3>
@@ -145,13 +170,13 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
           </section>
         );
 
-      case 'safety':
+      case 'profile':
         return (
-          <section key="safety" className="mb-6">
+          <section key="profile" className="mb-6">
             <h2 className="text-xl font-semibold text-gecko-800 mb-3">
-              {getSafetySectionTitle(domain)}
+              {getProfileSectionTitle(domain)}
             </h2>
-            <p className="text-gecko-700 leading-relaxed">{narrative.safetySection}</p>
+            <p className="text-gecko-700 leading-relaxed">{narrative.profileInterpretation}</p>
             <p className="text-gecko-500 text-sm mt-2">
               <Link href="/methodology" className="text-advisor-600 hover:text-advisor-700 underline">
                 How scores are calculated
@@ -167,57 +192,34 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
 
   return (
     <article className="narrative-content">
-      {/* Freshness Signal Box */}
-      <div className="mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-zinc-500">Last scanned:</span>{' '}
-            <span className="font-medium text-zinc-800">{formatDate(narrative.freshnessSignal.lastScanned)}</span>
-          </div>
-          {narrative.freshnessSignal.previousScan && (
-            <div>
-              <span className="text-zinc-500">Previous scan:</span>{' '}
-              <span className="font-medium text-zinc-800">{formatDate(narrative.freshnessSignal.previousScan)}</span>
-            </div>
-          )}
-          <div>
-            <span className="text-zinc-500">Scan count:</span>{' '}
-            <span className="font-medium text-zinc-800">{narrative.freshnessSignal.scanCount}</span>
-          </div>
-          <div>
-            <span className="text-zinc-500">Status:</span>{' '}
-            <span className={`font-medium ${narrative.freshnessSignal.changesDetected ? 'text-orange-600' : 'text-emerald-600'}`}>
-              {narrative.freshnessSignal.changesDetected ? 'Changes detected' : 'No changes detected'}
-            </span>
-          </div>
+      {/* ── VERDICT BLOCK (above the fold) ── */}
+      <div className={`mb-6 p-5 rounded-lg border-2 ${getScoreBorderColor(domain.privacyScore)} ${getScoreBgColor(domain.privacyScore)}`}>
+        <div className="flex items-baseline gap-3 mb-3">
+          <span className={`text-3xl font-bold ${getScoreColor(domain.privacyScore)}`}>
+            {domain.privacyScore}/100
+          </span>
+          <h2 className={`text-lg font-semibold ${getScoreColor(domain.privacyScore)}`}>
+            {narrative.verdict.headline}
+          </h2>
         </div>
-        {narrative.freshnessSignal.changesDetected && (
-          <div className="mt-3 pt-3 border-t border-zinc-200 text-sm">
-            <p className="text-zinc-600 font-medium mb-1">Changes since previous scan:</p>
-            <ul className="space-y-1 text-zinc-700">
-              {narrative.freshnessSignal.trackersAdded.map(t => (
-                <li key={`add-${t}`}>+ Tracker added: {t}</li>
-              ))}
-              {narrative.freshnessSignal.trackersRemoved.map(t => (
-                <li key={`rm-${t}`}>- Tracker removed: {t}</li>
-              ))}
-              {narrative.freshnessSignal.scoreChange && (
-                <li>
-                  Score changed: {narrative.freshnessSignal.scoreChange.old} → {narrative.freshnessSignal.scoreChange.new}
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
+        <ul className="space-y-1.5 mb-3">
+          {narrative.verdict.keyFindings.map((finding, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-gecko-700">
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gecko-400 shrink-0" />
+              {finding}
+            </li>
+          ))}
+        </ul>
+        <p className="text-sm text-gecko-600 leading-relaxed">{narrative.verdict.interpretation}</p>
       </div>
 
-      {/* Intro (always first) */}
+      {/* Intro */}
       <p className="text-gecko-700 leading-relaxed mb-6 text-lg">{narrative.intro}</p>
 
       {/* H2 sections in domain-specific order */}
       {narrative.sectionOrder.map((key) => renderSection(key))}
 
-      {/* About section (always last) */}
+      {/* About section */}
       <section className="mb-6">
         <h2 className="text-xl font-semibold text-gecko-800 mb-3">About This Report</h2>
         <p className="text-gecko-700 leading-relaxed">{narrative.aboutSection}</p>
@@ -230,10 +232,9 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
 
       {/* ============================================================ */}
       {/* INTERNAL LINK DENSITY BLOCKS */}
-      {/* Target: 20-30 internal links per quality-tier domain page */}
       {/* ============================================================ */}
 
-      {/* Link Block 1: Similar Sites (same category, ranked by relevance) */}
+      {/* Link Block 1: Similar Sites with relationship reasons */}
       {relatedDomains.length > 0 && (
         <section className="mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
           <h3 className="text-lg font-semibold text-gecko-800 mb-3">
@@ -241,19 +242,20 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
               ? `${domain.categoryName} Sites Similar to ${domain.displayName}`
               : `Sites Similar to ${domain.displayName}`}
           </h3>
-          <p className="text-sm text-zinc-600 mb-3">
-            {relatedDomains.length} domains with similar privacy profiles
-            {domain.categoryName ? ` in the ${domain.categoryName} category` : ''}.
-          </p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
             {relatedDomains.map(d => (
               <li key={d.domain} className="flex items-center justify-between py-1">
-                <Link
-                  href={`/privacy-report/${d.domain}`}
-                  className="text-advisor-600 hover:text-advisor-700 underline truncate"
-                >
-                  {d.displayName || d.domain}
-                </Link>
+                <div className="min-w-0">
+                  <Link
+                    href={`/privacy-report/${d.domain}`}
+                    className="text-advisor-600 hover:text-advisor-700 underline truncate block"
+                  >
+                    {d.displayName || d.domain}
+                  </Link>
+                  <span className="text-xs text-zinc-500">
+                    {getRelationLabel(d.relationReason, domain.categoryName)}
+                  </span>
+                </div>
                 <span className="text-sm text-zinc-500 shrink-0 ml-2">Score: {d.privacyScore}</span>
               </li>
             ))}
@@ -296,14 +298,13 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
         </section>
       )}
 
-      {/* Link Block 3: Cluster Anchors — upward links to category + technology pages */}
+      {/* Link Block 3: Cluster Anchors */}
       {(categorySlug || (technologyLinks && technologyLinks.length > 0)) && (
         <section className="mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
           <h3 className="text-lg font-semibold text-gecko-800 mb-3">
             {domain.displayName} Privacy Context
           </h3>
           <div className="flex flex-wrap gap-2">
-            {/* Category hub link */}
             {categorySlug && domain.categoryName && (
               <Link
                 href={`/privacy-benchmarks/${categorySlug}`}
@@ -315,7 +316,6 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
                 {domain.categoryName} Benchmark
               </Link>
             )}
-            {/* Technology entity page links */}
             {technologyLinks?.map(tech => (
               <Link
                 key={tech.slug}
@@ -328,7 +328,6 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
                 {tech.name}
               </Link>
             ))}
-            {/* Authority page links */}
             <Link
               href="/privacy-index"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full text-sm text-zinc-600 hover:text-advisor-700 hover:border-advisor-300 transition-colors"
@@ -372,6 +371,51 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
           ))}
         </section>
       )}
+
+      {/* ── Freshness Signal (metadata — bottom of page) ── */}
+      <div className="mt-8 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
+        <h3 className="text-sm font-semibold text-zinc-600 mb-2">Scan Metadata</h3>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <span className="text-zinc-500">Last scanned:</span>{' '}
+            <span className="font-medium text-zinc-800">{formatDate(narrative.freshnessSignal.lastScanned)}</span>
+          </div>
+          {narrative.freshnessSignal.previousScan && (
+            <div>
+              <span className="text-zinc-500">Previous scan:</span>{' '}
+              <span className="font-medium text-zinc-800">{formatDate(narrative.freshnessSignal.previousScan)}</span>
+            </div>
+          )}
+          <div>
+            <span className="text-zinc-500">Scan count:</span>{' '}
+            <span className="font-medium text-zinc-800">{narrative.freshnessSignal.scanCount}</span>
+          </div>
+          <div>
+            <span className="text-zinc-500">Status:</span>{' '}
+            <span className={`font-medium ${narrative.freshnessSignal.changesDetected ? 'text-orange-600' : 'text-emerald-600'}`}>
+              {narrative.freshnessSignal.changesDetected ? 'Changes detected' : 'No changes detected'}
+            </span>
+          </div>
+        </div>
+        {narrative.freshnessSignal.changesDetected && (
+          <div className="mt-3 pt-3 border-t border-zinc-200 text-sm">
+            <p className="text-zinc-600 font-medium mb-1">Changes since previous scan:</p>
+            <ul className="space-y-1 text-zinc-700">
+              {narrative.freshnessSignal.trackersAdded.map(t => (
+                <li key={`add-${t}`}>+ Tracker added: {t}</li>
+              ))}
+              {narrative.freshnessSignal.trackersRemoved.map(t => (
+                <li key={`rm-${t}`}>- Tracker removed: {t}</li>
+              ))}
+              {narrative.freshnessSignal.scoreChange && (
+                <li>
+                  Score changed: {narrative.freshnessSignal.scoreChange.old} → {narrative.freshnessSignal.scoreChange.new}
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
     </article>
   );
 }

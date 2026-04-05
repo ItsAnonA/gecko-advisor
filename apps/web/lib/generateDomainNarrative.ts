@@ -41,11 +41,32 @@ export interface DomainData {
   firstPartyCookies?: number;
   thirdPartyCookies?: number;
   trackers: Array<{ name: string; globalDomainCount: number }>;
+  // Enriched fields from narrative differentiation
+  purposeAnalysis?: {
+    breakdown: { advertising: number; analytics: number; social: number; fingerprinting: number; functional: number; unknown: number };
+    dominantPurpose: string | null;
+    dominantPurposeShare: number;
+    stackProfile: string;
+    isSkewed: boolean;
+    unknownCount: number;
+    classified: Array<{ domain: string; classification: { name: string; purpose: string; risk: string; description: string } }>;
+  };
+  cookiePersistence?: {
+    sessionCount: number;
+    shortLivedCount: number;
+    mediumLivedCount: number;
+    longLivedCount: number;
+    maxDaysObserved: number;
+    persistenceBand: string;
+  };
+  categoryQuartile?: string | null;
+  scoreDeltaVsCategoryMedian?: number | null;
 }
 
 export interface CategoryStats {
   categoryName: string;
   avgPrivacyScore: number;
+  medianPrivacyScore?: number;
   avgTrackerCount: number;
   avgCookieCount: number;
   totalDomains: number;
@@ -77,6 +98,7 @@ export interface DomainSummary {
   displayName: string;
   privacyScore: number;
   trackerCount: number;
+  relationReason?: string;
 }
 
 export interface ComparisonLink {
@@ -84,15 +106,22 @@ export interface ComparisonLink {
   otherDisplayName: string;
 }
 
-export type SectionKey = 'trackers' | 'cookies' | 'comparison' | 'history' | 'safety';
+export type SectionKey = 'trackers' | 'cookies' | 'comparison' | 'history' | 'profile';
+
+export interface Verdict {
+  headline: string;
+  keyFindings: string[];
+  interpretation: string;
+}
 
 export interface DomainNarrative {
+  verdict: Verdict;
   intro: string;
   trackerSection: string;
   cookieSection: string;
   comparisonSection: string;
   historySection: string;
-  safetySection: string;
+  profileInterpretation: string;
   aboutSection: string;
   rareTrackerSection?: string;
   recentChangesSection?: string;
@@ -282,14 +311,14 @@ const STABILITY_STABLE_VARIANTS = [
 // ============================================================
 
 const SECTION_ORDERINGS: SectionKey[][] = [
-  ['trackers', 'cookies', 'comparison', 'history', 'safety'],
-  ['comparison', 'trackers', 'cookies', 'history', 'safety'],
-  ['trackers', 'history', 'cookies', 'comparison', 'safety'],
-  ['history', 'trackers', 'comparison', 'cookies', 'safety'],
-  ['safety', 'trackers', 'cookies', 'comparison', 'history'],
-  ['trackers', 'comparison', 'history', 'cookies', 'safety'],
-  ['cookies', 'trackers', 'comparison', 'safety', 'history'],
-  ['comparison', 'history', 'trackers', 'cookies', 'safety'],
+  ['trackers', 'cookies', 'comparison', 'history', 'profile'],
+  ['comparison', 'trackers', 'cookies', 'history', 'profile'],
+  ['trackers', 'history', 'cookies', 'comparison', 'profile'],
+  ['history', 'trackers', 'comparison', 'cookies', 'profile'],
+  ['trackers', 'comparison', 'history', 'cookies', 'profile'],
+  ['trackers', 'comparison', 'history', 'cookies', 'profile'],
+  ['cookies', 'trackers', 'comparison', 'profile', 'history'],
+  ['comparison', 'history', 'trackers', 'cookies', 'profile'],
 ];
 
 function getSectionOrder(domain: string): SectionKey[] {
@@ -411,8 +440,8 @@ export function getHistorySectionTitle(domain: DomainData): string {
   return `${domain.displayName} Privacy History`;
 }
 
-export function getSafetySectionTitle(domain: DomainData): string {
-  return `Is ${domain.displayName} Safe for Privacy?`;
+export function getProfileSectionTitle(domain: DomainData): string {
+  return `What ${domain.displayName}'s Privacy Profile Means`;
 }
 
 // ============================================================
@@ -440,49 +469,58 @@ function generateTrackerNarrative(
 ): string {
   let text = pickVariant(domain.name, TRACKER_INTRO_VARIANTS)(domain.displayName, domain.trackerCount);
 
-  // Relative context with percentiles
-  if (categoryStats && domain.trackerPercentile !== undefined) {
-    if (domain.trackerPercentile >= 90) {
-      text += ` This places it among the most heavily instrumented ${categoryStats.categoryName} sites in the dataset (top ${100 - domain.trackerPercentile}% by tracker count).`;
-    } else if (domain.trackerPercentile <= 10) {
-      text += ` This places it among the least instrumented ${categoryStats.categoryName} sites in the dataset (bottom ${domain.trackerPercentile}% by tracker count).`;
-    } else {
-      const diff = domain.trackerCount - categoryStats.avgTrackerCount;
-      if (diff > 0) {
-        text += ` This is ${Math.round(diff)} more than the average for ${categoryStats.categoryName} sites (${categoryStats.avgTrackerCount.toFixed(1)}).`;
-      } else if (diff < 0) {
-        text += ` This is ${Math.abs(Math.round(diff))} fewer than the average for ${categoryStats.categoryName} sites (${categoryStats.avgTrackerCount.toFixed(1)}).`;
-      } else {
-        text += ` This matches the average for ${categoryStats.categoryName} sites.`;
-      }
-    }
-  } else if (categoryStats) {
+  // Relative context with category comparison
+  if (categoryStats) {
     const diff = domain.trackerCount - categoryStats.avgTrackerCount;
-    if (diff > 0) {
-      text += ` This is ${Math.round(diff)} more than the average for ${categoryStats.categoryName} sites (${categoryStats.avgTrackerCount.toFixed(1)}).`;
-    } else if (diff < 0) {
-      text += ` This is ${Math.abs(Math.round(diff))} fewer than the average for ${categoryStats.categoryName} sites (${categoryStats.avgTrackerCount.toFixed(1)}).`;
+    if (diff > 3) {
+      text += ` This is ${Math.round(diff)} more than the ${categoryStats.categoryName} average of ${categoryStats.avgTrackerCount.toFixed(1)}.`;
+    } else if (diff < -3) {
+      text += ` This is ${Math.abs(Math.round(diff))} fewer than the ${categoryStats.categoryName} average of ${categoryStats.avgTrackerCount.toFixed(1)}.`;
     } else {
-      text += ` This matches the average for ${categoryStats.categoryName} sites.`;
+      text += ` This is close to the ${categoryStats.categoryName} average of ${categoryStats.avgTrackerCount.toFixed(1)}.`;
     }
   }
 
-  text += ` The global average across all ${globalStats.totalDomains.toLocaleString()} scanned domains is ${globalStats.avgTrackerCount.toFixed(1)} trackers.`;
+  // Purpose composition — the key differentiator
+  const pa = domain.purposeAnalysis;
+  if (pa && domain.trackerCount > 0) {
+    const parts: string[] = [];
+    if (pa.breakdown.advertising > 0) parts.push(`${pa.breakdown.advertising} advertising`);
+    if (pa.breakdown.analytics > 0) parts.push(`${pa.breakdown.analytics} analytics`);
+    if (pa.breakdown.social > 0) parts.push(`${pa.breakdown.social} social media`);
+    if (pa.breakdown.fingerprinting > 0) parts.push(`${pa.breakdown.fingerprinting} fingerprinting`);
+    if (pa.breakdown.functional > 0) parts.push(`${pa.breakdown.functional} functional`);
+    if (pa.breakdown.unknown > 0) parts.push(`${pa.breakdown.unknown} uncategorized`);
+
+    if (parts.length > 0) {
+      text += ` By purpose: ${parts.join(', ')}.`;
+    }
+
+    // Interpret dominant purpose
+    if (pa.isSkewed && pa.dominantPurpose === 'advertising') {
+      text += ` The tracker stack is advertising-heavy, primarily serving retargeting and programmatic ad networks.`;
+    } else if (pa.isSkewed && pa.dominantPurpose === 'analytics') {
+      text += ` The tracker stack is analytics-focused, with most tools measuring on-site behavior rather than cross-site tracking.`;
+    } else if (pa.stackProfile === 'mixed') {
+      text += ` The tracker stack spans multiple purposes, combining analytics, advertising, and content delivery.`;
+    }
+
+    // Name high-risk trackers specifically
+    const highRisk = pa.classified.filter(c => c.classification.risk === 'high').slice(0, 5);
+    if (highRisk.length > 0) {
+      const names = highRisk.map(t => `${t.classification.name} (${t.classification.purpose})`);
+      text += ` Notable high-risk trackers: ${names.join(', ')}.`;
+    }
+  } else if (domain.trackerCount === 0) {
+    text += ` No third-party trackers were detected during the most recent scan.`;
+    if (categoryStats) {
+      const pct = ((categoryStats.zeroTrackerCount / categoryStats.totalDomains) * 100).toFixed(0);
+      text += ` Only ${pct}% of ${categoryStats.categoryName} sites share this zero-tracker profile.`;
+    }
+  }
 
   if (domain.hasRareTracker && domain.rarestTracker) {
-    text += ` One notable detection: ${domain.rarestTracker}, which appears on only ${domain.rarestTrackerDomainCount?.toLocaleString()} other domains in the dataset.`;
-  }
-
-  if (domain.trackers && domain.trackers.length > 0) {
-    text += ` The following trackers were detected:`;
-    for (const tracker of domain.trackers) {
-      text += ` ${tracker.name} (found on ${tracker.globalDomainCount.toLocaleString()} other domains).`;
-    }
-  } else {
-    text += ` No third-party trackers were detected on ${domain.displayName} during the most recent scan.`;
-    if (categoryStats) {
-      text += ` ${categoryStats.zeroTrackerCount} out of ${categoryStats.totalDomains} scanned domains in the ${categoryStats.categoryName} category also load zero trackers.`;
-    }
+    text += ` One unusual detection: ${domain.rarestTracker}, found on only ${domain.rarestTrackerDomainCount?.toLocaleString()} other domains in the dataset.`;
   }
 
   return text;
@@ -496,13 +534,39 @@ function generateCookieNarrative(
   let text = pickVariant(domain.name, COOKIE_INTRO_VARIANTS)(domain.displayName, domain.cookieCount);
 
   if (categoryStats) {
-    text += ` The average for ${categoryStats.categoryName} sites is ${categoryStats.avgCookieCount.toFixed(1)} cookies.`;
+    const diff = domain.cookieCount - categoryStats.avgCookieCount;
+    if (diff > 5) {
+      text += ` This is notably above the ${categoryStats.categoryName} average of ${categoryStats.avgCookieCount.toFixed(1)}.`;
+    } else if (diff < -5) {
+      text += ` This is below the ${categoryStats.categoryName} average of ${categoryStats.avgCookieCount.toFixed(1)}.`;
+    } else {
+      text += ` This is close to the ${categoryStats.categoryName} average of ${categoryStats.avgCookieCount.toFixed(1)}.`;
+    }
   }
 
-  text += ` The global average across all scanned domains is ${globalStats.avgCookieCount.toFixed(1)} cookies.`;
-
-  if (domain.firstPartyCookies !== undefined && domain.thirdPartyCookies !== undefined) {
-    text += ` Of these, ${domain.firstPartyCookies} are first-party cookies and ${domain.thirdPartyCookies} are third-party cookies.`;
+  // Cookie persistence — the differentiator
+  const cp = domain.cookiePersistence;
+  if (cp) {
+    if (cp.persistenceBand === 'long-lived') {
+      text += ` Most cookies are long-lived (persisting over 30 days), which enables cross-session visitor identification.`;
+      if (cp.maxDaysObserved > 0) {
+        text += ` The longest cookie observed persists for ${cp.maxDaysObserved} days.`;
+      }
+    } else if (cp.persistenceBand === 'session-only') {
+      text += ` All cookies are session-based — they expire when the browser closes and do not persist between visits.`;
+    } else if (cp.persistenceBand === 'short-lived') {
+      text += ` Most cookies are short-lived (under 24 hours), limiting persistent tracking ability.`;
+    } else {
+      // mixed
+      const parts: string[] = [];
+      if (cp.sessionCount > 0) parts.push(`${cp.sessionCount} session`);
+      if (cp.shortLivedCount > 0) parts.push(`${cp.shortLivedCount} short-lived`);
+      if (cp.mediumLivedCount > 0) parts.push(`${cp.mediumLivedCount} medium-lived`);
+      if (cp.longLivedCount > 0) parts.push(`${cp.longLivedCount} long-lived`);
+      if (parts.length > 1) {
+        text += ` Cookie persistence is mixed: ${parts.join(', ')}.`;
+      }
+    }
   }
 
   return text;
@@ -517,17 +581,37 @@ function generateComparisonNarrative(
   let text = '';
 
   if (categoryStats && domain.categoryRank) {
-    text += `Among ${categoryStats.totalDomains} ${categoryStats.categoryName} sites in our dataset, ${domain.displayName} ranks ${domain.categoryRank} by privacy score.`;
-    text += ` The highest-scoring ${categoryStats.categoryName} site is ${categoryStats.topDomain} with a score of ${categoryStats.topScore}.`;
-    text += ` The lowest-scoring is ${categoryStats.bottomDomain} with a score of ${categoryStats.bottomScore}.`;
+    // Quartile framing instead of raw rank
+    const quartileLabels: Record<string, string> = {
+      top: 'in the top quartile',
+      upper: 'in the upper half',
+      lower: 'in the lower half',
+      bottom: 'in the bottom quartile',
+    };
+    const quartileLabel = domain.categoryQuartile
+      ? quartileLabels[domain.categoryQuartile] || ''
+      : '';
+
+    text += `Among ${categoryStats.totalDomains} ${categoryStats.categoryName} sites, ${domain.displayName} ranks ${domain.categoryRank} by privacy score`;
+    if (quartileLabel) text += ` (${quartileLabel})`;
+    text += '.';
+
+    // Use median for comparison when available
+    const median = categoryStats.medianPrivacyScore ?? categoryStats.avgPrivacyScore;
+    const delta = domain.privacyScore - median;
+    if (Math.abs(delta) > 5) {
+      text += ` Its score of ${domain.privacyScore} is ${Math.abs(Math.round(delta))} points ${delta > 0 ? 'above' : 'below'} the category median of ${Math.round(median)}.`;
+    }
+
+    text += ` The top-scoring site is ${categoryStats.topDomain} (${categoryStats.topScore}), the lowest is ${categoryStats.bottomDomain} (${categoryStats.bottomScore}).`;
   } else {
     text += `${domain.displayName} has a privacy score of ${domain.privacyScore} out of 100.`;
   }
 
   if (comparisonPages.length > 0) {
-    text += ` Direct comparisons are available for ${domain.displayName} against:`;
+    text += ` Head-to-head comparisons:`;
     for (const comp of comparisonPages.slice(0, 3)) {
-      text += ` ${comp.otherDisplayName} (comparison report).`;
+      text += ` ${domain.displayName} vs ${comp.otherDisplayName}.`;
     }
   }
 
@@ -570,30 +654,178 @@ function generateHistoryNarrative(
   return text;
 }
 
-// SAFETY RULE: This function MUST NEVER output verdicts.
-// It states: score, average, tracker count, stability. Period.
-function generateSafetyNarrative(
+// ============================================================
+// VERDICT GENERATOR (above-the-fold insight)
+// ============================================================
+
+function generateVerdict(
+  domain: DomainData,
+  categoryStats: CategoryStats | null,
+  globalStats: GlobalStats
+): Verdict {
+  const findings: string[] = [];
+  let headline = '';
+
+  // ── Headline: one sentence that captures what's unusual ──
+  if (categoryStats) {
+    const ratio = categoryStats.avgTrackerCount > 0
+      ? domain.trackerCount / categoryStats.avgTrackerCount
+      : 0;
+
+    if (domain.trackerCount === 0) {
+      headline = `No third-party trackers detected — uncommon for ${categoryStats.categoryName} sites`;
+    } else if (ratio >= 2.5) {
+      headline = `Significantly higher tracker load than most ${categoryStats.categoryName} sites`;
+    } else if (ratio >= 1.5) {
+      headline = `Above-average tracker presence for ${categoryStats.categoryName} sites`;
+    } else if (ratio <= 0.5 && domain.trackerCount > 0) {
+      headline = `Lower tracker footprint than most ${categoryStats.categoryName} sites`;
+    } else {
+      headline = `Typical tracking profile for ${categoryStats.categoryName} sites`;
+    }
+  } else {
+    if (domain.trackerCount === 0) {
+      headline = 'No third-party trackers detected';
+    } else if (domain.trackerCount > globalStats.avgTrackerCount * 2) {
+      headline = 'Above-average third-party tracker presence';
+    } else {
+      headline = `${domain.trackerCount} third-party trackers detected`;
+    }
+  }
+
+  // ── Key findings (3-5 bullets) ──
+
+  // Finding 1: Tracker count vs category
+  if (categoryStats && categoryStats.avgTrackerCount > 0) {
+    const ratio = domain.trackerCount / categoryStats.avgTrackerCount;
+    if (ratio >= 2) {
+      findings.push(`${domain.trackerCount} third-party trackers — ${ratio.toFixed(1)}× the ${categoryStats.categoryName} average`);
+    } else if (ratio <= 0.5 && domain.trackerCount > 0) {
+      findings.push(`Only ${domain.trackerCount} trackers — well below the ${categoryStats.categoryName} average of ${categoryStats.avgTrackerCount.toFixed(1)}`);
+    } else {
+      findings.push(`${domain.trackerCount} third-party trackers detected (${categoryStats.categoryName} average: ${categoryStats.avgTrackerCount.toFixed(1)})`);
+    }
+  } else {
+    findings.push(`${domain.trackerCount} third-party trackers detected (global average: ${globalStats.avgTrackerCount.toFixed(1)})`);
+  }
+
+  // Finding 2: Purpose composition (if available)
+  const pa = domain.purposeAnalysis;
+  if (pa && pa.dominantPurpose && pa.isSkewed) {
+    const pctLabel = Math.round(pa.dominantPurposeShare * 100);
+    const purposeLabels: Record<string, string> = {
+      advertising: 'advertising',
+      analytics: 'analytics',
+      social: 'social media',
+      fingerprinting: 'fingerprinting',
+    };
+    const label = purposeLabels[pa.dominantPurpose] || pa.dominantPurpose;
+    findings.push(`Tracker stack dominated by ${label} technologies (${pctLabel}% of detected trackers)`);
+  } else if (pa && pa.stackProfile === 'mixed' && domain.trackerCount >= 3) {
+    findings.push('Mixed tracker stack spanning advertising, analytics, and social purposes');
+  } else if (pa && pa.stackProfile === 'functional-only') {
+    findings.push('All detected third-party resources are functional (CDN, hosting) — no tracking-purpose technologies');
+  }
+
+  // Finding 3: Cookie persistence (if available)
+  const cp = domain.cookiePersistence;
+  if (cp) {
+    if (cp.persistenceBand === 'long-lived') {
+      findings.push(`Long-lived cookies detected (up to ${cp.maxDaysObserved} days) — indicates cross-session tracking`);
+    } else if (cp.persistenceBand === 'session-only') {
+      findings.push('Cookies are session-only — no persistent cross-visit tracking detected');
+    } else if (cp.longLivedCount > 0) {
+      findings.push(`${cp.longLivedCount} long-lived cookie${cp.longLivedCount > 1 ? 's' : ''} detected alongside ${cp.sessionCount + cp.shortLivedCount} short-lived/session cookies`);
+    }
+  }
+
+  // Finding 4: Category ranking
+  if (domain.categoryQuartile && categoryStats) {
+    const quartileLabels: Record<string, string> = {
+      top: 'top quartile',
+      upper: 'upper half',
+      lower: 'lower half',
+      bottom: 'bottom quartile',
+    };
+    const label = quartileLabels[domain.categoryQuartile] || domain.categoryQuartile;
+    findings.push(`Privacy score ranks in the ${label} of ${categoryStats.categoryName} sites`);
+  }
+
+  // ── Interpretation ──
+  let interpretation = '';
+  if (pa && pa.isSkewed && pa.dominantPurpose === 'advertising') {
+    interpretation = `${domain.displayName}'s privacy profile is driven primarily by advertising and retargeting technologies. `;
+    interpretation += 'Users visiting this site should expect their browsing behavior to be tracked for ad targeting across multiple networks.';
+  } else if (pa && pa.isSkewed && pa.dominantPurpose === 'analytics') {
+    interpretation = `${domain.displayName} primarily uses analytics and measurement tools. `;
+    interpretation += 'While these track user behavior on-site, they are generally lower risk than advertising trackers that share data across sites.';
+  } else if (domain.trackerCount === 0) {
+    interpretation = `${domain.displayName} operates with no detected third-party trackers, indicating a minimal data-sharing footprint.`;
+  } else {
+    interpretation = `${domain.displayName} uses a mix of third-party technologies for analytics, advertising, and content delivery. `;
+    if (categoryStats) {
+      const median = categoryStats.medianPrivacyScore ?? categoryStats.avgPrivacyScore;
+      if (domain.privacyScore < median - 10) {
+        interpretation += `Its privacy score is notably below the ${categoryStats.categoryName} median, suggesting heavier third-party instrumentation than peers.`;
+      } else if (domain.privacyScore > median + 10) {
+        interpretation += `Its privacy score is above the ${categoryStats.categoryName} median, indicating lighter third-party instrumentation than peers.`;
+      } else {
+        interpretation += `Its privacy profile is comparable to the typical ${categoryStats.categoryName} site.`;
+      }
+    }
+  }
+
+  return { headline, keyFindings: findings, interpretation };
+}
+
+// ============================================================
+// PROFILE INTERPRETATION (replaces "Is X Safe?")
+// ============================================================
+
+function generateProfileInterpretation(
   domain: DomainData,
   categoryStats: CategoryStats | null,
   globalStats: GlobalStats,
   scanHistory: ScanHistory[]
 ): string {
-  let text = `${domain.displayName} has a privacy score of ${domain.privacyScore} out of 100.`;
-  text += ` The average score across all ${globalStats.totalDomains.toLocaleString()} scanned domains is ${globalStats.avgPrivacyScore.toFixed(1)}.`;
+  let text = '';
 
-  if (categoryStats) {
-    text += ` The average for ${categoryStats.categoryName} sites is ${categoryStats.avgPrivacyScore.toFixed(1)}.`;
+  // Score context with quartile framing
+  if (categoryStats && domain.categoryQuartile) {
+    const median = categoryStats.medianPrivacyScore ?? categoryStats.avgPrivacyScore;
+    const delta = domain.privacyScore - median;
+    const direction = delta > 0 ? 'above' : 'below';
+    text += `${domain.displayName}'s privacy score of ${domain.privacyScore} places it ${Math.abs(Math.round(delta))} points ${direction} the ${categoryStats.categoryName} median of ${Math.round(median)}.`;
+  } else {
+    text += `${domain.displayName} has a privacy score of ${domain.privacyScore} out of 100.`;
+    text += ` The global average across ${globalStats.totalDomains.toLocaleString()} domains is ${globalStats.avgPrivacyScore.toFixed(1)}.`;
   }
 
-  text += ` ${domain.displayName} loads ${domain.trackerCount} third-party trackers, compared to a`;
-  if (categoryStats) {
-    text += ` category average of ${categoryStats.avgTrackerCount.toFixed(1)} and a`;
+  // Purpose-driven interpretation
+  const pa = domain.purposeAnalysis;
+  if (pa && pa.isSkewed && pa.dominantPurpose === 'advertising') {
+    text += ` The majority of its tracker stack consists of advertising technologies, which share user data across ad networks for retargeting.`;
+    text += ` Privacy-conscious users should be aware of cross-site tracking on this domain.`;
+  } else if (pa && pa.isSkewed && pa.dominantPurpose === 'analytics') {
+    text += ` Its tracker stack is primarily analytics-focused, which typically involves on-site behavior measurement rather than cross-site tracking.`;
+  } else if (pa && pa.stackProfile === 'mixed') {
+    text += ` The third-party stack spans multiple purposes including analytics, advertising, and social integrations.`;
   }
-  text += ` global average of ${globalStats.avgTrackerCount.toFixed(1)}.`;
 
-  text += ` ${domain.displayName} has been scanned ${scanHistory.length} times. Its stability classification is ${domain.stabilityTier}, based on observed configuration changes across scans.`;
-  text += ` For details on how scores are calculated, see our methodology.`;
+  // Cookie persistence interpretation
+  const cp = domain.cookiePersistence;
+  if (cp && cp.persistenceBand === 'long-lived') {
+    text += ` Cookie persistence is notably high, with cookies lasting up to ${cp.maxDaysObserved} days, enabling long-term visitor identification.`;
+  } else if (cp && cp.persistenceBand === 'session-only') {
+    text += ` Cookies are session-based and do not persist between visits.`;
+  }
 
+  // Stability context
+  if (scanHistory.length >= 3) {
+    text += ` Across ${scanHistory.length} scans, ${domain.displayName}'s privacy configuration has been ${domain.stabilityTier.toLowerCase()}.`;
+  }
+
+  text += ` For details on scoring methodology, see our methodology page.`;
   return text;
 }
 
@@ -613,12 +845,13 @@ export function generateDomainNarrative(
   relatedDomains: DomainSummary[],
   comparisonPages: ComparisonLink[]
 ): DomainNarrative {
+  const verdict = generateVerdict(domain, categoryStats, globalStats);
   const intro = generateIntro(domain, categoryStats, globalStats, scanHistory);
   const trackerSection = generateTrackerNarrative(domain, categoryStats, globalStats);
   const cookieSection = generateCookieNarrative(domain, categoryStats, globalStats);
   const comparisonSection = generateComparisonNarrative(domain, categoryStats, relatedDomains, comparisonPages);
   const historySection = generateHistoryNarrative(domain, scanHistory);
-  const safetySection = generateSafetyNarrative(domain, categoryStats, globalStats, scanHistory);
+  const profileInterpretation = generateProfileInterpretation(domain, categoryStats, globalStats, scanHistory);
   const aboutSection = generateAboutSection(globalStats);
 
   // ============================================================
@@ -719,8 +952,8 @@ export function generateDomainNarrative(
 
   // Word count
   const allSections = [
-    intro, trackerSection, cookieSection, comparisonSection,
-    historySection, safetySection, aboutSection,
+    verdict.interpretation, intro, trackerSection, cookieSection, comparisonSection,
+    historySection, profileInterpretation, aboutSection,
     rareTrackerSection, recentChangesSection, categoryRankSection,
     trackerDistributionSection, zeroTrackerSection, highCookieSection,
     scoreImproveSection, scoreDeclineSection,
@@ -728,12 +961,13 @@ export function generateDomainNarrative(
   const totalWordCount = allSections.join(' ').split(/\s+/).length;
 
   return {
+    verdict,
     intro,
     trackerSection,
     cookieSection,
     comparisonSection,
     historySection,
-    safetySection,
+    profileInterpretation,
     aboutSection,
     rareTrackerSection,
     recentChangesSection,
