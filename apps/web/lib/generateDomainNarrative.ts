@@ -390,31 +390,67 @@ const INTRO_STRUCTURE_VARIANTS: IntroGenerator[] = [
 // TITLE GENERATION
 // ============================================================
 
-const TITLE_VARIANTS = [
-  (name: string, n: number) => `${name} Privacy Analysis: ${n} Trackers, Cookies & Score`,
-  (name: string, n: number) => `${name} Tracking Analysis: ${n} Trackers Detected`,
-  (name: string, n: number) => `Does ${name} Track Users? ${n} Trackers Detected`,
-  (name: string, _n: number) => `${name} Privacy Score & Tracker Report`,
-  (name: string, n: number) => `How ${name} Tracks Visitors: ${n} Trackers Found`,
-  (name: string, _n: number) => `${name} Cookie & Tracker Report: Privacy Analysis`,
-  (name: string, n: number) => `${name} Privacy Score Explained: ${n} Trackers`,
-  (name: string, n: number) => `Is ${name} Safe? Privacy Score & ${n} Trackers Analyzed`,
+// ============================================================
+// TITLE GENERATION — Score + key insight in every title
+// ============================================================
+
+type TitleGenerator = (d: DomainData) => string;
+
+function getScoreInsight(d: DomainData): string {
+  const pa = d.purposeAnalysis;
+  if (d.trackerCount === 0) return 'No Trackers';
+  if (pa?.isSkewed && pa.dominantPurpose === 'advertising') return 'Ad-Heavy';
+  if (pa?.isSkewed && pa.dominantPurpose === 'analytics') return 'Analytics-Heavy';
+  if (d.trackerCount > 10) return `${d.trackerCount} Trackers`;
+  return `${d.trackerCount} Tracker${d.trackerCount > 1 ? 's' : ''}`;
+}
+
+const TITLE_GENERATORS: TitleGenerator[] = [
+  (d) => `${d.displayName} Privacy Score: ${d.privacyScore}/100 (${getScoreInsight(d)})`,
+  (d) => `${d.displayName}: ${d.privacyScore}/100 Privacy Score — ${getScoreInsight(d)}`,
+  (d) => `${d.displayName} Privacy Report: ${d.privacyScore}/100, ${getScoreInsight(d)}`,
+  (d) => `${d.displayName} Tracking Report: Score ${d.privacyScore}/100 (${getScoreInsight(d)})`,
+  (d) => `How Private Is ${d.displayName}? Score ${d.privacyScore}/100, ${getScoreInsight(d)}`,
+  (d) => `${d.displayName} Privacy Check: ${d.privacyScore}/100 — ${getScoreInsight(d)}`,
 ];
 
 export function generateDomainTitle(domain: DomainData): string {
-  const variant = pickVariant(domain.name, TITLE_VARIANTS);
-  return variant(domain.displayName, domain.trackerCount);
+  const generator = pickVariant(domain.name, TITLE_GENERATORS);
+  return generator(domain);
 }
 
 export function generateDomainDescription(
   domain: DomainData,
   categoryStats: CategoryStats | null
 ): string {
-  let desc = `${domain.displayName} loads ${domain.trackerCount} third-party trackers and has a privacy score of ${domain.privacyScore}/100.`;
-  if (categoryStats) {
-    desc += ` Compare to the ${categoryStats.categoryName} average of ${categoryStats.avgTrackerCount.toFixed(1)} trackers.`;
+  // Lead with the key insight, not just counts
+  const pa = domain.purposeAnalysis;
+  let desc = `${domain.displayName} privacy score: ${domain.privacyScore}/100.`;
+
+  if (domain.trackerCount === 0) {
+    desc += ' No third-party trackers detected.';
+  } else if (pa?.isSkewed && pa.dominantPurpose === 'advertising') {
+    desc += ` ${domain.trackerCount} trackers detected, mostly advertising.`;
+  } else if (pa?.isSkewed && pa.dominantPurpose === 'analytics') {
+    desc += ` ${domain.trackerCount} trackers detected, mostly analytics.`;
+  } else {
+    desc += ` ${domain.trackerCount} third-party trackers detected.`;
   }
-  desc += ` Scanned ${domain.scanCount} times.`;
+
+  if (categoryStats) {
+    const median = categoryStats.medianPrivacyScore ?? categoryStats.avgPrivacyScore;
+    const delta = domain.privacyScore - median;
+    if (delta > 5) {
+      desc += ` Above the ${categoryStats.categoryName} median.`;
+    } else if (delta < -5) {
+      desc += ` Below the ${categoryStats.categoryName} median.`;
+    }
+  }
+
+  // Truncate to 155 chars
+  if (desc.length > 155) {
+    desc = desc.substring(0, 152) + '...';
+  }
   return desc;
 }
 
