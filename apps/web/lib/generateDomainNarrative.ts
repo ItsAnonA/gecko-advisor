@@ -61,6 +61,8 @@ export interface DomainData {
   };
   categoryQuartile?: string | null;
   scoreDeltaVsCategoryMedian?: number | null;
+  isLikelyUndercounted?: boolean;
+  scanMethod?: string;
 }
 
 export interface CategoryStats {
@@ -397,8 +399,9 @@ const INTRO_STRUCTURE_VARIANTS: IntroGenerator[] = [
 type TitleGenerator = (d: DomainData) => string;
 
 function getScoreInsight(d: DomainData): string {
+  if (d.isLikelyUndercounted && d.trackerCount <= 1) return 'Static Analysis';
   const pa = d.purposeAnalysis;
-  if (d.trackerCount === 0) return 'No Trackers';
+  if (d.trackerCount === 0) return 'No Trackers Detected';
   if (pa?.isSkewed && pa.dominantPurpose === 'advertising') return 'Ad-Heavy';
   if (pa?.isSkewed && pa.dominantPurpose === 'analytics') return 'Analytics-Heavy';
   if (d.trackerCount > 10) return `${d.trackerCount} Trackers`;
@@ -427,8 +430,10 @@ export function generateDomainDescription(
   const pa = domain.purposeAnalysis;
   let desc = `${domain.displayName} privacy score: ${domain.privacyScore}/100.`;
 
-  if (domain.trackerCount === 0) {
-    desc += ' No third-party trackers detected.';
+  if (domain.trackerCount === 0 && domain.isLikelyUndercounted) {
+    desc += ' Static HTML analysis — JS-loaded trackers not captured.';
+  } else if (domain.trackerCount === 0) {
+    desc += ' No third-party trackers detected in initial page load.';
   } else if (pa?.isSkewed && pa.dominantPurpose === 'advertising') {
     desc += ` ${domain.trackerCount} trackers detected, mostly advertising.`;
   } else if (pa?.isSkewed && pa.dominantPurpose === 'analytics') {
@@ -548,10 +553,14 @@ function generateTrackerNarrative(
       text += ` Notable high-risk trackers: ${names.join(', ')}.`;
     }
   } else if (domain.trackerCount === 0) {
-    text += ` No third-party trackers were detected during the most recent scan.`;
-    if (categoryStats) {
-      const pct = ((categoryStats.zeroTrackerCount / categoryStats.totalDomains) * 100).toFixed(0);
-      text += ` Only ${pct}% of ${categoryStats.categoryName} sites share this zero-tracker profile.`;
+    if (domain.isLikelyUndercounted) {
+      text += ` No third-party trackers were found in the static HTML. However, this scan does not execute JavaScript — trackers loaded dynamically (common on modern sites) may not be reflected in these results.`;
+    } else {
+      text += ` No third-party trackers were detected during the most recent scan.`;
+      if (categoryStats) {
+        const pct = ((categoryStats.zeroTrackerCount / categoryStats.totalDomains) * 100).toFixed(0);
+        text += ` Only ${pct}% of ${categoryStats.categoryName} sites share this zero-tracker profile.`;
+      }
     }
   }
 
@@ -701,15 +710,19 @@ function generateVerdict(
 ): Verdict {
   const findings: string[] = [];
   let headline = '';
+  const undercounted = domain.isLikelyUndercounted && domain.trackerCount <= 1;
 
   // ── Headline: one sentence that captures what's unusual ──
-  if (categoryStats) {
+  if (undercounted) {
+    // Honest headline when scan is likely incomplete
+    headline = `Static analysis only — dynamically loaded trackers may not be reflected`;
+  } else if (categoryStats) {
     const ratio = categoryStats.avgTrackerCount > 0
       ? domain.trackerCount / categoryStats.avgTrackerCount
       : 0;
 
     if (domain.trackerCount === 0) {
-      headline = `No third-party trackers detected — uncommon for ${categoryStats.categoryName} sites`;
+      headline = `No third-party trackers detected in initial page load`;
     } else if (ratio >= 2.5) {
       headline = `Significantly higher tracker load than most ${categoryStats.categoryName} sites`;
     } else if (ratio >= 1.5) {
@@ -719,9 +732,9 @@ function generateVerdict(
     } else {
       headline = `Typical tracking profile for ${categoryStats.categoryName} sites`;
     }
-  } else {
+  } else if (!undercounted) {
     if (domain.trackerCount === 0) {
-      headline = 'No third-party trackers detected';
+      headline = 'No third-party trackers detected in initial page load';
     } else if (domain.trackerCount > globalStats.avgTrackerCount * 2) {
       headline = 'Above-average third-party tracker presence';
     } else {
@@ -730,6 +743,11 @@ function generateVerdict(
   }
 
   // ── Key findings (3-5 bullets) ──
+
+  // Add undercount warning as first finding when applicable
+  if (undercounted) {
+    findings.push('This scan analyzes initial page load (static HTML) — trackers loaded via JavaScript are not captured');
+  }
 
   // Finding 1: Tracker count vs category
   if (categoryStats && categoryStats.avgTrackerCount > 0) {
@@ -795,8 +813,10 @@ function generateVerdict(
   } else if (pa && pa.isSkewed && pa.dominantPurpose === 'analytics') {
     interpretation = `${domain.displayName} primarily uses analytics and measurement tools. `;
     interpretation += 'While these track user behavior on-site, they are generally lower risk than advertising trackers that share data across sites.';
+  } else if (domain.trackerCount === 0 && domain.isLikelyUndercounted) {
+    interpretation = `This analysis is based on static HTML only and does not execute JavaScript. ${domain.displayName} likely loads additional trackers dynamically that are not captured in this scan. A browser-based scan would provide a more complete picture.`;
   } else if (domain.trackerCount === 0) {
-    interpretation = `${domain.displayName} operates with no detected third-party trackers, indicating a minimal data-sharing footprint.`;
+    interpretation = `${domain.displayName} operates with no detected third-party trackers in its initial page load, indicating a minimal data-sharing footprint.`;
   } else {
     interpretation = `${domain.displayName} uses a mix of third-party technologies for analytics, advertising, and content delivery. `;
     if (categoryStats) {

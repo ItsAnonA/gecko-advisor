@@ -202,6 +202,19 @@ export function NarrativeContent({ narrative, domain, relatedDomains, sameTracke
             {narrative.verdict.headline}
           </h2>
         </div>
+
+        {/* Scan limitation warning — visible, not hidden */}
+        {domain.isLikelyUndercounted && domain.trackerCount <= 1 && (
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+            <span className="text-amber-500 mt-0.5 shrink-0">&#9888;</span>
+            <p className="text-sm text-amber-800">
+              <strong>Limited scan:</strong> This analysis is based on initial page load (static HTML).
+              Trackers loaded via JavaScript — which is how most modern tracking works — are not captured.
+              Actual tracker count may be higher.
+            </p>
+          </div>
+        )}
+
         <ul className="space-y-1.5 mb-3">
           {narrative.verdict.keyFindings.map((finding, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-gecko-700">

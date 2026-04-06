@@ -457,6 +457,12 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
           else categoryQuartile = 'bottom';
         }
 
+        // ── Undercount detection ──
+        // All scans are static HTML (no JS execution). Flag when results are
+        // likely incomplete — low tracker count on domains that almost certainly
+        // have JS-loaded trackers.
+        const isLikelyUndercounted = trackerEvidence.length <= 1; // Static fetch misses JS-loaded trackers
+
         // Same-tracker domains (top 5 trackers, 4 domains each — strengthens crawl graph)
         const sameTrackerDomains: Record<string, string[]> = {};
         const topTrackers = trackerNames.slice(0, 5);
@@ -506,6 +512,8 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
             cookiePersistence,
             categoryQuartile,
             scoreDeltaVsCategoryMedian,
+            isLikelyUndercounted,
+            scanMethod: 'http_fetch' as const,
           },
           scanHistory: scanHistory.map(s => ({
             date: s.finishedAt?.toISOString() || '',
