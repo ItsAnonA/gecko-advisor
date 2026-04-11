@@ -368,7 +368,7 @@ export async function getRelatedDomains(
     where: {
       domain: { not: currentDomain },
       isIndexed: true,
-      scanCount: { gte: 2 },
+      scanCount: { gte: 3 },
       latestScan: {
         status: 'done',
         score: { gte: scoreMin, lte: scoreMax },

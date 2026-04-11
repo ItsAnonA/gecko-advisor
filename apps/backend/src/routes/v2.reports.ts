@@ -109,7 +109,7 @@ async function getRelatedDomainsForReport(
         domain: { not: normalized },
         categoryId,
         isIndexed: true,
-        scanCount: { gte: 2 },
+        scanCount: { gte: 3 },
         latestScan: { status: 'done', score: { gte: scoreMin, lte: scoreMax } },
       },
       select: {

@@ -361,15 +361,15 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
             },
           }),
 
-          // Related domains in same category (15 closest by score, ranked by tier + depth)
+          // Related domains in same category — only link to quality pages (3+ scans)
           domain.categoryId
             ? prisma.domain.findMany({
                 where: {
                   categoryId: domain.categoryId,
                   id: { not: domain.id },
-                  scanCount: { gte: 2 },
+                  scanCount: { gte: 3 },
                   isIndexed: true,
-                  latestScan: { status: 'done', score: { not: null } },
+                  latestScan: { status: 'done', score: { gte: 60, not: null } },
                 },
                 orderBy: [
                   { tierScore: 'desc' },
@@ -478,6 +478,7 @@ narrativeV2Router.get('/domain/:domain/narrative-context', async (req, res) => {
                 AND s.id = d."latestScanId"
                 AND d.domain != ${domainName}
                 AND d."isIndexed" = true
+                AND d."scanCount" >= 3
               LIMIT 4
             `;
             sameTrackerDomains[trackerName] = others.map(o => o.domain);
