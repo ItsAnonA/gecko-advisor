@@ -21,8 +21,9 @@ import { fetchReports } from '@/lib/api';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 
-/** Pages 1-10 get indexed; beyond that, noindex but follow links */
+/** Pages 1-10 get indexed; 11-50 noindex but follow; 51+ noindex nofollow */
 const MAX_INDEXED_PAGE = 10;
+const MAX_CRAWLABLE_PAGE = 50;
 
 interface Props {
   searchParams: Promise<{ page?: string }>;
@@ -43,7 +44,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     },
     robots: {
       index: shouldIndex,
-      follow: true, // Always follow links for discovery
+      follow: page <= MAX_CRAWLABLE_PAGE, // Stop link following beyond page 50
     },
     openGraph: {
       title: 'Privacy Reports',

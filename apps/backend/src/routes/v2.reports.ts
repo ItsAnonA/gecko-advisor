@@ -434,8 +434,8 @@ reportV2Router.get('/stats', async (_req, res) => {
  * Individual domain pages handle their own robots via index-gating.ts.
  */
 const REPORTS_QUALITY_GATE = {
-  MIN_SCORE: 40, // D-grade+ (looser than sitemap's 60 — gives Google contrast)
-  MIN_EVIDENCE: 3, // Looser than sitemap's 5 — allows partial scans into discovery
+  MIN_SCORE: 60, // C-grade+ (aligned with sitemap — no more thin page leakage)
+  MIN_EVIDENCE: 5, // Aligned with sitemap — only complete scans
   MAX_AGE_DAYS: 90,
 };
 
