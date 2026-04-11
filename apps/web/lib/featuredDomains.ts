@@ -35,6 +35,92 @@ SPDX-License-Identifier: MIT
 
 import type { RankingEntry, RankingsData, RankingType } from './rankings';
 
+/** Data-quality gate — returns true only if the rankings payload is credible
+ * enough to feed a curated featured section.
+ *
+ * Why this exists: on 2026-04-11 we sampled production data and found that
+ * 3 of 4 ranking hubs had non-credible source data. The root cause is that
+ * commit `5c71f47` (Puppeteer browser scan for JS-loaded tracker detection)
+ * has never been run as a backfill — everything currently in the rankings
+ * was scanned with the older static-HTML analyzer, which misses most
+ * runtime-injected trackers. Concretely that meant:
+ *
+ *   - `/most-tracked` top entry had 4 trackers (reality: 30-80)
+ *   - `/least-private` top 100 averaged 2.9 trackers
+ *   - `/privacy-index` top 100 all tied at score 100 (no variance)
+ *   - `/most-cookies` worked fine (cookies are detectable via HTTP headers)
+ *
+ * Shipping curated narratives over that data would mean publishing
+ * sentences like "Bmmagazine runs 4 third-party trackers — one of the
+ * highest counts we've ever measured" which is objectively false. The
+ * gate blocks the featured section from rendering until the data can
+ * support it, while letting `/most-cookies` ship its real content.
+ *
+ * Principle: **no credible data → no featured section.** The rule lives
+ * at the entry point of `selectFeaturedDomains` (not buried in the
+ * component) so it's visible to anyone reading the selection path.
+ *
+ * DO NOT broaden or delete these thresholds to make the featured section
+ * appear everywhere. The thresholds are there specifically to fail against
+ * current data. After the Puppeteer backfill runs, verify by re-sampling
+ * the 4 rankings endpoints — real data will pass the gates naturally. */
+function passesDataQualityGate(
+  rankings: RankingsData,
+  hubType: RankingType
+): boolean {
+  const entries = rankings.rankings;
+  if (entries.length === 0) return false;
+
+  switch (hubType) {
+    case 'most-tracked': {
+      // The hub is called "Most Tracked Websites". If the top entry runs
+      // only a handful of trackers, the hub is meaningless — in the real
+      // world the worst offenders run 30-80 third-party trackers. Gate at
+      // 15 as a conservative floor that still filters out current broken
+      // data (top = 4) without being so aggressive that a partial backfill
+      // couldn't pass it.
+      const topTrackerCount = entries[0]?.trackers ?? 0;
+      return topTrackerCount >= 15;
+    }
+    case 'least-private': {
+      // Two-part check. A credible "least private" ranking needs BOTH:
+      //   1. Bad scores (worst in top 10 ≤ 35) — sanity check that the hub
+      //      is actually surfacing low-scoring domains.
+      //   2. Tracker-count credibility (top-10 average ≥ 10) — low tracker
+      //      counts despite low scores signals the scanner couldn't see
+      //      enough to produce a trustworthy ranking (same JS-loading gap
+      //      that breaks /most-tracked).
+      // Current data fails on part 2 (avg ≈ 2.9).
+      const top10 = entries.slice(0, 10);
+      const worstScore = Math.min(...top10.map((e) => e.score));
+      const avgTrackers =
+        top10.reduce((s, e) => s + e.trackers, 0) / top10.length;
+      return worstScore <= 35 && avgTrackers >= 10;
+    }
+    case 'privacy-index': {
+      // Requires actual score variance in the returned top 100. Current
+      // data has all 100 entries tied at score 100, which means the
+      // narrative generators have nothing to differentiate on and the
+      // "extremes vs clean" distinction is meaningless. Any post-backfill
+      // dataset with real score distribution will pass this trivially.
+      const scores = entries.map((e) => e.score);
+      const minScore = Math.min(...scores);
+      const maxScore = Math.max(...scores);
+      return maxScore > minScore;
+    }
+    case 'most-cookies': {
+      // Cookies are detectable via HTTP response headers without JS
+      // execution, so this dataset survived the scanner gap. Verified
+      // on 2026-04-11: top entry westernunion.com at 144 cookies, real
+      // brands throughout. Let it through unconditionally. When the
+      // Puppeteer backfill eventually lands, this gate might need a
+      // sanity check too — but for now, this is the one hub whose data
+      // is credible.
+      return true;
+    }
+  }
+}
+
 /** Globally recognizable consumer domains used for brand-mix selection.
  *
  * Hand-flattened from `scripts/classification/known-brands.ts` — kept here as
@@ -249,6 +335,14 @@ export function selectFeaturedDomains(
   rankings: RankingsData,
   hubType: RankingType
 ): FeaturedDomain[] {
+  // Data-quality gate first — if the source data isn't credible enough to
+  // support curated narratives, return empty and let the hub page fall back
+  // to the existing flat-table view. See passesDataQualityGate() above for
+  // rationale and current thresholds.
+  if (!passesDataQualityGate(rankings, hubType)) {
+    return [];
+  }
+
   const entries = rankings.rankings;
   if (entries.length === 0) return [];
 
