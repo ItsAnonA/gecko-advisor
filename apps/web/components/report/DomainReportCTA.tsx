@@ -8,13 +8,89 @@ import { SampleRequestForm } from '@/components/conversion/SampleRequestForm';
 
 interface DomainReportCTAProps {
   domain: string;
+  /** Privacy score 0-100. Used to decide which authority hub to link to. */
+  score?: number | null;
+  /** Number of trackers detected. Used to decide which authority hub to link to. */
+  trackerCount?: number | null;
+  /** Number of cookies set. Used to decide which authority hub to link to. */
+  cookieCount?: number | null;
 }
 
-export function DomainReportCTA({ domain }: DomainReportCTAProps) {
+/**
+ * Pick up to 2 authority-hub links that match this report's signals.
+ *
+ * Why contextual (not all 4 hubs everywhere): linking every report to every hub
+ * dilutes the relevance signal — Google sees identical anchor patterns across the
+ * site. Instead, we surface the hub that *explains* this domain's specific issue,
+ * so anchor text and surrounding context line up with the destination's intent.
+ *
+ * Selection rules (signal-driven, ranked by magnitude):
+ *   - low score (<60)         → Least Private Websites
+ *   - many trackers (>=10)    → Most Tracked Websites
+ *   - many cookies (>=15)     → Websites with Most Cookies
+ *
+ * Fallback: if a domain has no qualifying signals (i.e. it's a "good" site),
+ * we link to the Privacy Index as the neutral entry point — still 1 link, not 4.
+ */
+function pickContextualHubs(
+  score?: number | null,
+  trackerCount?: number | null,
+  cookieCount?: number | null
+): Array<{ href: string; title: string; reason: string; magnitude: number }> {
+  const candidates: Array<{ href: string; title: string; reason: string; magnitude: number }> = [];
+
+  if (typeof score === 'number' && score < 60) {
+    // Larger gap from 60 = stronger signal
+    candidates.push({
+      href: '/least-private-websites',
+      title: 'Least Private Websites',
+      reason: `This domain scores ${score}/100 — see other low-scoring sites`,
+      magnitude: 60 - score,
+    });
+  }
+
+  if (typeof trackerCount === 'number' && trackerCount >= 10) {
+    candidates.push({
+      href: '/most-tracked-websites',
+      title: 'Most Tracked Websites',
+      reason: `This domain runs ${trackerCount} trackers — see the most-tracked sites we monitor`,
+      magnitude: trackerCount, // raw count as magnitude
+    });
+  }
+
+  if (typeof cookieCount === 'number' && cookieCount >= 15) {
+    candidates.push({
+      href: '/websites-with-most-cookies',
+      title: 'Websites with Most Cookies',
+      reason: `This domain sets ${cookieCount} cookies — see the highest-cookie sites we track`,
+      magnitude: cookieCount,
+    });
+  }
+
+  // Sort by magnitude descending and take top 2
+  candidates.sort((a, b) => b.magnitude - a.magnitude);
+  const picked = candidates.slice(0, 2);
+
+  // Fallback: no signals matched (well-behaved domain) → 1 neutral link to Privacy Index
+  if (picked.length === 0) {
+    return [{
+      href: '/privacy-index',
+      title: 'The Privacy Index',
+      reason: 'Browse our full ranking of website privacy practices',
+      magnitude: 0,
+    }];
+  }
+
+  return picked;
+}
+
+export function DomainReportCTA({ domain, score, trackerCount, cookieCount }: DomainReportCTAProps) {
   const monitorSubject = encodeURIComponent(`Privacy alerts for ${domain}`);
   const monitorBody = encodeURIComponent(
     `I'd like to receive privacy change alerts for ${domain}.\n\nPlease add me to the monitoring list.`
   );
+
+  const contextualHubs = pickContextualHubs(score, trackerCount, cookieCount);
 
   return (
     <div className="mt-12 space-y-10">
@@ -129,6 +205,31 @@ export function DomainReportCTA({ domain }: DomainReportCTAProps) {
       {/* Section C: Sample Request Form */}
       <section>
         <SampleRequestForm defaultDomain={domain} />
+      </section>
+
+      {/* Contextual authority-hub links — picked based on this report's signals.
+          Renders 1-2 hubs that are *relevant* to this domain (low score, high trackers,
+          or high cookies). Avoids the dilution that comes from linking all 4 hubs everywhere. */}
+      <section className="border-t border-zinc-200 pt-8">
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4 font-display">
+          Privacy Rankings
+        </h2>
+        <div className={`grid gap-4 ${contextualHubs.length === 2 ? 'sm:grid-cols-2' : ''}`}>
+          {contextualHubs.map((hub) => (
+            <Link
+              key={hub.href}
+              href={hub.href}
+              className="group p-4 rounded-lg border border-zinc-200 bg-white hover:border-advisor-300 hover:shadow-sm transition-all"
+            >
+              <h3 className="font-semibold text-zinc-900 text-sm mb-1 group-hover:text-advisor-600 transition-colors">
+                {hub.title}
+              </h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                {hub.reason}
+              </p>
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* Original Resource Links */}

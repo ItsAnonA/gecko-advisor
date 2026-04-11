@@ -345,54 +345,73 @@ export default function ScanForm() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Hierarchy: Privacy Index = primary hub (featured, full-width).
+            The 3 ranking hubs are secondary supporting pages. This is intentional —
+            we want Google to see Privacy Index as the canonical authority page. */}
+        <div className="space-y-4">
+          {/* Primary hub — featured */}
           <Link
             href="/privacy-index"
-            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
+            className="group block p-6 md:p-7 rounded-xl bg-gradient-to-br from-advisor-50 to-zinc-50 border-2 border-advisor-200 hover:border-advisor-400 hover:shadow-lg transition-all duration-300"
           >
-            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
-              Privacy Index
-            </h3>
-            <p className="text-sm text-gecko-500 leading-relaxed">
-              The definitive ranking of website privacy practices
-            </p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-advisor-600">
+                    Featured Research
+                  </span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-display font-bold text-gecko-900 mb-1.5 group-hover:text-advisor-600 transition-colors">
+                  The Privacy Index
+                </h3>
+                <p className="text-sm md:text-base text-gecko-600 leading-relaxed">
+                  The definitive ranking of website privacy practices across the web — start here to explore our research.
+                </p>
+              </div>
+              <svg className="hidden sm:block w-6 h-6 text-advisor-500 flex-shrink-0 mt-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
           </Link>
 
-          <Link
-            href="/most-tracked-websites"
-            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
-          >
-            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
-              Most Tracked Websites
-            </h3>
-            <p className="text-sm text-gecko-500 leading-relaxed">
-              Which sites deploy the most third-party trackers
-            </p>
-          </Link>
+          {/* Secondary hubs — supporting rankings */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link
+              href="/most-tracked-websites"
+              className="group p-4 rounded-lg bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-advisor-300 hover:shadow-sm transition-all duration-300"
+            >
+              <h4 className="text-sm font-semibold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+                Most Tracked Websites
+              </h4>
+              <p className="text-xs text-gecko-500 leading-relaxed">
+                Sites deploying the most third-party trackers
+              </p>
+            </Link>
 
-          <Link
-            href="/technologies"
-            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
-          >
-            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
-              Tracking Technologies
-            </h3>
-            <p className="text-sm text-gecko-500 leading-relaxed">
-              Intelligence on every major tracking technology
-            </p>
-          </Link>
+            <Link
+              href="/least-private-websites"
+              className="group p-4 rounded-lg bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-advisor-300 hover:shadow-sm transition-all duration-300"
+            >
+              <h4 className="text-sm font-semibold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+                Least Private Websites
+              </h4>
+              <p className="text-xs text-gecko-500 leading-relaxed">
+                Domains with the lowest privacy scores
+              </p>
+            </Link>
 
-          <Link
-            href="/privacy-benchmarks"
-            className="group p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:shadow-md hover:border-advisor-300 transition-all duration-300"
-          >
-            <h3 className="text-base font-bold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
-              Privacy Benchmarks
-            </h3>
-            <p className="text-sm text-gecko-500 leading-relaxed">
-              How industries compare on privacy practices
-            </p>
-          </Link>
+            <Link
+              href="/websites-with-most-cookies"
+              className="group p-4 rounded-lg bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-advisor-300 hover:shadow-sm transition-all duration-300"
+            >
+              <h4 className="text-sm font-semibold text-gecko-900 mb-1 group-hover:text-advisor-600 transition-colors">
+                Websites with Most Cookies
+              </h4>
+              <p className="text-xs text-gecko-500 leading-relaxed">
+                Sites setting the highest number of cookies
+              </p>
+            </Link>
+          </div>
         </div>
       </section>
 

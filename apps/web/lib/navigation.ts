@@ -71,7 +71,10 @@ export const footerColumns = [
   {
     label: 'Resources',
     items: [
-      { label: 'Privacy Rankings', href: '/privacy-index' },
+      { label: 'Privacy Index', href: '/privacy-index' },
+      { label: 'Most Tracked Websites', href: '/most-tracked-websites' },
+      { label: 'Least Private Websites', href: '/least-private-websites' },
+      { label: 'Websites with Most Cookies', href: '/websites-with-most-cookies' },
       { label: 'Tracking Technologies', href: '/technologies' },
       { label: 'Research', href: '/research' },
       { label: 'Methodology', href: '/methodology' },

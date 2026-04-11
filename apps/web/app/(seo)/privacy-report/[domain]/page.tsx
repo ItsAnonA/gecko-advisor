@@ -290,8 +290,13 @@ export default async function ReportPage({ params }: Props) {
           <ChangeHistorySection domain={domain} />
         </Suspense>
 
-        {/* Domain Intelligence Resources CTA */}
-        <DomainReportCTA domain={domain} />
+        {/* Domain Intelligence Resources CTA — signals drive contextual hub links */}
+        <DomainReportCTA
+          domain={domain}
+          score={scanData.score}
+          trackerCount={scanData.trackerCount}
+          cookieCount={data.meta?.cookieCount}
+        />
       </div>
     </>
   );
