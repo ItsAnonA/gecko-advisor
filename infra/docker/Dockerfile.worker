@@ -53,8 +53,15 @@ WORKDIR /app
 # Install runtime system dependencies
 # - openssl: required by Prisma for database connections
 # - tini: proper PID 1 init for signal handling
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl tini \
+# - chromium: headless browser for JS-loaded tracker detection via puppeteer-core
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    openssl tini chromium \
     && rm -rf /var/lib/apt/lists/*
+
+# Tell puppeteer-core where to find the system Chromium binary
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Skip Chromium download — we use the system package above
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 # Copy pruned production node_modules and compiled worker
 COPY --from=build /app/pruned/worker/node_modules ./node_modules

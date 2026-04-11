@@ -21,6 +21,7 @@
     "cheerio": "^1.2.0",
     "ioredis": "^5.4.1",
     "pino": "^9.5.0",
+    "puppeteer-core": "^23.11.1",
     "tldts": "^7.0.16"
   },
   "devDependencies": {

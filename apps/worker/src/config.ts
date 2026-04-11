@@ -41,7 +41,15 @@ export const config = {
   // Job-level timeout to prevent hanging jobs (in milliseconds)
   // Default: 90 seconds (crawl 30s + TLS 5s + scoring + DB ops)
   // Previous 60s was tight with increased crawl budget
-  jobTimeoutMs: parseNumber(process.env.WORKER_JOB_TIMEOUT_MS, 90_000),
+  jobTimeoutMs: parseNumber(process.env.WORKER_JOB_TIMEOUT_MS, 120_000),
+  // Browser scan: Puppeteer-based network interception for JS-loaded tracker detection
+  browserScan: {
+    enabled: parseBoolean(process.env.BROWSER_SCAN_ENABLED, true),
+    // Minimum scan count on the Domain record before browser scan is used
+    minScanCount: parseNumber(process.env.BROWSER_SCAN_MIN_SCANS, 3),
+    // Total timeout for the browser scan phase (navigation + wait + cookie collection)
+    timeoutMs: parseNumber(process.env.BROWSER_SCAN_TIMEOUT_MS, 30_000),
+  },
   objectStorage: {
     enabled: parseBoolean(process.env.OBJECT_STORAGE_ENABLED, false),
     endpoint: process.env.OBJECT_STORAGE_ENDPOINT,

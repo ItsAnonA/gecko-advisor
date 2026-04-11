@@ -7,6 +7,7 @@ import { logger } from './logger.js';
 import { objectStorage } from './objectStorage.js';
 import { config } from './config.js';
 import { ProgressThrottle } from './utils/progressThrottle.js';
+import { browserScan } from './browserScan.js';
 
 // Standard bot User-Agent with info URL for site operators
 const BOT_USER_AGENT = 'Mozilla/5.0 (compatible; GeckoAdvisorBot/1.0; +https://geckoadvisor.com/bot)';
@@ -682,8 +683,8 @@ export async function scanSiteJob(
     return;
   }
 
-  // Batch insert all evidence - 70% progress
-  await reportProgress(70);
+  // Batch insert static evidence - 65% progress
+  await reportProgress(65);
   if (allEvidence.length > 0) {
     await prisma.evidence.createMany({
       data: allEvidence,
@@ -691,8 +692,61 @@ export async function scanSiteJob(
     });
   }
 
-  // Scoring phase - 75% progress
-  await reportProgress(75);
+  // Browser scan phase - 65%-80% progress
+  // Only runs for established domains (scanCount >= threshold) to detect JS-loaded trackers
+  let scanMethod: 'http_fetch' | 'browser' = 'http_fetch';
+  if (config.browserScan.enabled) {
+    try {
+      // Check if this domain qualifies for browser scan
+      const domainRecord = await prisma.domain.findUnique({
+        where: { domain: siteRoot },
+        select: { scanCount: true },
+      }).catch(() => null);
+
+      const qualifies = domainRecord && domainRecord.scanCount >= config.browserScan.minScanCount;
+
+      if (qualifies) {
+        await reportProgress(70);
+        logger.info({ scanId, url: urlInput, siteRoot, scanCount: domainRecord.scanCount }, 'Running browser scan for established domain');
+
+        const browserResult = await browserScan({
+          scanId,
+          url: u.href,
+          siteRoot,
+          lists,
+          knownTrackers: seenTrackers,
+          knownThirdParties: seenThirdParties,
+          timeoutMs: config.browserScan.timeoutMs,
+        });
+
+        if (browserResult.success && browserResult.evidence.length > 0) {
+          scanMethod = 'browser';
+          // Insert browser-discovered evidence
+          await prisma.evidence.createMany({
+            data: browserResult.evidence,
+            skipDuplicates: true,
+          });
+          logger.info(
+            {
+              scanId,
+              newEvidence: browserResult.evidence.length,
+              networkRequests: browserResult.networkRequestCount,
+              thirdPartyDomains: browserResult.thirdPartyCount,
+            },
+            'Browser scan added new evidence'
+          );
+        } else if (!browserResult.success) {
+          logger.debug({ scanId, error: browserResult.error }, 'Browser scan failed — using static-only results');
+        }
+      }
+    } catch (browserError) {
+      // Browser scan is non-fatal — log and continue with static results
+      logger.warn({ scanId, error: browserError }, 'Browser scan error — falling back to static-only results');
+    }
+  }
+
+  // Scoring phase - 80% progress
+  await reportProgress(80);
 
   const { computeScore } = await import('./scoring.js');
   const result = await computeScore(prisma, scanId);
@@ -724,7 +778,7 @@ export async function scanSiteJob(
         score: result.score,
         label: result.label,
         summary: result.summary,
-        meta: result.meta as Prisma.InputJsonValue,
+        meta: { ...(result.meta as Record<string, unknown>), scanMethod } as Prisma.InputJsonValue,
         status: 'done',
         finishedAt: new Date(),
         progress: 100,
