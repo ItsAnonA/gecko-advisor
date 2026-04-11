@@ -78,14 +78,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Not Found' };
   }
 
-  const { tier, heading, description, domain } = report;
+  const { tier: baseTier, heading, description, domain } = report;
 
   // Try narrative-driven titles for quality-tier domains
   const narrativeCtx = await fetchNarrativeContext(domain);
   let title = heading;
   let desc = description;
 
-  if (narrativeCtx && narrativeCtx.domain.scanCount >= 3) {
+  // Domains with < 3 scans get demoted to 'limited' (noindex) regardless of scan quality.
+  // Only domains with sufficient scan history produce differentiated content worth indexing.
+  const scanCount = narrativeCtx?.domain?.scanCount ?? 1;
+  const tier = (baseTier === 'full' && scanCount < 3) ? 'limited' as const : baseTier;
+
+  if (narrativeCtx && scanCount >= 3) {
     // Use varied titles from narrative engine
     title = generateDomainTitle(narrativeCtx.domain);
     if (narrativeCtx.categoryStats) {

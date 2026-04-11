@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { getIndexTier, isIndexable, getRobotsDirective, type ScanDataForGating } from './index-gating.js';
 
 describe('getIndexTier', () => {
-  // Full tier data (all fields present and valid)
+  // Full tier data (all fields present and valid, 3+ scans)
   const fullData: ScanDataForGating = {
     status: 'done',
     score: 75,
@@ -18,6 +18,7 @@ describe('getIndexTier', () => {
     thirdPartyCount: 10,
     cookieCount: 3,
     tlsGrade: 'A',
+    scanCount: 3,
   };
 
   describe('full tier conditions', () => {
@@ -55,6 +56,18 @@ describe('getIndexTier', () => {
 
     it('returns full with Date object for finishedAt', () => {
       expect(getIndexTier({ ...fullData, finishedAt: new Date() })).toBe('full');
+    });
+  });
+
+  describe('scan history gating', () => {
+    it('returns limited for domains with insufficient scan history (< 3 scans)', () => {
+      expect(getIndexTier({ ...fullData, scanCount: 1 })).toBe('limited');
+      expect(getIndexTier({ ...fullData, scanCount: 2 })).toBe('limited');
+    });
+
+    it('returns limited when scanCount is not provided (defaults to 1)', () => {
+      const { scanCount: _sc, ...noScanCount } = fullData;
+      expect(getIndexTier(noScanCount)).toBe('limited');
     });
   });
 
@@ -159,6 +172,7 @@ describe('isIndexable', () => {
         trackerCount: 5,
         thirdPartyCount: 10,
         tlsGrade: 'A',
+        scanCount: 3,
       })
     ).toBe(true);
   });

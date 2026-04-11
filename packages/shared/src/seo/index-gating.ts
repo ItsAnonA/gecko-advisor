@@ -36,6 +36,8 @@ export interface ScanDataForGating {
   tlsGrade?: string;
   // Domain for blocklist checking (optional for backward compatibility)
   domain?: string;
+  // Domain-level signals for quality gating
+  scanCount?: number;
 }
 
 /**
@@ -106,12 +108,15 @@ export function getIndexTier(scanData: ScanDataForGating | null | undefined): In
   const hasThirdPartyData = typeof scanData.thirdPartyCount === 'number' && !Number.isNaN(scanData.thirdPartyCount);
   const hasTlsGrade = typeof scanData.tlsGrade === 'string' && scanData.tlsGrade.length > 0;
 
-  // Full tier requires complete analysis
-  if (hasTrackerData && hasThirdPartyData && hasTlsGrade) {
+  // Full tier requires: complete analysis + minimum scan history (3+ scans)
+  // Single-scan domains produce thin, undifferentiated pages that Google rejects.
+  const hasSufficientHistory = (scanData.scanCount ?? 1) >= 3;
+
+  if (hasTrackerData && hasThirdPartyData && hasTlsGrade && hasSufficientHistory) {
     return 'full';
   }
 
-  // Has score but missing some data = limited
+  // Has score but insufficient history or missing data = limited (noindex)
   return 'limited';
 }
 
