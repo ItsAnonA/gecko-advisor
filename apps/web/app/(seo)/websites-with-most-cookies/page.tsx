@@ -14,7 +14,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { SEO_CONSTANTS } from '@gecko-advisor/shared';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { FeaturedDomainsSection } from '@/components/seo/FeaturedDomainsSection';
 import { fetchRankings, gradeBg, buildRankingsJsonLd, type CategoryBreakdown, type FreshnessStats } from '@/lib/rankings';
+import { selectFeaturedDomains } from '@/lib/featuredDomains';
 
 export const metadata: Metadata = {
   title: '100 Websites with the Most Cookies (2026) — Cookie Rankings',
@@ -38,6 +40,7 @@ export const revalidate = 3600;
 
 export default async function MostCookiesPage() {
   const data = await fetchRankings('most-cookies');
+  const featured = data ? selectFeaturedDomains(data, 'most-cookies') : [];
 
   return (
     <>
@@ -91,6 +94,11 @@ export default async function MostCookiesPage() {
             </div>
           </div>
         </section>
+
+        {/* Featured Domains — curated authority concentration above the flat table. */}
+        <div className="max-w-5xl mx-auto px-4">
+          <FeaturedDomainsSection featured={featured} hubType="most-cookies" />
+        </div>
 
         {/* Rankings Table */}
         <section className="max-w-5xl mx-auto px-4 py-12">
