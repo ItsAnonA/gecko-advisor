@@ -700,14 +700,22 @@ export async function scanSiteJob(
       // Check if this domain qualifies for browser scan
       const domainRecord = await prisma.domain.findUnique({
         where: { domain: siteRoot },
-        select: { scanCount: true },
+        select: { scanCount: true, indexTier: true },
       }).catch(() => null);
 
-      const qualifies = domainRecord && domainRecord.scanCount >= config.browserScan.minScanCount;
+      // Tier A domains always get browser scan (correctness for high-value pages).
+      // Other tiers require scanCount >= minScanCount (cost control for long-tail).
+      const qualifies =
+        domainRecord &&
+        (domainRecord.indexTier === 'A' ||
+          domainRecord.scanCount >= config.browserScan.minScanCount);
 
       if (qualifies) {
         await reportProgress(70);
-        logger.info({ scanId, url: urlInput, siteRoot, scanCount: domainRecord.scanCount }, 'Running browser scan for established domain');
+        logger.info(
+          { scanId, url: urlInput, siteRoot, scanCount: domainRecord.scanCount, indexTier: domainRecord.indexTier },
+          'Running browser scan'
+        );
 
         const browserResult = await browserScan({
           scanId,

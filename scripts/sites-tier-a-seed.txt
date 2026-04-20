@@ -1,0 +1,76 @@
+# Tier-A backfill seed list — ~50 known-heavy domains across categories.
+# Runs FIRST so distribution shift shows up inside the first checkpoint window.
+# Categories intentionally mixed so a per-category classifier bug surfaces early.
+
+# --- Social / Surveillance-heavy ---
+facebook.com
+instagram.com
+x.com
+tiktok.com
+linkedin.com
+pinterest.com
+reddit.com
+snapchat.com
+
+# --- News & Media (ad-dense, tracker-dense) ---
+nytimes.com
+cnn.com
+foxnews.com
+washingtonpost.com
+bbc.com
+theguardian.com
+bloomberg.com
+wsj.com
+forbes.com
+businessinsider.com
+buzzfeed.com
+huffpost.com
+
+# --- Ecommerce (cookie-dense, retargeting) ---
+amazon.com
+ebay.com
+walmart.com
+target.com
+bestbuy.com
+wayfair.com
+aliexpress.com
+etsy.com
+shopify.com
+shein.com
+
+# --- Streaming / Entertainment (JS-heavy) ---
+youtube.com
+netflix.com
+spotify.com
+hulu.com
+disneyplus.com
+twitch.tv
+
+# --- Tech / Platform ---
+google.com
+microsoft.com
+apple.com
+adobe.com
+dropbox.com
+
+# --- Finance / Travel ---
+paypal.com
+chase.com
+bankofamerica.com
+expedia.com
+booking.com
+airbnb.com
+tripadvisor.com
+kayak.com
+
+# --- Adult / Heavy-tracker category (included only if eligible-for-scan) ---
+pornhub.com
+
+# --- Gaming ---
+roblox.com
+twitch.tv
+ign.com
+
+# --- Utilities / Reference ---
+wikipedia.org
+imdb.com
