@@ -53,19 +53,32 @@ WORKDIR /app
 # Install runtime system dependencies
 # - openssl: required by Prisma for database connections
 # - tini: proper PID 1 init for signal handling
-# - chromium: headless browser for JS-loaded tracker detection via puppeteer-core
+# - lib* / fonts-liberation: shared libraries Puppeteer's bundled Chromium needs
+#
+# We previously used Debian's chromium package, but chromium 147 ships a broken
+# chrome_crashpad_handler that fails to start regardless of flags. Puppeteer's
+# bundled Chromium pins a known-good version and immunizes us against Debian
+# repo regressions.
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
-    openssl tini chromium \
+    openssl tini \
+    ca-certificates \
+    libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
+    libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1 libasound2 \
+    libpangocairo-1.0-0 libcairo2 libatspi2.0-0 \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Tell puppeteer-core where to find the system Chromium binary
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-# Skip Chromium download — we use the system package above
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Puppeteer cache is set here so installers / runtime can find the bundled
+# Chromium consistently.
+ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
 
 # Copy pruned production node_modules and compiled worker
 COPY --from=build /app/pruned/worker/node_modules ./node_modules
 COPY --from=build /app/apps/worker/dist ./dist
+
+# Copy Puppeteer's bundled Chromium (downloaded during pnpm install in the
+# deps stage). Without this the runtime stage has no browser binary.
+COPY --from=build /root/.cache/puppeteer /app/.cache/puppeteer
 
 # Copy the built shared package (workspace dependency)
 COPY --from=build /app/packages/shared/dist ./node_modules/@gecko-advisor/shared/dist

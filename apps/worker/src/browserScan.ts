@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import type { Browser, Page, HTTPRequest } from 'puppeteer-core';
+import type { Browser, Page, HTTPRequest } from 'puppeteer';
 import type { Prisma } from '@prisma/client';
 import { etldPlusOne } from '@gecko-advisor/shared';
 import type { Lists } from './lists.js';
@@ -56,20 +56,15 @@ export interface BrowserScanResult {
   error?: string;
 }
 
-/** Path to Chromium binary — set via PUPPETEER_EXECUTABLE_PATH env var in Docker */
-function getChromiumPath(): string {
-  return process.env.PUPPETEER_EXECUTABLE_PATH ?? '/usr/bin/chromium';
-}
-
 /**
- * Launch a headless Chromium browser instance.
- * Returns null if puppeteer-core is not available.
+ * Launch a headless Chromium browser instance using Puppeteer's bundled Chromium.
+ * Returns null if launch fails (logged at error level — browser scan silently
+ * failing would corrupt tracker detection across the dataset).
  */
 async function launchBrowser(): Promise<Browser | null> {
   try {
-    const puppeteer = await import('puppeteer-core');
+    const puppeteer = await import('puppeteer');
     const browser = await puppeteer.default.launch({
-      executablePath: getChromiumPath(),
       headless: true,
       args: [
         '--no-sandbox',
@@ -90,7 +85,10 @@ async function launchBrowser(): Promise<Browser | null> {
     });
     return browser;
   } catch (error) {
-    logger.warn({ error }, 'Failed to launch Chromium — puppeteer-core may not be installed or Chromium not found');
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      'Failed to launch Chromium — browser scan unavailable'
+    );
     return null;
   }
 }
