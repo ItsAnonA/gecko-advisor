@@ -72,7 +72,6 @@
       "@puppeteer/browsers",
       "esbuild",
       "prisma",
-      "@prisma/client",
       "@prisma/engines"
     ]
   }

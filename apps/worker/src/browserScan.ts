@@ -64,8 +64,13 @@ export interface BrowserScanResult {
 async function launchBrowser(): Promise<Browser | null> {
   try {
     const puppeteer = await import('puppeteer');
+    // Use chrome-headless-shell (Chromium's lightweight headless binary).
+    // The full Chrome binary's crashpad_handler subprocess fails to start in
+    // our container environment ("--database is required" followed by
+    // Trace/breakpoint trap), regardless of launch flags. chrome-headless-shell
+    // uses a different IPC mechanism and launches cleanly.
     const browser = await puppeteer.default.launch({
-      headless: true,
+      headless: 'shell',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
