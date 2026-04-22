@@ -66,6 +66,14 @@
       "qs": ">=6.14.1",
       "fast-xml-parser": ">=5.3.4",
       "lodash": ">=4.17.23"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "puppeteer",
+      "@puppeteer/browsers",
+      "esbuild",
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines"
+    ]
   }
 }

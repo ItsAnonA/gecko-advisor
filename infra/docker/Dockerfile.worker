@@ -8,9 +8,17 @@
 FROM node:22-slim AS deps
 WORKDIR /app
 ENV CI=true
+# Chromium download target for Puppeteer's postinstall — must match the runtime
+# path so the COPY in the runner stage lines up. Puppeteer resolves this at
+# install time (to place the binary) and at runtime (to find it).
+ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+
+# Install ca-certificates so puppeteer's postinstall can fetch Chromium over TLS
+RUN apt-get update -y && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy workspace config and lockfile first for cache efficiency
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
@@ -25,9 +33,20 @@ COPY infra/prisma/package.json infra/prisma/
 # Copy Prisma schema (needed by postinstall hooks that run prisma generate)
 COPY infra/prisma/schema.prisma infra/prisma/
 
-# Install all dependencies (including devDependencies for building)
+# Install all dependencies (including devDependencies for building).
+# pnpm 10 requires onlyBuiltDependencies in root package.json for third-party
+# postinstall scripts (incl. puppeteer's Chromium download) to run.
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
+
+# Sanity check: fail fast if Chromium didn't download as expected.
+# Linux layout is /app/.cache/puppeteer/chrome/linux-<ver>/chrome-linux64/chrome
+RUN test -d "$PUPPETEER_CACHE_DIR/chrome" || \
+    (echo "ERROR: $PUPPETEER_CACHE_DIR/chrome missing — puppeteer postinstall did not run" && \
+     ls -la "$PUPPETEER_CACHE_DIR" 2>/dev/null ; exit 1) && \
+    find "$PUPPETEER_CACHE_DIR/chrome" -maxdepth 4 -type f -name chrome | head -1 | grep -q chrome || \
+    (echo "ERROR: chrome binary not found under $PUPPETEER_CACHE_DIR/chrome" && \
+     find "$PUPPETEER_CACHE_DIR" -maxdepth 5 2>/dev/null ; exit 1)
 
 # ---------- Stage 2: Build TypeScript to JavaScript ----------
 FROM deps AS build
@@ -77,8 +96,8 @@ COPY --from=build /app/pruned/worker/node_modules ./node_modules
 COPY --from=build /app/apps/worker/dist ./dist
 
 # Copy Puppeteer's bundled Chromium (downloaded during pnpm install in the
-# deps stage). Without this the runtime stage has no browser binary.
-COPY --from=build /root/.cache/puppeteer /app/.cache/puppeteer
+# deps stage, to PUPPETEER_CACHE_DIR=/app/.cache/puppeteer).
+COPY --from=build /app/.cache/puppeteer /app/.cache/puppeteer
 
 # Copy the built shared package (workspace dependency)
 COPY --from=build /app/packages/shared/dist ./node_modules/@gecko-advisor/shared/dist
