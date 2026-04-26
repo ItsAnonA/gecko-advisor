@@ -28,10 +28,10 @@
  * that rely on consistent tracker counts).
  */
 import { PrismaClient } from '@prisma/client';
-import { getDomain } from 'tldts';
 import crypto from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { parseList, validateList } from '../apps/worker/src/utils/easyPrivacyParser.js';
 
 // ============================================================
 // Configuration
@@ -39,129 +39,6 @@ import path from 'node:path';
 
 const EASYPRIVACY_URL =
   process.env.EASYPRIVACY_URL ?? 'https://easylist.to/easylist/easyprivacy.txt';
-
-/**
- * Floor for a sane list. EasyPrivacy ships ~10K domains; a dramatic drop
- * probably means upstream format changed or fetch was partial.
- */
-const MIN_DOMAIN_COUNT = 5_000;
-
-/**
- * Canary trackers that MUST be present. If any is missing the ingestion
- * failed in a way that would ship broken data. These are the tent-pole
- * trackers any working EasyPrivacy ingestion will contain.
- */
-const CANARIES = [
-  'google-analytics.com',
-  'googletagmanager.com',
-  'doubleclick.net',
-  'facebook.net',
-  'googlesyndication.com',
-  'scorecardresearch.com',
-];
-
-// ============================================================
-// Parser
-// ============================================================
-
-/**
- * Extract a canonical eTLD+1 domain from one EasyPrivacy filter line.
- * Returns null for anything that isn't a network block rule we can use.
- *
- * Supported forms (all with various option suffixes after $):
- *   ||tracker.example.com^
- *   ||tracker.example.com/path
- *   ||tracker.example.com$script,third-party
- *   ||sub.tracker.example.com^$domain=foo.com
- *
- * Rejected:
- *   @@||...       (exceptions / allowlist)
- *   !...          (comments, headers)
- *   [Adblock...]  (header lines)
- *   foo##.ad      (element hiding)
- *   foo#@#.ad     (element hiding exceptions)
- *   /bar/         (regex rules)
- */
-export function parseEasyPrivacyLine(line: string): string | null {
-  const t = line.trim();
-  if (!t) return null;
-
-  // Comments and metadata
-  if (t.startsWith('!') || t.startsWith('[')) return null;
-
-  // Allowlist exceptions — we're only interested in BLOCK rules
-  if (t.startsWith('@@')) return null;
-
-  // Element-hiding / scriptlet rules (not network blocks)
-  if (/#[@?$]?#/.test(t)) return null;
-
-  // Regex rules — skip for Phase 1
-  if (t.startsWith('/') && t.endsWith('/')) return null;
-
-  // Network block rules start with ||
-  if (!t.startsWith('||')) return null;
-
-  // Strip leading ||, cut at the first of ^ / $ ? or whitespace
-  const body = t.slice(2);
-  const m = body.match(/^([a-z0-9][a-z0-9.\-_*]*?)(?:[\^/?$]|$)/i);
-  if (!m) return null;
-
-  let host = m[1].toLowerCase();
-
-  // Reject pure wildcards and leading-dot / double-dot patterns
-  if (host.includes('*') || host.startsWith('.') || host.includes('..')) return null;
-  if (!host.includes('.')) return null;
-
-  // Normalize to eTLD+1 via public suffix list
-  const root = getDomain(host);
-  return root || null;
-}
-
-export function parseList(text: string): {
-  domains: Set<string>;
-  stats: { totalLines: number; blockRules: number; parsed: number };
-} {
-  const domains = new Set<string>();
-  let blockRules = 0;
-  let parsed = 0;
-  let totalLines = 0;
-
-  for (const line of text.split('\n')) {
-    totalLines++;
-    if (line.trim().startsWith('||')) blockRules++;
-    const d = parseEasyPrivacyLine(line);
-    if (d) {
-      parsed++;
-      domains.add(d);
-    }
-  }
-
-  return { domains, stats: { totalLines, blockRules, parsed } };
-}
-
-// ============================================================
-// Validation
-// ============================================================
-
-export function validateList(domains: Set<string>): {
-  ok: boolean;
-  reasons: string[];
-} {
-  const reasons: string[] = [];
-
-  if (domains.size < MIN_DOMAIN_COUNT) {
-    reasons.push(
-      `domain count ${domains.size} < floor ${MIN_DOMAIN_COUNT} (upstream format change or partial fetch?)`,
-    );
-  }
-
-  const missing = CANARIES.filter((c) => !domains.has(c));
-  if (missing.length > 0) {
-    reasons.push(`missing canary trackers: ${missing.join(', ')}`);
-  }
-
-  return { ok: reasons.length === 0, reasons };
-}
 
 // ============================================================
 // I/O

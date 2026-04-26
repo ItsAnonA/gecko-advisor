@@ -5,6 +5,8 @@ SPDX-License-Identifier: MIT
 import type { PrismaClient } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { logger } from './logger.js';
+import { MIN_RUNTIME_DOMAIN_COUNT } from './utils/easyPrivacyParser.js';
 
 export interface Lists {
   easyprivacy: EasyList;
@@ -81,11 +83,38 @@ export async function getLists(prisma: PrismaClient): Promise<Lists> {
   const easy = normalizeEasyList(easyStored);
   const who = normalizeWhoTracksList(whoStored);
 
+  // Gap 2: defense-in-depth runtime guard. The original 4-domain bug shipped
+  // because nothing refused to classify against a tiny list. If the row exists
+  // but has fewer than MIN_RUNTIME_DOMAIN_COUNT domains, treat it as missing —
+  // far better to fail loudly than to silently classify against garbage.
+  const easyValid =
+    easy !== null && easy.domains.length >= MIN_RUNTIME_DOMAIN_COUNT;
+
+  if (easy !== null && !easyValid) {
+    logger.error(
+      { domainCount: easy.domains.length, floor: MIN_RUNTIME_DOMAIN_COUNT },
+      'easyprivacy list in DB is below runtime floor — refusing to use it',
+    );
+  }
+
   let result: Lists;
 
-  if (easy && who) {
+  if (easyValid && who) {
     result = { easyprivacy: easy, whotracks: who };
   } else {
+    // Gap 4: in production, demo fallback is poison. Refuse rather than ship
+    // a 4-domain classifier silently. Demo is dev/test only.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'Tracker list missing or invalid in production; refusing demo fallback. ' +
+          'Run scripts/refresh-privacy-lists.ts to repopulate CachedList.',
+      );
+    }
+
+    logger.warn(
+      'easyprivacy/whotracks list missing or below floor — falling back to demo fixture (NODE_ENV != production)',
+    );
+
     const fallbackEasy = normalizeEasyList(await readJson('packages/shared/data/easyprivacy-demo.json'));
     const fallbackWho = normalizeWhoTracksList(await readJson('packages/shared/data/whotracks-demo.json'));
 
