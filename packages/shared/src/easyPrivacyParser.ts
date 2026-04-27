@@ -34,7 +34,7 @@ export const MIN_RUNTIME_DOMAIN_COUNT = 1_000;
  * Tent-pole trackers any working EasyPrivacy ingest must contain. If any
  * is missing, ingestion failed in a way that would ship broken data.
  */
-export const CANARIES = [
+export const EASYPRIVACY_CANARIES = [
   'google-analytics.com',
   'googletagmanager.com',
   'doubleclick.net',
@@ -42,6 +42,27 @@ export const CANARIES = [
   'googlesyndication.com',
   'scorecardresearch.com',
 ] as const;
+
+/**
+ * AdTech canaries for EasyList. These are the domains EasyPrivacy MISSES
+ * (it's a tracking/analytics list, not an ad-network list) and that
+ * EasyList must contain — the exact gap that was producing low tracker
+ * counts on Tier-A sites during the 2026-04-27 validation pass.
+ */
+export const EASYLIST_CANARIES = [
+  'doubleclick.net',
+  'amazon-adsystem.com',
+  'adnxs.com',
+  'adsafeprotected.com',
+  'criteo.com',
+  'taboola.com',
+] as const;
+
+/**
+ * Back-compat: existing imports of CANARIES point at EasyPrivacy.
+ * @deprecated import EASYPRIVACY_CANARIES instead.
+ */
+export const CANARIES = EASYPRIVACY_CANARIES;
 
 /**
  * Extract a canonical eTLD+1 domain from one EasyPrivacy filter line.
@@ -176,16 +197,28 @@ export interface ValidationResult {
   reasons: string[];
 }
 
-export function validateList(domains: Set<string>): ValidationResult {
+export interface ValidateOptions {
+  /** Required canary domains; ingestion fails if any is missing. */
+  canaries?: readonly string[];
+  /** Minimum unique-domain count; defaults to MIN_INGEST_DOMAIN_COUNT. */
+  minCount?: number;
+}
+
+export function validateList(
+  domains: Set<string>,
+  options: ValidateOptions = {},
+): ValidationResult {
+  const canaries = options.canaries ?? EASYPRIVACY_CANARIES;
+  const minCount = options.minCount ?? MIN_INGEST_DOMAIN_COUNT;
   const reasons: string[] = [];
 
-  if (domains.size < MIN_INGEST_DOMAIN_COUNT) {
+  if (domains.size < minCount) {
     reasons.push(
-      `domain count ${domains.size} < floor ${MIN_INGEST_DOMAIN_COUNT} (upstream format change or partial fetch?)`,
+      `domain count ${domains.size} < floor ${minCount} (upstream format change or partial fetch?)`,
     );
   }
 
-  const missing = CANARIES.filter((c) => !domains.has(c));
+  const missing = canaries.filter((c) => !domains.has(c));
   if (missing.length > 0) {
     reasons.push(`missing canary trackers: ${missing.join(', ')}`);
   }

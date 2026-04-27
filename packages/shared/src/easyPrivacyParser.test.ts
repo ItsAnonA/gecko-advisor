@@ -3,7 +3,8 @@ import {
   parseEasyPrivacyLine,
   parseList,
   validateList,
-  CANARIES,
+  EASYPRIVACY_CANARIES,
+  EASYLIST_CANARIES,
   MIN_INGEST_DOMAIN_COUNT,
 } from './easyPrivacyParser.js';
 
@@ -187,7 +188,7 @@ describe('parseList', () => {
 
 describe('validateList', () => {
   function makeListWithCanaries(extraCount: number): Set<string> {
-    const s = new Set<string>(CANARIES);
+    const s = new Set<string>(EASYPRIVACY_CANARIES);
     for (let i = 0; i < extraCount; i++) s.add(`tracker-${i}.example.com`);
     return s;
   }
@@ -224,8 +225,24 @@ describe('validateList', () => {
     const result = validateList(new Set(['noise.com']));
     const missingReason = result.reasons.find((r) => r.includes('canary'));
     expect(missingReason).toBeDefined();
-    for (const c of CANARIES) {
+    for (const c of EASYPRIVACY_CANARIES) {
       expect(missingReason!.includes(c)).toBe(true);
     }
+  });
+
+  it('accepts custom canaries via options (EasyList AdTech set)', () => {
+    // When validating EasyList ingestion, we need AdTech canaries instead.
+    const s = new Set<string>(EASYLIST_CANARIES);
+    for (let i = 0; i < MIN_INGEST_DOMAIN_COUNT; i++) s.add(`ad-${i}.example.com`);
+    const result = validateList(s, { canaries: EASYLIST_CANARIES });
+    expect(result.ok).toBe(true);
+    expect(result.reasons).toEqual([]);
+  });
+
+  it('accepts custom minCount via options', () => {
+    const s = new Set([...EASYPRIVACY_CANARIES, 'extra.com']);
+    // 7 domains: passes a low floor with default canaries.
+    const result = validateList(s, { minCount: 5 });
+    expect(result.ok).toBe(true);
   });
 });

@@ -116,7 +116,12 @@ export async function browserScan(options: BrowserScanOptions): Promise<BrowserS
     timeoutMs = 30_000,
   } = options;
 
-  const trackerDomains = new Set(lists.easyprivacy.domains);
+  // Union EasyPrivacy + EasyList (AdTech coverage). EasyList is optional
+  // during the post-ingestion transition; absent → EasyPrivacy only.
+  const trackerDomains = new Set([
+    ...lists.easyprivacy.domains,
+    ...(lists.easylist?.domains ?? []),
+  ]);
   const fpDomains = new Set((lists.whotracks.fingerprinting ?? []).map((d: string) => d));
 
   const evidence: EvidenceData[] = [];

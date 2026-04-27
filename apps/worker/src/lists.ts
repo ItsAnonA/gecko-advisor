@@ -10,6 +10,14 @@ import { MIN_RUNTIME_DOMAIN_COUNT } from '@gecko-advisor/shared';
 
 export interface Lists {
   easyprivacy: EasyList;
+  /**
+   * EasyList — covers the AdTech ecosystem (amazon-adsystem, adnxs,
+   * adsafeprotected, indexww, etc.) that EasyPrivacy doesn't.
+   * Optional during the transition: pre-ingestion deploys see no row
+   * and continue with EasyPrivacy only. Post-ingestion, the worker
+   * unions both domain sets at classification time.
+   */
+  easylist?: EasyList;
   whotracks: WhoTracksList;
 }
 
@@ -78,9 +86,11 @@ export async function getLists(prisma: PrismaClient): Promise<Lists> {
 
   const lists = await prisma.cachedList.findMany();
   const easyStored = lists.find((list) => list.source === 'easyprivacy')?.data;
+  const easylistStored = lists.find((list) => list.source === 'easylist')?.data;
   const whoStored = lists.find((list) => list.source === 'whotracks')?.data;
 
   const easy = normalizeEasyList(easyStored);
+  const easylist = normalizeEasyList(easylistStored);
   const who = normalizeWhoTracksList(whoStored);
 
   // Gap 2: defense-in-depth runtime guard. The original 4-domain bug shipped
@@ -97,10 +107,32 @@ export async function getLists(prisma: PrismaClient): Promise<Lists> {
     );
   }
 
+  // EasyList is OPTIONAL — the worker functions with EasyPrivacy alone if
+  // the easylist row is missing (pre-ingestion transition state). Once the
+  // row is present, it must clear the same runtime floor.
+  const easylistValid =
+    easylist !== null && easylist.domains.length >= MIN_RUNTIME_DOMAIN_COUNT;
+
+  if (easylist !== null && !easylistValid) {
+    logger.error(
+      { domainCount: easylist.domains.length, floor: MIN_RUNTIME_DOMAIN_COUNT },
+      'easylist row in DB is below runtime floor — ignoring it',
+    );
+  }
+
   let result: Lists;
 
   if (easyValid && who) {
-    result = { easyprivacy: easy, whotracks: who };
+    result = {
+      easyprivacy: easy,
+      whotracks: who,
+      ...(easylistValid ? { easylist } : {}),
+    };
+    if (!easylistValid) {
+      logger.warn(
+        'easylist row missing or invalid — running with EasyPrivacy only (AdTech coverage gap; run refresh-privacy-lists.ts --easylist)',
+      );
+    }
   } else {
     // Gap 4: in production, demo fallback is poison. Refuse rather than ship
     // a 4-domain classifier silently. Demo is dev/test only.

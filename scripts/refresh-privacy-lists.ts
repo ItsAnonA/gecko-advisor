@@ -2,43 +2,82 @@
 /*
  * Refresh tracker signature lists from upstream sources.
  *
- * EasyPrivacy ingestion replaces the prior 4-domain demo fallback that was
- * silently running in production. See memory/project-tracker-detector-gate-bug.md
- * and session notes dated 2026-04-22/23.
+ * Two sources, same Adblock-Plus parser, different canary sets:
+ *   - EasyPrivacy (https://easylist.to/easylist/easyprivacy.txt)
+ *       Tracking/analytics rules. ~36K eTLD+1 domains.
+ *   - EasyList    (https://easylist.to/easylist/easylist.txt)
+ *       AdTech ecosystem (amazon-adsystem, adnxs, adsafeprotected,
+ *       indexww, criteo, taboola, etc.) that EasyPrivacy doesn't cover.
+ *       Validation surfaced this gap on 2026-04-27 — tracker counts on
+ *       Tier-A sites were ~50% of expected because the AdTech stack
+ *       wasn't classified.
  *
- * What this does:
- *   1. Fetch https://easylist.to/easylist/easyprivacy.txt
- *   2. Parse Adblock Plus filter syntax — extract blocking rules only
- *   3. Normalize extracted hostnames to eTLD+1 via tldts
- *   4. Validate: must have >= MIN_DOMAIN_COUNT, must include canary trackers
- *   5. Version + hash, write to CachedList (source="easyprivacy")
- *   6. Seed whotracks from demo JSON if missing (preserves current behavior)
+ * What this does (per source):
+ *   1. Fetch upstream filter list
+ *   2. Parse Adblock Plus syntax — extract block rules; skip exceptions,
+ *      element-hiding, regex, $domain=, $~third-party, $1p modifiers
+ *   3. Normalize hostnames to eTLD+1 via psl
+ *   4. Validate: floor + source-specific canary set; hard-exit on fail
+ *   5. Version (ISO date + sha256[12]); write CachedList row
+ *
+ * Worker unions both rows at classification time; EasyList absent during
+ * transition is OK (warns but continues with EasyPrivacy only).
  *
  * Usage:
- *   tsx scripts/refresh-privacy-lists.ts                # fetch + validate + write
- *   tsx scripts/refresh-privacy-lists.ts --dry-run      # parse + validate only
- *   tsx scripts/refresh-privacy-lists.ts --source=URL   # alternate upstream
+ *   tsx scripts/refresh-privacy-lists.ts                 # both sources
+ *   tsx scripts/refresh-privacy-lists.ts --easyprivacy   # EasyPrivacy only
+ *   tsx scripts/refresh-privacy-lists.ts --easylist      # EasyList only
+ *   tsx scripts/refresh-privacy-lists.ts --dry-run       # parse + validate, no DB write
  *
  * Exit codes:
  *   0 success
  *   1 fetch / runtime error
- *   2 validation failure (fewer than MIN_DOMAIN_COUNT, or canary missing)
- *
- * Schedule suggestion: daily at 03:00 (before update-stability / other jobs
- * that rely on consistent tracker counts).
+ *   2 validation failure (any source below floor or missing canary)
  */
 import { PrismaClient } from '@prisma/client';
 import crypto from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseList, validateList } from '@gecko-advisor/shared';
+import {
+  parseList,
+  validateList,
+  EASYPRIVACY_CANARIES,
+  EASYLIST_CANARIES,
+} from '@gecko-advisor/shared';
 
 // ============================================================
 // Configuration
 // ============================================================
 
-const EASYPRIVACY_URL =
-  process.env.EASYPRIVACY_URL ?? 'https://easylist.to/easylist/easyprivacy.txt';
+interface SourceConfig {
+  /** CachedList.source key */
+  key: 'easyprivacy' | 'easylist';
+  /** Display label for logs */
+  label: string;
+  /** Upstream URL (env-overridable) */
+  url: string;
+  /** Required canary domains for this source */
+  canaries: readonly string[];
+}
+
+const SOURCES: SourceConfig[] = [
+  {
+    key: 'easyprivacy',
+    label: 'EasyPrivacy',
+    url:
+      process.env.EASYPRIVACY_URL ??
+      'https://easylist.to/easylist/easyprivacy.txt',
+    canaries: EASYPRIVACY_CANARIES,
+  },
+  {
+    key: 'easylist',
+    label: 'EasyList',
+    url:
+      process.env.EASYLIST_URL ??
+      'https://easylist.to/easylist/easylist.txt',
+    canaries: EASYLIST_CANARIES,
+  },
+];
 
 // ============================================================
 // I/O
@@ -85,23 +124,27 @@ async function seedWhoTracksIfMissing(prisma: PrismaClient): Promise<void> {
 }
 
 // ============================================================
-// Main
+// Per-source ingestion
 // ============================================================
 
-async function main() {
-  const args = process.argv.slice(2);
-  const dryRun = args.includes('--dry-run');
-  const url =
-    args.find((a) => a.startsWith('--source='))?.slice(9) ?? EASYPRIVACY_URL;
+interface IngestResult {
+  source: SourceConfig;
+  domains: string[];
+  version: string;
+}
 
-  console.log(`[refresh] source: ${url}`);
+async function ingestSource(source: SourceConfig): Promise<IngestResult> {
+  console.log(`\n=== ${source.label} ===`);
+  console.log(`[${source.key}] source: ${source.url}`);
   const t0 = Date.now();
-  const text = await fetchUpstream(url);
-  console.log(`[refresh] fetched ${text.length.toLocaleString()} bytes in ${Date.now() - t0}ms`);
+  const text = await fetchUpstream(source.url);
+  console.log(
+    `[${source.key}] fetched ${text.length.toLocaleString()} bytes in ${Date.now() - t0}ms`,
+  );
 
   const { domains, stats } = parseList(text);
   console.log(
-    `[refresh] parsed: ${stats.totalLines} lines, ${stats.blockRules} block rules, ` +
+    `[${source.key}] parsed: ${stats.totalLines} lines, ${stats.blockRules} block rules, ` +
       `${stats.parsed} extracted, ${domains.size} unique eTLD+1 domains`,
   );
 
@@ -112,12 +155,11 @@ async function main() {
     .digest('hex')
     .slice(0, 12);
   const version = `${new Date().toISOString().slice(0, 10)}-${sha}`;
-  console.log(`[refresh] version: ${version}`);
+  console.log(`[${source.key}] version: ${version}`);
 
-  // Canary and floor checks
-  const validation = validateList(domains);
+  const validation = validateList(domains, { canaries: source.canaries });
   if (!validation.ok) {
-    console.error('[refresh] VALIDATION FAILED:');
+    console.error(`[${source.key}] VALIDATION FAILED:`);
     for (const r of validation.reasons) console.error('  -', r);
     console.error(
       `\nSample parsed domains (first 15): ${sorted.slice(0, 15).join(', ')}`,
@@ -125,36 +167,84 @@ async function main() {
     process.exit(2);
   }
 
-  // Reassurance sample — show ~10 canaries + 5 random
-  const sample = sorted.slice(0, 10).concat(sorted.slice(Math.floor(sorted.length / 2), Math.floor(sorted.length / 2) + 5));
-  console.log('[refresh] validation passed. Sample:', sample.join(', '));
+  const sample = sorted
+    .slice(0, 10)
+    .concat(
+      sorted.slice(
+        Math.floor(sorted.length / 2),
+        Math.floor(sorted.length / 2) + 5,
+      ),
+    );
+  console.log(`[${source.key}] validation passed. Sample:`, sample.join(', '));
+
+  return { source, domains: sorted, version };
+}
+
+// ============================================================
+// Main
+// ============================================================
+
+async function main() {
+  const args = process.argv.slice(2);
+  const dryRun = args.includes('--dry-run');
+
+  // Source selection: explicit flag wins, otherwise both.
+  const onlyEasyPrivacy = args.includes('--easyprivacy');
+  const onlyEasyList = args.includes('--easylist');
+  const selected = SOURCES.filter((s) => {
+    if (onlyEasyPrivacy && !onlyEasyList) return s.key === 'easyprivacy';
+    if (onlyEasyList && !onlyEasyPrivacy) return s.key === 'easylist';
+    return true;
+  });
+
+  console.log(
+    `[refresh] sources: ${selected.map((s) => s.key).join(', ')}` +
+      (dryRun ? ' (dry-run)' : ''),
+  );
+
+  // Ingest each source. validateList() hard-exits the process on failure
+  // so a partial write can't happen — we either get all results or none.
+  const results: IngestResult[] = [];
+  for (const s of selected) {
+    results.push(await ingestSource(s));
+  }
 
   if (dryRun) {
-    console.log('[refresh] --dry-run: skipping DB write');
+    console.log('\n[refresh] --dry-run: skipping DB write');
     return;
   }
 
+  console.log('\n=== writing to DB ===');
   const prisma = new PrismaClient();
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.cachedList.deleteMany({ where: { source: 'easyprivacy' } });
-      await tx.cachedList.create({
-        data: {
-          source: 'easyprivacy',
-          version,
-          data: { domains: sorted, version, count: sorted.length, fetchedAt: new Date().toISOString() },
-        },
+    for (const r of results) {
+      await prisma.$transaction(async (tx) => {
+        await tx.cachedList.deleteMany({ where: { source: r.source.key } });
+        await tx.cachedList.create({
+          data: {
+            source: r.source.key,
+            version: r.version,
+            data: {
+              domains: r.domains,
+              version: r.version,
+              count: r.domains.length,
+              fetchedAt: new Date().toISOString(),
+            },
+          },
+        });
       });
-    });
-    console.log(
-      `[refresh] wrote CachedList(source="easyprivacy", version="${version}", domains=${sorted.length})`,
-    );
+      console.log(
+        `[refresh] wrote CachedList(source="${r.source.key}", version="${r.version}", domains=${r.domains.length})`,
+      );
+    }
     await seedWhoTracksIfMissing(prisma);
   } finally {
     await prisma.$disconnect();
   }
 
-  console.log('[refresh] done. Worker will pick up new list on next 5-minute cache expiry, or restart worker to force.');
+  console.log(
+    '\n[refresh] done. Worker will pick up new lists on next 5-minute cache expiry, or restart worker to force.',
+  );
 }
 
 main().catch((err) => {

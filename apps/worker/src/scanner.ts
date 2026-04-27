@@ -463,7 +463,11 @@ export async function scanSiteJob(
   const timeBudgetMs = config.crawlTimeBudgetMs;
   const start = Date.now();
 
-  const trackerDomains = new Set(lists.easyprivacy.domains);
+  // Union EasyPrivacy + EasyList. See lists.ts for transition semantics.
+  const trackerDomains = new Set([
+    ...lists.easyprivacy.domains,
+    ...(lists.easylist?.domains ?? []),
+  ]);
   const fpDomains = new Set((lists.whotracks.fingerprinting ?? []).map((domain: string) => domain));
 
   // Collect all evidence in memory for batch insertion
