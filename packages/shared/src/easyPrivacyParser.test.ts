@@ -21,12 +21,23 @@ describe('parseEasyPrivacyLine', () => {
       expect(parseEasyPrivacyLine('||tracker.example.com/pixel.gif')).toBe('example.com');
     });
 
-    it('handles $domain= options', () => {
-      expect(parseEasyPrivacyLine('||tracker.example.com^$domain=foo.com')).toBe('example.com');
+    it('keeps resource-type modifiers ($script, $image, $xhr)', () => {
+      expect(parseEasyPrivacyLine('||tracker.example.com^$script')).toBe('example.com');
+      expect(parseEasyPrivacyLine('||metrics.example.com^$image,xhr')).toBe('example.com');
+      expect(parseEasyPrivacyLine('||t.example.com^$script,frame,other')).toBe('example.com');
     });
 
-    it('handles $script,third-party options', () => {
-      expect(parseEasyPrivacyLine('||metrics.example.com$script,third-party')).toBe('example.com');
+    it('keeps $third-party (canonical tracker rules)', () => {
+      // Most of EasyPrivacy looks like this — these ARE the trackers.
+      // Self-classification on the scanned domain is prevented at the worker
+      // by the first-party filter, not at parse time.
+      expect(parseEasyPrivacyLine('||google-analytics.com^$third-party')).toBe('google-analytics.com');
+      expect(parseEasyPrivacyLine('||scorecardresearch.com^$third-party')).toBe('scorecardresearch.com');
+      expect(parseEasyPrivacyLine('||tracker.com^$script,third-party,xmlhttprequest')).toBe('tracker.com');
+    });
+
+    it('keeps $~1p (synonym for $third-party)', () => {
+      expect(parseEasyPrivacyLine('||tracker.com^$~1p')).toBe('tracker.com');
     });
 
     it('handles ?query in URL', () => {
@@ -92,6 +103,25 @@ describe('parseEasyPrivacyLine', () => {
       expect(parseEasyPrivacyLine('||192.168.1.1/track')).toBeNull();
     });
 
+    it('rejects $~third-party (first-party-only — not a tracker)', () => {
+      expect(parseEasyPrivacyLine('||x.com^$~third-party')).toBeNull();
+    });
+
+    it('rejects $1p (synonym for ~third-party — first-party-only)', () => {
+      expect(parseEasyPrivacyLine('||x.com^$1p')).toBeNull();
+    });
+
+    it('rejects $domain= host-specific rules', () => {
+      expect(parseEasyPrivacyLine('||tracker.com^$domain=foo.com')).toBeNull();
+      expect(parseEasyPrivacyLine('||tracker.com^$domain=foo.com|bar.com')).toBeNull();
+      expect(parseEasyPrivacyLine('||tracker.com^$domain=~bad.com')).toBeNull();
+    });
+
+    it('rejects when ANY modifier is excluded (mixed)', () => {
+      expect(parseEasyPrivacyLine('||tracker.com^$script,~third-party')).toBeNull();
+      expect(parseEasyPrivacyLine('||tracker.com^$script,domain=foo.com')).toBeNull();
+    });
+
     it('passes through unknown TLDs (psl is permissive)', () => {
       // Documented behavior: psl returns 2-segment hosts unchanged for
       // unknown TLDs. Harmless — garbage extracted strings cannot match
@@ -126,20 +156,24 @@ describe('parseList', () => {
       '||google-analytics.com^',
       '@@||allowed.com^',
       'example.com##.ad',
-      '||facebook.net^$third-party',
+      '||facebook.net^$third-party', // KEPT — canonical 3p tracker
+      '||scorecardresearch.com^$script', // resource-type modifier — kept
+      '||first-party-only.com^$~third-party', // skipped — 1p only
       '',
     ].join('\n');
 
     const { domains, stats } = parseList(text);
 
-    expect(domains.size).toBe(3);
+    expect(domains.size).toBe(4);
     expect(domains.has('doubleclick.net')).toBe(true);
     expect(domains.has('google-analytics.com')).toBe(true);
-    expect(domains.has('facebook.net')).toBe(true);
+    expect(domains.has('scorecardresearch.com')).toBe(true);
+    expect(domains.has('facebook.net')).toBe(true); // $third-party kept
+    expect(domains.has('first-party-only.com')).toBe(false); // $~third-party skipped
 
-    expect(stats.totalLines).toBe(9);
-    expect(stats.blockRules).toBe(4); // four lines start with ||
-    expect(stats.parsed).toBe(4); // four extractions (one dupe, but parsed counts each)
+    expect(stats.totalLines).toBe(11);
+    expect(stats.blockRules).toBe(6); // six lines start with ||
+    expect(stats.parsed).toBe(5); // 5 extractions (doubleclick dupe; 1p-only skipped)
   });
 
   it('handles empty input', () => {

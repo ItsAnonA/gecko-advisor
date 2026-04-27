@@ -47,22 +47,30 @@ export const CANARIES = [
  * Extract a canonical eTLD+1 domain from one EasyPrivacy filter line.
  * Returns null for anything that isn't a network block rule we can use.
  *
- * Supported (with various option suffixes after $):
+ * Supported (resource-type modifiers like $script/$image/$xhr are kept):
  *   ||tracker.example.com^
  *   ||tracker.example.com/path
- *   ||tracker.example.com$script,third-party
- *   ||sub.tracker.example.com^$domain=foo.com
+ *   ||tracker.example.com$script
+ *   ||tracker.example.com^$image,xhr
  *
  * Rejected:
- *   @@||...       (exceptions / allowlist)
- *   !...          (comments)
- *   [Adblock...]  (header lines)
- *   foo##.ad      (element hiding)
- *   foo#@#.ad     (element-hiding exceptions)
- *   /bar/         (regex rules)
- *   ||1.2.3.4^    (IP literal — psl rejects)
- *   ||*.foo.com^  (wildcard host)
- *   ||a.invalid^  (unknown TLD — psl rejects)
+ *   @@||...                 (exceptions / allowlist)
+ *   !...                    (comments)
+ *   [Adblock...]            (header lines)
+ *   foo##.ad                (element hiding)
+ *   foo#@#.ad               (element-hiding exceptions)
+ *   /bar/                   (regex rules)
+ *   ||1.2.3.4^              (IP literal — psl rejects)
+ *   ||*.foo.com^            (wildcard host)
+ *   ||x.com^$~third-party   (first-party-only — not a tracker)
+ *   ||x.com^$1p             (synonym for ~third-party)
+ *   ||x.com^$domain=foo.com (host-specific — not a universal tracker)
+ *
+ * Kept (third-party-context rules ARE the trackers):
+ *   ||x.com^$third-party     (canonical: GA, scorecardresearch, etc.)
+ *   ||x.com^$~1p             (synonym for third-party)
+ * The worker applies a first-party self-load filter at classification
+ * time so scanning a site listed in EasyPrivacy doesn't self-classify.
  */
 export function parseEasyPrivacyLine(line: string): string | null {
   const t = line.trim();
@@ -74,8 +82,46 @@ export function parseEasyPrivacyLine(line: string): string | null {
   if (t.startsWith('/') && t.endsWith('/')) return null;
   if (!t.startsWith('||')) return null;
 
+  // Strip leading ||, split URL pattern from $-modifiers (Adblock Plus syntax).
+  // We MUST inspect modifiers before extracting the host, because
+  // context-dependent rules ($third-party, $domain=) cannot be flattened into
+  // a universal tracker domain set. Example: ||cnn.com^$third-party means
+  // "block cnn.com only when loaded as a third party"; treating it as a
+  // universal tracker would self-classify cnn.com as a tracker on its own
+  // page. Resource-type modifiers ($script, $image, $xhr, etc.) are NOT
+  // context-dependent — they restrict request type, not caller — so we keep
+  // those rules.
   const body = t.slice(2);
-  const m = body.match(/^([a-z0-9][a-z0-9.\-_*]*?)(?:[\^/?$]|$)/i);
+  const dollarIdx = body.indexOf('$');
+  const urlPart = dollarIdx >= 0 ? body.slice(0, dollarIdx) : body;
+  const modifiers = dollarIdx >= 0 ? body.slice(dollarIdx + 1) : '';
+
+  // Skip:
+  //   $~third-party / $1p — first-party-only rules; these by definition
+  //                         don't apply to tracker classification.
+  //   $domain=...        — host-specific allowlist/blocklist; the rule only
+  //                         fires on certain origins, so flattening into a
+  //                         universal tracker list produces false positives.
+  //
+  // Keep:
+  //   $third-party / $~1p — third-party-context rules. These ARE the
+  //                          canonical tracker rules (most of EasyPrivacy
+  //                          looks like this — google-analytics.com,
+  //                          scorecardresearch.com, etc. are all
+  //                          $third-party qualified). The worker applies a
+  //                          first-party self-load filter at classification
+  //                          time so scanning the domain itself doesn't
+  //                          self-classify (see firstPartyDetection.ts).
+  if (modifiers) {
+    for (const opt of modifiers.toLowerCase().split(',')) {
+      const o = opt.trim();
+      if (o === '~third-party' || o === '1p' || o.startsWith('domain=')) {
+        return null;
+      }
+    }
+  }
+
+  const m = urlPart.match(/^([a-z0-9][a-z0-9.\-_*]*?)(?:[\^/?]|$)/i);
   if (!m || !m[1]) return null;
 
   const host = m[1].toLowerCase();

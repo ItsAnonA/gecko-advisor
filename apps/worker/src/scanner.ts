@@ -565,7 +565,13 @@ export async function scanSiteJob(
           allEvidence.push(createThirdPartyEvidence(evidence));
         }
 
-        if (trackerDomains.has(root) && !seenTrackers.has(root)) {
+        // First-party self-load filter: EasyPrivacy contains rules like
+        // ||cnn.com^$third-party that target the host only when loaded as
+        // a third party. Without this guard, scanning a domain listed in
+        // EasyPrivacy self-classifies the site as a tracker on its own
+        // page. browserScan.ts already has this guard inside its
+        // isThirdParty branch; replicating here for the static HTML path.
+        if (isThirdParty && trackerDomains.has(root) && !seenTrackers.has(root)) {
           seenTrackers.add(root);
           allEvidence.push(createTrackerEvidence(evidence));
         }
