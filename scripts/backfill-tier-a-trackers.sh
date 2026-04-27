@@ -22,8 +22,13 @@ CHECKPOINT_EVERY="${CHECKPOINT_EVERY:-500}"
 # Two-gate system:
 #   First checkpoint (500 seed-prioritized domains) — STRICTER because seeds are
 #   known heavy brands. If distribution isn't strong here, it never will be.
-FIRST_MIN_MAX="${FIRST_MIN_MAX:-40}"
-FIRST_MIN_P90="${FIRST_MIN_P90:-25}"
+#
+# Thresholds calibrated to Gecko's pre-interaction crawl model
+# (logged-out, no consent click, ~30s window). 2026-04-27 validation pass:
+# foxnews=33, weather=13, cnn=24 — heavy news sites max in the 25-35 range,
+# not the 40-80 of full-waterfall measurements. See session notes.
+FIRST_MIN_MAX="${FIRST_MIN_MAX:-30}"
+FIRST_MIN_P90="${FIRST_MIN_P90:-18}"
 FIRST_MIN_MEDIAN="${FIRST_MIN_MEDIAN:-12}"
 #   Subsequent checkpoints — LOOSER because tail domains are lower-volume.
 CHECKPOINT_MIN_MAX_TRACKERS="${CHECKPOINT_MIN_MAX_TRACKERS:-20}"
@@ -102,7 +107,7 @@ while IFS= read -r domain; do
     URLS_JSON=$(printf '%s\n' "${BATCH_URLS[@]}" | jq -R . | jq -s .)
 
     echo "[$(date +%H:%M:%S)] Batch $BATCH_NUM: ${#BATCH_URLS[@]} urls (total: $PROCESSED)" | tee -a "$LOG_FILE"
-    curl -s -X POST "$API_BASE/admin/bulk-scan" \
+    curl -s -X POST "$API_BASE/api/admin/bulk-scan" \
       -H "X-Admin-Key: $ADMIN_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{\"urls\": $URLS_JSON, \"skipExisting\": false}" > /dev/null || \
@@ -145,7 +150,7 @@ done < "$SITES_FILE"
 # Flush tail batch
 if [[ ${#BATCH_URLS[@]} -gt 0 ]]; then
   URLS_JSON=$(printf '%s\n' "${BATCH_URLS[@]}" | jq -R . | jq -s .)
-  curl -s -X POST "$API_BASE/admin/bulk-scan" \
+  curl -s -X POST "$API_BASE/api/admin/bulk-scan" \
     -H "X-Admin-Key: $ADMIN_API_KEY" \
     -H "Content-Type: application/json" \
     -d "{\"urls\": $URLS_JSON, \"skipExisting\": false}" > /dev/null
