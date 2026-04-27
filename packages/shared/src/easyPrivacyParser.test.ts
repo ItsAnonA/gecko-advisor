@@ -5,7 +5,7 @@ import {
   validateList,
   CANARIES,
   MIN_INGEST_DOMAIN_COUNT,
-} from '../utils/easyPrivacyParser.js';
+} from './easyPrivacyParser.js';
 
 describe('parseEasyPrivacyLine', () => {
   describe('block rules (extracted)', () => {
@@ -92,10 +92,11 @@ describe('parseEasyPrivacyLine', () => {
       expect(parseEasyPrivacyLine('||192.168.1.1/track')).toBeNull();
     });
 
-    it('passes through unknown TLDs (tldts treats them as eTLD+1)', () => {
-      // Documented behavior: tldts is permissive on unknown TLDs and returns
-      // the 2-segment host unchanged. Harmless — garbage extracted domains
-      // simply won't match real-evidence hostnames during classification.
+    it('passes through unknown TLDs (psl is permissive)', () => {
+      // Documented behavior: psl returns 2-segment hosts unchanged for
+      // unknown TLDs. Harmless — garbage extracted strings cannot match
+      // real-evidence hostnames during classification, and validateList()
+      // (5K floor + canaries) catches gross upstream-format breakage.
       expect(parseEasyPrivacyLine('||tracker.invalidtld^')).toBe('tracker.invalidtld');
     });
 

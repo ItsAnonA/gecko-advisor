@@ -14,3 +14,4 @@ export * from './domain.js';
 export * from './cache.js';
 export * from './bot-detection.js';
 export * from './tracker-classification.js';
+export * from './easyPrivacyParser.js';

@@ -3,12 +3,17 @@ SPDX-FileCopyrightText: 2026 Gecko Advisor contributors
 SPDX-License-Identifier: MIT
 
 Pure parser/validator for EasyPrivacy filter lists. No I/O — extracted so the
-ingestion script (scripts/refresh-privacy-lists.ts) and worker tests both
-import the same code path. The original 4-domain demo fallback that silently
-shipped to prod (see memory/project-tracker-detector-gate-bug.md) is exactly
-the failure class these tests guard against.
+ingestion script (scripts/refresh-privacy-lists.ts) and worker runtime
+(apps/worker/src/lists.ts) share one tested code path. The original 4-domain
+demo fallback that silently shipped to prod (see
+memory/project-tracker-detector-gate-bug.md) is exactly the failure class
+these tests guard against.
+
+Lives in @gecko-advisor/shared because both the backend container (which runs
+the script via tsx) and the worker container (which classifies traffic
+against the loaded list) ship this package.
 */
-import { getDomain } from 'tldts';
+import { etldPlusOne } from './utils.js';
 
 /**
  * Floor for a sane upstream ingestion. EasyPrivacy ships ~30K+ eTLD+1
@@ -55,8 +60,9 @@ export const CANARIES = [
  *   foo##.ad      (element hiding)
  *   foo#@#.ad     (element-hiding exceptions)
  *   /bar/         (regex rules)
- *   ||1.2.3.4^    (IP literal — no eTLD+1)
+ *   ||1.2.3.4^    (IP literal — psl rejects)
  *   ||*.foo.com^  (wildcard host)
+ *   ||a.invalid^  (unknown TLD — psl rejects)
  */
 export function parseEasyPrivacyLine(line: string): string | null {
   const t = line.trim();
@@ -77,10 +83,18 @@ export function parseEasyPrivacyLine(line: string): string | null {
   if (host.includes('*') || host.startsWith('.') || host.includes('..')) return null;
   if (!host.includes('.')) return null;
 
-  // tldts.getDomain() returns null for IP literals and unknown TLDs, which
-  // gives us the IP-rejection behavior for free.
-  const root = getDomain(host);
-  return root || null;
+  // Reject IPv4 literals explicitly. psl is happy to parse "1.2.3.4" as
+  // "3.4" (treats the last segment as the TLD), which would silently
+  // pollute the domain set if upstream ever shipped IP rules.
+  if (/^\d+(\.\d+){3}$/.test(host)) return null;
+
+  // psl.get() (via etldPlusOne) handles bare TLDs and length checks.
+  // Note: psl IS permissive on unknown TLDs (returns the host unchanged
+  // for things like "tracker.invalidtld"). Harmless in practice — those
+  // extracted strings can't match real-evidence hostnames during
+  // classification, and the validation step (5K floor + canary list)
+  // catches any gross upstream-format breakage.
+  return etldPlusOne(host);
 }
 
 export interface ParseStats {

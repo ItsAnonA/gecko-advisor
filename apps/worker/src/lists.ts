@@ -6,7 +6,7 @@ import type { PrismaClient } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { logger } from './logger.js';
-import { MIN_RUNTIME_DOMAIN_COUNT } from './utils/easyPrivacyParser.js';
+import { MIN_RUNTIME_DOMAIN_COUNT } from '@gecko-advisor/shared';
 
 export interface Lists {
   easyprivacy: EasyList;

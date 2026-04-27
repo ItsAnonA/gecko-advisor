@@ -31,7 +31,7 @@ import { PrismaClient } from '@prisma/client';
 import crypto from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseList, validateList } from '../apps/worker/src/utils/easyPrivacyParser.js';
+import { parseList, validateList } from '@gecko-advisor/shared';
 
 // ============================================================
 // Configuration
