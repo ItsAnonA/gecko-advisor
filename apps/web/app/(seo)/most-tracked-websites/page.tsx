@@ -80,19 +80,36 @@ export default async function MostTrackedWebsitesPage() {
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
                 Most Tracked Websites
               </h1>
-              <p className="text-xl text-gray-400 max-w-2xl mb-10">
-                The 100 websites deploying the most third-party tracking scripts. Ranked by
-                tracker count from automated privacy scans.
+              <p className="text-2xl font-semibold text-white max-w-2xl mb-4">
+                We measured what websites load before you click anything.
+              </p>
+              <p className="text-lg text-gray-400 max-w-2xl mb-10">
+                We scanned <strong className="text-white">{data?.totalDomains?.toLocaleString() ?? '5,948'}</strong> of the most-trafficked websites in a clean,
+                logged-out browser session — no consent click, no scroll, no login — and counted every
+                third-party tracker that loads on first paint.
               </p>
 
-              {data && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatBlock label="Domains Analyzed" value={data.totalDomains.toLocaleString()} />
-                  <StatBlock label="Avg Trackers" value={data.stats.averageTrackers.toFixed(1)} accent />
-                  <StatBlock label="Avg Score" value={`${data.stats.averageScore}/100`} />
-                  <StatBlock label="Avg Cookies" value={data.stats.averageCookies.toFixed(1)} />
-                </div>
-              )}
+              {data && (() => {
+                const trackerCounts = data.rankings.map((r) => r.trackers).filter((n): n is number => Number.isFinite(n)).sort((a, b) => a - b);
+                const n = trackerCounts.length;
+                const max = n > 0 ? trackerCounts[n - 1] : 0;
+                const median = n > 0 ? trackerCounts[Math.floor(n / 2)] : 0;
+                const p90 = n > 0 ? trackerCounts[Math.floor(0.9 * (n - 1))] : 0;
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatBlock label="Domains scanned" value={data.totalDomains.toLocaleString()} />
+                    <StatBlock label="Max trackers" value={String(max)} accent />
+                    <StatBlock label="Top 10% load" value={`${p90}+`} />
+                    <StatBlock label="Median site" value={String(median)} />
+                  </div>
+                );
+              })()}
+
+              <p className="mt-8 text-lg text-gray-300 max-w-2xl">
+                The sites at the top of this list aren&apos;t household names. That isn&apos;t a gap in the data.
+                It&apos;s the result. The sites that track you the most before you act are not the ones
+                you expect — they&apos;re the ones that monetize immediately.
+              </p>
             </div>
           </div>
         </section>
@@ -169,6 +186,11 @@ export default async function MostTrackedWebsitesPage() {
           )}
         </section>
 
+        {/* Where the sites you recognize fall — pre-empts the "where is Facebook?" perception
+            problem. Hardcoded snapshot from 2026-04-28 brand audit; consider wiring to live
+            scan data once the brand cohort is stable in the rankings. */}
+        <RecognizableBrandsSection />
+
         {/* Dataset Freshness Signal */}
         {data?.freshness && <FreshnessBar freshness={data.freshness} />}
 
@@ -209,14 +231,45 @@ export default async function MostTrackedWebsitesPage() {
             </p>
 
             <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-3">
-              How We Measure Tracking
+              How we measure tracking
             </h3>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Gecko Advisor uses automated headless browser scanning to detect third-party tracking scripts.
-              Our scanner loads each website in a controlled environment and monitors all network requests.
-              Scripts that communicate with known tracking domains (identified via community-maintained
-              blocklists and our own fingerprinting detection) are counted as trackers. We distinguish
-              between essential analytics, advertising trackers, and cross-site profiling scripts.
+              This list answers one specific question: how many trackers does a site load before you
+              do anything? It does not measure trackers that fire after consent, login, scroll, or any
+              user interaction. That is deliberate. Different humans interact with the same page in
+              different ways, on different days, with different consent histories. A reproducible
+              measurement has to start from a clean state — same browser, same session shape, every
+              time.
+            </p>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Every site in this list was measured under the same conditions:
+            </p>
+            <ul className="list-disc pl-6 text-gray-700 leading-relaxed mb-4 space-y-1">
+              <li>A real Chromium browser (not just an HTTP fetch)</li>
+              <li>~30 seconds of page load with no user interaction</li>
+              <li>Network requests classified against EasyPrivacy + EasyList (combined ~94,000 tracker domains)</li>
+              <li>Identical session shape for every site</li>
+            </ul>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              This makes the results directly comparable across thousands of sites — something
+              interaction-based measurements cannot guarantee. Sites that block automated scanners
+              (some do) are flagged in their report rather than silently absent from the dataset.
+            </p>
+
+            <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-3">
+              How to read the numbers
+            </h3>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              A high tracker count is not proof of hostile intent. It usually reflects an ad-supported
+              business model and a less restrictive consent flow. A low tracker count is not a free
+              pass either — it can mean strong privacy practices, or it can mean the heavy tracking
+              happens after you log in, accept a banner, or hit a paywall.
+            </p>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              What the first-load count gives you: a clean, comparable measurement of what your
+              browser is asked to do <em>before you have made any decisions</em>. That signal is not
+              the whole story, but it is the one signal on this list that is reproducible across
+              every site and every scan.
             </p>
 
             <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-3">
@@ -317,6 +370,116 @@ export default async function MostTrackedWebsitesPage() {
         </section>
       </div>
     </>
+  );
+}
+
+/**
+ * Snapshot of how recognizable brands rank under the pre-interaction
+ * measurement model. This is the trust-bridge that pre-empts the
+ * "where is Facebook?" reaction to the regional-publisher-heavy top-20.
+ *
+ * Numbers are from the 2026-04-28 brand audit on prod scans. Counts are
+ * stable enough to ship as-is; revisit when the cohort is queryable as
+ * a live ranking cut.
+ */
+const RECOGNIZABLE_BRANDS: { domain: string; trackers: number; reason: string }[] = [
+  { domain: 'foxnews.com', trackers: 33, reason: 'ad-supported, no consent gate' },
+  { domain: 'cnn.com', trackers: 24, reason: 'ad-supported, US-style banners' },
+  { domain: 'washingtonpost.com', trackers: 22, reason: 'ad-supported, soft paywall' },
+  { domain: 'buzzfeed.com', trackers: 19, reason: 'ad-supported' },
+  { domain: 'target.com', trackers: 12, reason: 'retail with ad inventory' },
+  { domain: 'weather.com', trackers: 9, reason: 'ad-supported' },
+  { domain: 'microsoft.com', trackers: 8, reason: 'corporate landing' },
+  { domain: 'nytimes.com', trackers: 7, reason: 'paywall gate' },
+  { domain: 'linkedin.com', trackers: 5, reason: 'login wall' },
+  { domain: 'bloomberg.com', trackers: 4, reason: 'strict EU-style consent gate' },
+  { domain: 'google.com', trackers: 4, reason: 'minimal SERP shell' },
+  { domain: 'youtube.com', trackers: 3, reason: 'logged-out homepage' },
+  { domain: 'netflix.com', trackers: 3, reason: 'login wall' },
+  { domain: 'yahoo.com', trackers: 3, reason: 'sparse' },
+  { domain: 'amazon.com', trackers: 2, reason: 'pre-search shell' },
+  { domain: 'x.com', trackers: 2, reason: 'login wall' },
+  { domain: 'tiktok.com', trackers: 2, reason: 'login wall' },
+  { domain: 'facebook.com', trackers: 1, reason: 'login wall' },
+  { domain: 'instagram.com', trackers: 1, reason: 'login wall' },
+  { domain: 'apple.com', trackers: 1, reason: 'corporate landing' },
+  { domain: 'theguardian.com', trackers: 0, reason: 'consent wall blocks scripts entirely' },
+  { domain: 'forbes.com', trackers: 0, reason: 'consent wall' },
+];
+
+function RecognizableBrandsSection() {
+  return (
+    <section className="max-w-5xl mx-auto px-4 py-12 border-t border-gray-100">
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        Where the sites you recognize actually fall
+      </h2>
+      <p className="text-gray-600 mb-6">
+        Here&apos;s where the sites you recognize actually fall:
+      </p>
+
+      <div className="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+        <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <div className="col-span-5">Site</div>
+          <div className="col-span-2 text-right">Trackers</div>
+          <div className="col-span-5">Why</div>
+        </div>
+        {RECOGNIZABLE_BRANDS.map((b) => (
+          <Link
+            key={b.domain}
+            href={`/privacy-report/${b.domain}`}
+            className="grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
+          >
+            <div className="col-span-5 flex items-center gap-2 min-w-0">
+              <Image
+                src={`https://www.google.com/s2/favicons?domain=${b.domain}&sz=32`}
+                alt=""
+                width={16}
+                height={16}
+                className="w-4 h-4 rounded flex-shrink-0"
+                unoptimized
+              />
+              <span className="font-medium text-gray-900 truncate text-sm">{b.domain}</span>
+            </div>
+            <div className="col-span-2 text-right text-sm font-semibold text-gray-700">
+              {b.trackers}
+            </div>
+            <div className="col-span-5 text-sm text-gray-500 truncate">{b.reason}</div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-6 prose prose-gray max-w-none">
+        <p className="text-gray-700 leading-relaxed">
+          The pattern repeats:
+        </p>
+        <ul className="text-gray-700 leading-relaxed">
+          <li>
+            <strong>Login walls</strong> — Facebook, Instagram, X, TikTok, LinkedIn, Reddit show a
+            sparse landing screen. The tracking stack fires <em>after</em> authentication, which we
+            never trigger.
+          </li>
+          <li>
+            <strong>Consent walls</strong> — The Guardian, Bloomberg, Forbes gate scripts behind a
+            cookie banner. Strict EU-style flows mean almost nothing loads until you click
+            &ldquo;accept&rdquo;.
+          </li>
+          <li>
+            <strong>Paywalls</strong> — NYT, WSJ render minimal content to unauthenticated
+            visitors.
+          </li>
+          <li>
+            <strong>Corporate landing pages</strong> — Apple, Microsoft, Google&apos;s homepage
+            prioritise speed and design over ad inventory.
+          </li>
+        </ul>
+        <p className="text-gray-700 leading-relaxed">
+          Meanwhile, ad-supported regional publishers without strict consent gates load their entire
+          ad and tracking stack on first paint. That is how a site you have never heard of can carry
+          more trackers than Facebook does pre-login. This is not an artefact of measurement. It is
+          a finding.
+        </p>
+      </div>
+    </section>
   );
 }
 
