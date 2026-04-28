@@ -104,8 +104,50 @@ async function launchBrowser(): Promise<Browser | null> {
  *
  * This function is safe to call even if Chromium is not available —
  * it returns a failed result with empty evidence.
+ *
+ * Hard-timeout protection: an outer Promise.race wraps the entire scan.
+ * If the inner work exceeds `hardTimeoutMs` (2× timeoutMs by default),
+ * we SIGKILL the Chromium process and resolve with error="HARD_TIMEOUT".
+ * This prevents the 17-minute zombie scans observed during Tier-A
+ * backfill validation (2026-04-27).
  */
 export async function browserScan(options: BrowserScanOptions): Promise<BrowserScanResult> {
+  const innerTimeoutMs = options.timeoutMs ?? 30_000;
+  const hardTimeoutMs = innerTimeoutMs * 2;
+  // Shared mutable state so the hard-timeout handler can SIGKILL the
+  // Chromium process even if the inner scan is wedged.
+  const state: { browser: Browser | null } = { browser: null };
+
+  const hardTimeoutPromise = new Promise<BrowserScanResult>((resolve) => {
+    const timer = setTimeout(() => {
+      logger.error(
+        { scanId: options.scanId, url: options.url, hardTimeoutMs },
+        'Browser scan exceeded hard timeout — SIGKILL Chromium',
+      );
+      try {
+        const proc = state.browser?.process();
+        proc?.kill('SIGKILL');
+      } catch {
+        // Best-effort kill
+      }
+      resolve({
+        evidence: [],
+        networkRequestCount: 0,
+        thirdPartyCount: 0,
+        success: false,
+        error: 'HARD_TIMEOUT',
+      });
+    }, hardTimeoutMs);
+    timer.unref?.();
+  });
+
+  return Promise.race([runBrowserScan(options, state), hardTimeoutPromise]);
+}
+
+async function runBrowserScan(
+  options: BrowserScanOptions,
+  state: { browser: Browser | null },
+): Promise<BrowserScanResult> {
   const {
     scanId,
     url,
@@ -129,7 +171,6 @@ export async function browserScan(options: BrowserScanOptions): Promise<BrowserS
   const seenTrackers = new Set<string>(knownTrackers);
   const seenThirdParties = new Set<string>(knownThirdParties);
 
-  let browser: Browser | null = null;
   let page: Page | null = null;
 
   // Overall timeout guard
@@ -139,8 +180,8 @@ export async function browserScan(options: BrowserScanOptions): Promise<BrowserS
   });
 
   try {
-    browser = await launchBrowser();
-    if (!browser) {
+    state.browser = await launchBrowser();
+    if (!state.browser) {
       return {
         evidence: [],
         networkRequestCount: 0,
@@ -150,7 +191,7 @@ export async function browserScan(options: BrowserScanOptions): Promise<BrowserS
       };
     }
 
-    page = await browser.newPage();
+    page = await state.browser.newPage();
 
     // Set a realistic user agent
     await page.setUserAgent(
@@ -358,10 +399,11 @@ export async function browserScan(options: BrowserScanOptions): Promise<BrowserS
       error: errorMsg,
     };
   } finally {
-    // Always close browser to prevent zombie Chromium processes
+    // Always close browser to prevent zombie Chromium processes.
+    // If close hangs, the outer hard-timeout will SIGKILL the process.
     try {
       if (page) await page.close().catch(() => {});
-      if (browser) await browser.close().catch(() => {});
+      if (state.browser) await state.browser.close().catch(() => {});
     } catch {
       // Best-effort cleanup
     }

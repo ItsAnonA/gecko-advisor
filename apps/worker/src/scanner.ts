@@ -666,31 +666,60 @@ export async function scanSiteJob(
     });
   }
 
-  // Check if site was reachable - if no pages fetched, mark as error
-  if (successfulFetches === 0) {
-    // Determine dominant error code from fetch attempts
-    const dominantError = getDominantError(fetchErrors);
-    const { summary, suggestion } = getErrorMessage(dominantError);
+  // Pull domain record once — we need indexTier to decide whether a static
+  // fetch failure should hard-fail the scan (long-tail) or fall through to
+  // browser scan (Tier-A: known anti-bot block; Chromium can usually bypass).
+  const domainRecord = await prisma.domain
+    .findUnique({
+      where: { domain: siteRoot },
+      select: { scanCount: true, indexTier: true },
+    })
+    .catch(() => null);
+  const isTierA = domainRecord?.indexTier === 'A';
 
-    logger.warn({ scanId, url: urlInput, errorCode: dominantError, fetchErrors }, 'Site unreachable - no pages could be fetched');
-    await prisma.scan.update({
-      where: { id: scanId },
-      data: {
-        status: 'error',
-        score: null,
-        label: null,
-        summary,
-        meta: {
-          error: dominantError,
-          errorMessage: summary,
-          suggestion,
-          fetchErrors, // Preserve all error codes for debugging
-        } as Prisma.InputJsonValue,
-        finishedAt: new Date(),
-        progress: 100,
-      },
-    });
-    return;
+  // Track failures separately so the final scan record can preserve both
+  // staticFetchFailure and browserScanFailure for audits.
+  let staticFetchFailure: { error: ScanErrorCode; fetchErrors: ScanErrorCode[] } | null = null;
+  let browserScanFailure: { error: string } | null = null;
+
+  // Check if site was reachable. If not:
+  //   - Long-tail (B/C/etc.): hard-fail here — cheap-fail saves crawl cost.
+  //   - Tier-A: continue to browser scan. Many big sites (reddit, bloomberg,
+  //     wapo) block our static HTTP fetch with anti-bot but render fine in
+  //     a real Chromium. Erroring out before browser scan is the bug that
+  //     left them missing from the most-tracked rankings.
+  if (successfulFetches === 0) {
+    const dominantError = getDominantError(fetchErrors);
+    staticFetchFailure = { error: dominantError, fetchErrors: [...fetchErrors] };
+
+    if (!isTierA) {
+      const { summary, suggestion } = getErrorMessage(dominantError);
+      logger.warn({ scanId, url: urlInput, errorCode: dominantError, fetchErrors }, 'Site unreachable - no pages could be fetched');
+      await prisma.scan.update({
+        where: { id: scanId },
+        data: {
+          status: 'error',
+          score: null,
+          label: null,
+          summary,
+          meta: {
+            error: dominantError,
+            errorMessage: summary,
+            suggestion,
+            fetchErrors,
+            staticFetchFailure,
+          } as Prisma.InputJsonValue,
+          finishedAt: new Date(),
+          progress: 100,
+        },
+      });
+      return;
+    }
+
+    logger.info(
+      { scanId, url: urlInput, siteRoot, errorCode: dominantError, fetchErrors },
+      'Static fetch failed for Tier-A — falling through to browser scan',
+    );
   }
 
   // Batch insert static evidence - 65% progress
@@ -703,24 +732,19 @@ export async function scanSiteJob(
   }
 
   // Browser scan phase - 65%-80% progress
-  // Only runs for established domains (scanCount >= threshold) to detect JS-loaded trackers
+  // Tier A domains always get browser scan (correctness for high-value pages).
+  // Other tiers require scanCount >= minScanCount (cost control for long-tail).
   let scanMethod: 'http_fetch' | 'browser' = 'http_fetch';
+  let browserScanRan = false;
   if (config.browserScan.enabled) {
     try {
-      // Check if this domain qualifies for browser scan
-      const domainRecord = await prisma.domain.findUnique({
-        where: { domain: siteRoot },
-        select: { scanCount: true, indexTier: true },
-      }).catch(() => null);
-
-      // Tier A domains always get browser scan (correctness for high-value pages).
-      // Other tiers require scanCount >= minScanCount (cost control for long-tail).
       const qualifies =
         domainRecord &&
-        (domainRecord.indexTier === 'A' ||
+        (isTierA ||
           domainRecord.scanCount >= config.browserScan.minScanCount);
 
       if (qualifies) {
+        browserScanRan = true;
         await reportProgress(70);
         logger.info(
           { scanId, url: urlInput, siteRoot, scanCount: domainRecord.scanCount, indexTier: domainRecord.indexTier },
@@ -739,7 +763,6 @@ export async function scanSiteJob(
 
         if (browserResult.success && browserResult.evidence.length > 0) {
           scanMethod = 'browser';
-          // Insert browser-discovered evidence
           await prisma.evidence.createMany({
             data: browserResult.evidence,
             skipDuplicates: true,
@@ -754,13 +777,54 @@ export async function scanSiteJob(
             'Browser scan added new evidence'
           );
         } else if (!browserResult.success) {
-          logger.debug({ scanId, error: browserResult.error }, 'Browser scan failed — using static-only results');
+          browserScanFailure = { error: browserResult.error ?? 'unknown' };
+          logger.warn({ scanId, error: browserResult.error }, 'Browser scan failed');
         }
       }
     } catch (browserError) {
-      // Browser scan is non-fatal — log and continue with static results
-      logger.warn({ scanId, error: browserError }, 'Browser scan error — falling back to static-only results');
+      const msg = browserError instanceof Error ? browserError.message : String(browserError);
+      browserScanFailure = { error: msg };
+      logger.warn({ scanId, error: msg }, 'Browser scan threw — continuing with whatever evidence exists');
     }
+  }
+
+  // Tier-A bypass gate: if we got here only because static failed AND
+  // browser scan didn't produce any evidence either, the scan has no real
+  // signal. Mark as error with both failure modes preserved.
+  if (staticFetchFailure && allEvidence.length === 0 && scanMethod !== 'browser') {
+    const { summary, suggestion } = getErrorMessage(staticFetchFailure.error);
+    logger.warn(
+      {
+        scanId,
+        url: urlInput,
+        siteRoot,
+        staticFetchFailure,
+        browserScanFailure,
+        browserScanRan,
+      },
+      'Tier-A scan failed: static unreachable AND browser scan produced no evidence',
+    );
+    await prisma.scan.update({
+      where: { id: scanId },
+      data: {
+        status: 'error',
+        score: null,
+        label: null,
+        summary,
+        meta: {
+          error: staticFetchFailure.error,
+          errorMessage: summary,
+          suggestion,
+          fetchErrors: staticFetchFailure.fetchErrors,
+          staticFetchFailure,
+          browserScanFailure,
+          browserScanRan,
+        } as Prisma.InputJsonValue,
+        finishedAt: new Date(),
+        progress: 100,
+      },
+    });
+    return;
   }
 
   // Scoring phase - 80% progress
@@ -796,7 +860,15 @@ export async function scanSiteJob(
         score: result.score,
         label: result.label,
         summary: result.summary,
-        meta: { ...(result.meta as Record<string, unknown>), scanMethod } as Prisma.InputJsonValue,
+        meta: {
+          ...(result.meta as Record<string, unknown>),
+          scanMethod,
+          // Preserve failure-cause metadata even on success — surfaces
+          // when we recovered via Tier-A bypass or partial browser scan.
+          ...(staticFetchFailure ? { staticFetchFailure } : {}),
+          ...(browserScanFailure ? { browserScanFailure } : {}),
+          ...(browserScanRan ? { browserScanRan: true } : {}),
+        } as Prisma.InputJsonValue,
         status: 'done',
         finishedAt: new Date(),
         progress: 100,
