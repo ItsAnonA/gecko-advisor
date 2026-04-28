@@ -20,17 +20,17 @@ import { fetchRankings, gradeBg, buildRankingsJsonLd, type CategoryBreakdown, ty
 import { selectFeaturedDomains } from '@/lib/featuredDomains';
 
 export const metadata: Metadata = {
-  title: '100 Most Tracked Websites (2026) — Tracker Rankings',
+  title: 'Most-Tracked Websites 2026 — Up to 92 Trackers Before You Click',
   description:
-    'Which websites track you the most? See the top 100 websites ranked by number of third-party trackers. Data from automated privacy scans of thousands of domains.',
+    'Which websites load the most trackers before you click? We scanned 5,455 sites in a clean, logged-out browser. Top sites load up to 92 trackers.',
   robots: { index: true, follow: true },
   alternates: {
     canonical: `${SEO_CONSTANTS.BASE_URL}/most-tracked-websites`,
   },
   openGraph: {
-    title: '100 Most Tracked Websites (2026) — Tracker Rankings',
+    title: 'Most-Tracked Websites 2026 — Up to 92 Trackers Before You Click',
     description:
-      'Which websites track you the most? See the top 100 websites ranked by number of third-party trackers.',
+      'Which websites load the most trackers before you click? We scanned 5,455 sites in a clean, logged-out browser. Top sites load up to 92 trackers.',
     url: `${SEO_CONSTANTS.BASE_URL}/most-tracked-websites`,
     siteName: SEO_CONSTANTS.SITE_NAME,
     type: 'article',
@@ -334,7 +334,21 @@ export default async function MostTrackedWebsitesPage() {
             />
             <FaqItem
               question="How many trackers does the average website have?"
-              answer={data ? `Among the top 100 most-tracked websites in our dataset, the average is ${data.stats.averageTrackers.toFixed(1)} trackers per page. The broader web average is lower, typically 5-15 trackers per site.` : 'The average website deploys 5-15 third-party trackers. The most heavily tracked sites can have 50 or more.'}
+              answer="Among the top 100 most-tracked websites in our dataset, the average is 35.5 trackers loaded on first paint. The median is 32; the top 10% load 47 or more. We measure trackers loaded before user interaction — counts after consent, login, or scroll are typically much higher."
+            />
+            <FaqItem
+              question="Why aren't familiar sites like Facebook and Google in the top 100?"
+              answer={
+                'Big platforms typically sit behind a login wall, consent banner, or paywall. ' +
+                'Their tracking stack fires after you authenticate or click "accept" — and our scan never does either. ' +
+                'A reproducible measurement has to start from a clean state, which is why aggressive ad-supported regional publishers rank higher than household names. ' +
+                'Full pattern in the "Where the sites you recognize fall" section above. ' +
+                'This is why the most recognizable brands rarely appear at the very top of this list.'
+              }
+            />
+            <FaqItem
+              question="Is a low tracker count proof of privacy?"
+              answer="No. A low first-paint count can mean strong privacy practices, or it can mean the heavy tracking happens after you log in, accept a banner, or interact with the page. Read the rankings as one specific signal — what your browser is asked to do before you've made any decisions — not as a complete privacy verdict."
             />
             <FaqItem
               question="Can trackers identify me without cookies?"
